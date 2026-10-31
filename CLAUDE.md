@@ -16,7 +16,7 @@
 
 | 層 | 採用 |
 |---|---|
-| フロント | Vite 8 + TypeScript 7（strict）、MapLibre GL JS 6、Chart.js 4 |
+| フロント | Vite 8 + TypeScript 7（strict）、Preact 11（パネル UI）、MapLibre GL JS 6、Chart.js 4 |
 | 背景地図 | 地理院タイル（淡色地図） |
 | 前処理・校正 | Python 3.14（`.venv`）、geopandas / pandas / statsmodels / scipy |
 | テスト | vitest（`tests/*.test.ts`） |
@@ -49,6 +49,7 @@ npm run dev        # 開発サーバ
 npm test           # 単体テスト
 npm run typecheck  # 型チェック
 npm run build      # 本番ビルド（dist/）
+$env:BASE_PATH='/UrbanRailway_game/'; npx vite build  # Pages と同じサブパスで確認（Git Bash だと MSYS がパスを書き換えるので PowerShell で）
 # Python
 py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
 .\.venv\Scripts\python.exe scripts\run_pipeline.py        # 前処理を全段実行（DL 済みなら約20秒）
@@ -73,8 +74,8 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 | | 内容 | 状態 |
 |---|---|---|
 | M0 | リポジトリ初期化、CLAUDE.md、design.md、data-sources.md | 完了（2026-10-31） |
-| M1 | データ取得・前処理 → 概要報告して停止 | 完了（2026-11-01）、レビュー待ち |
-| M2 | 地図表示（既存路線・駅・メッシュ） | 未着手 |
+| M1 | データ取得・前処理 → 概要報告して停止 | 完了（2026-11-01） |
+| M2 | 地図表示（既存路線・駅・メッシュ） | 完了（2026-11-01） |
 | M3 | 路線エディタ | 未着手 |
 | M4 | 需要推計エンジン＋校正 → 校正結果報告 | 未着手 |
 | M5 | 費用・収支・回収年数と結果 UI | 未着手 |
@@ -91,6 +92,11 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 国勢調査の秘匿処理メッシュも人口総数は公表値をそのまま使う（都県の公表人口と 0.5% 以内で一致）。
 - 2026-11-01: 新幹線・鋼索鉄道は既存ネットワークから除外。駅は N02 グループコード単位、S12 の「他路線駅に記載」は乗降集計クラスタで扱う。
 - 2026-11-01: 所要時間は network.json に延長だけを持ち、表定速度（仮置き）で実行時に計算する。
+- 2026-11-01: UI は Preact（パネル）＋ MapLibre を直接操作する `MapView` クラス。状態は `src/state/store.ts` の最小ストアで持ち、`useStore` フックで購読。
+- 2026-11-01: MapLibre 6 のワーカーは Vite の事前バンドルで場所が変わるため `maplibre-gl-worker.mjs?url` を `setWorkerUrl` で明示（本番ビルドでも別アセットとして出力される）。
+- 2026-11-01: レイヤーは `style.load` で追加（`load` は初期タイル完了まで待つため遅い）。メッシュ（約5万ポリゴン）は初めて表示を選んだときに追加（同じワーカーで処理する路線・駅の表示を遅らせないため）。
+- 2026-11-01: 地理院淡色地図は高速道路が緑で JR の色と紛れるため、ラスターの彩度を -0.6 に落とす。対象地域外は白い半透明マスクで示す（地理院の行政界破線と区別するため）。
+- 2026-11-01: 路線色は主要 12 事業者のみ固有色、他は「その他」の灰色（`src/config/display.ts`）。
 
 ## 未解決・要確認
 
