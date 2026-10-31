@@ -1,0 +1,26 @@
+{
+  "name": "urban-railway-game",
+  "private": true,
+  "version": "0.1.0",
+  "description": "首都圏 鉄道新線計画シミュレーター",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "chart.js": "^4.6.1",
+    "maplibre-gl": "^6.16.0"
+  }
+}

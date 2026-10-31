@@ -1,0 +1,11 @@
+# 前処理・校正用（M1 で venv に導入し、バージョンを固定する）
+geopandas
+pyogrio
+shapely
+pandas
+numpy
+scipy
+statsmodels
+networkx
+requests
+pyyaml
