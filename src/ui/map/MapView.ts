@@ -72,7 +72,7 @@ export class MapView {
   private readonly data: BaseData;
   private readonly hover = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, maxWidth: '280px' });
   private lastState: ViewState | null = null;
-  private ready: Promise<void>;
+  private readonly ready: Promise<void>;
 
   constructor(container: HTMLElement, data: BaseData) {
     this.data = data;
@@ -250,6 +250,11 @@ export class MapView {
     return `<div class="popup"><strong>${escapeHtml(s.name)}</strong>`
       + `<div class="popup-sub">${lines.map(escapeHtml).join('<br>')}</div>`
       + `<div>${rows.join('<br>')}</div></div>`;
+  }
+
+  /** 既存データのレイヤーを追加し終えたら解決する */
+  whenReady(): Promise<void> {
+    return this.ready;
   }
 
   async applyViewState(state: ViewState): Promise<void> {
