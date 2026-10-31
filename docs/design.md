@@ -54,13 +54,15 @@ UserLine 編集 ──▶ state（debounce 300ms）──▶ runDemand(scenario,
 
 | スクリプト | 内容 | 出力 |
 |---|---|---|
-| `00_download.py` | 自動取得可能なデータの DL（国土数値情報、e-Stat 統計GIS）。取得不可なら手動 DL 一覧を表示して終了 | `data/raw/...` |
-| `01_region.py` | 対象地域ポリゴン作成（N03 行政区域から 1都3県＋茨城県南部の市町村を dissolve。島しょ部除外） | `data/interim/region.gpkg` |
+| `00_download.py` | 国土数値情報・e-Stat 統計GIS の DL（すべて自動）。取得不可なら手動 DL 一覧を表示して終了 | `data/raw/...`, `data/raw/manifest.json` |
+| `01_region.py` | 対象地域ポリゴン作成（N03 から 1都3県＋茨城県南部 26 市町村を dissolve。島しょ部除外） | `data/interim/region.gpkg`, `public/data/region.geojson` |
 | `02_zones.py` | 500m メッシュ人口・従業者数を結合。対象地域＋外周 3km バッファ内のメッシュを抽出（境界付近の駅勢圏の欠けを防ぐ） | `public/data/zones.json` |
-| `03_rail.py` | N02 路線・駅を抽出、簡略化。駅グループ化（同名かつ 300m 以内）、路線ごとの駅順序からグラフ構築 | `public/data/rail_lines.geojson`, `public/data/network.json` |
-| `04_ridership.py` | S12 乗降客数を駅グループに集計（重複コード処理） | `data/interim/ridership.csv` |
+| `03_rail.py` | N02 路線・駅を抽出、簡略化。駅グループ化（N02 グループコード）、路線ごとの線路グラフから隣接駅と駅間距離を求める | `public/data/rail_lines.geojson`, `public/data/network.json`, `data/interim/stations.csv` |
+| `04_ridership.py` | S12 乗降客数を駅グループ・乗降集計クラスタに集計（重複コード処理） | `public/data/stations.json` |
 | `05_landprice.py` | （任意）L01 地価公示ポイント抽出 | `public/data/landprice.json` |
-| `calibrate.py` | §5 の校正。パラメータと ACC を出力し、docs/calibration.md を生成 | `src/config/demand.calibrated.json`, `public/data/stations.json`, `docs/calibration.md` |
+| `calibrate.py`（M4） | §5 の校正。パラメータと ACC を出力し、docs/calibration.md を生成 | `src/config/demand.calibrated.json`, `public/data/stations.json`（ACC 追記）, `docs/calibration.md` |
+
+全段の実行: `.venv\Scripts\python.exe scripts\run_pipeline.py`（約 20 秒、DL 済みの場合）。設定は `scripts/config/pipeline.yaml`。
 
 ### 3.2 加工済みデータの形式（`public/data/`）
 
@@ -70,16 +72,27 @@ GitHub の制限（1ファイル 100MB、推奨 50MB 未満）と初回ロード
   ```json
   { "version": 1, "meshLevel": "half", "code": [533946111, ...], "pop": [1234, ...], "emp": [567, ...] }
   ```
-  推定 6〜7 万メッシュ × 約 20 byte ≒ 1.5MB（Pages の gzip 転送で 0.5MB 程度）。
-- `rail_lines.geojson` — 既存路線（LineString、座標は小数 5 桁 ≒ 1m、Douglas–Peucker で簡略化）。属性は路線ID・路線名・事業者・事業者種別。
-- `stations.json` — 駅グループの配列（`ExistingStation` 型）。位置、路線、観測乗降客数、ACC。
-- `network.json` — 既存ネットワークのグラフ（ノード=駅グループ、エッジ=隣接駅間の所要時間・延長、乗換エッジ）。ブラウザ側で接続駅からの最短時間（Dijkstra）を計算するために使う。
-- `landprice.json` — 地価ポイント `[lng, lat, 円/m²]` の配列（任意）。
+  実績（M1）: 49,522 メッシュ（うち対象地域内 46,703）、0.89MB。`inRegion` 列で対象地域内/外周バッファを区別。
+- `region.geojson` — 対象地域の外形（200m 簡略化、73KB）。
+- `rail_lines.geojson` — 既存路線（路線ごとに 1 フィーチャ、座標は小数 5 桁 ≒ 1m、10m で簡略化）。属性は `id`（network.json の路線添字）・路線名・事業者・事業者種別。
+- `stations.json` — 駅グループの配列（`ExistingStation` 型の元データ）。位置、路線添字、事業者、`inRegion`、乗降集計クラスタ `cluster`、S12 観測値 `ridership`（2019/2024 年度）、`partial`（一部事業者のデータ無し）、`includesShinkansen`。M4 で ACC を追記。
+- `network.json` — 既存ネットワーク。`lines`（路線名・事業者・表定速度の初期値）、`edges`（`[駅a, 駅b, 路線添字, 線路延長m]`）、`walk`（名前の異なる近接駅間の徒歩乗換 `[駅a, 駅b, 直線距離m]`）。所要時間は実行時に「延長 / 表定速度」で計算する（速度を設定で変えられるように）。経路探索は（駅, 路線）を状態とし、路線を変えると乗換抵抗を加える。
+- `landprice.json` — 地価ポイント `[lng, lat, 円/m², 用途区分]` の配列（任意）。
+
+#### 駅グループと乗降集計クラスタ
+- **駅グループ**: N02 のグループコード（同名かつ 300m 以内の事業者別駅をまとめたもの）。需要モデル（Huff・分布）の「駅」はこの単位。
+- **乗降集計クラスタ**: S12 で「他路線駅に記載（重複コード 2）」の行がある場合、その駅グループと記載先の駅グループを 1 クラスタにまとめる（例: JR 武蔵小杉の横須賀線ホーム）。校正ではクラスタ内の推計値の合計を観測値と比べる。観測値はクラスタの代表駅（ID 最小）にのみ持たせる。
+
+#### 表定速度（`scripts/config/pipeline.yaml` の `rail.speed_kmh`、**仮置き**）
+JR 在来線 40、民営 35、公営 30、第三セクター 40、東京メトロ 30、つくばエクスプレス 55、路面電車 15、モノレール・新交通 27 km/h。急行・快速は考慮しない。M4 で代表区間の時刻表所要時間と照合する。
+
+#### N02 の路線名に関する注意
+路線名は法令上の線名で、運行系統とは一致しない（例: 山手線の東京〜田端は「東北線」）。同一事業者の線名をまたぐ直通運転にも乗換抵抗がかかってしまうため、M4 では「同一事業者内の乗換抵抗」を他社間より小さくする（またはゼロにする）設定を設ける。
 
 ### 3.3 対象地域の定義
 
 - 第6回東京都市圏PT調査（2018）の圏域: 東京都（島しょ部除く）・神奈川県・埼玉県・千葉県の全域＋茨城県南部の市町村。
-- 茨城県分は `scripts/config/region.yaml` に市町村コードのリストとして持つ。初期値（2018 PT 圏域図から読み取ったもの。M1 で公式資料と照合）:
+- 茨城県分は `scripts/config/pipeline.yaml` に市町村名のリストとして持つ（N03_004 と照合し、26 市町村すべて一致）。2018 PT 圏域図から読み取ったもので、公式の一覧表とは未照合:
   土浦市、古河市、石岡市、龍ケ崎市、下妻市、常総市、取手市、牛久市、つくば市、鹿嶋市、潮来市、守谷市、坂東市、稲敷市、かすみがうら市、神栖市、行方市、つくばみらい市、小美玉市、阿見町、美浦村、河内町、利根町、八千代町、五霞町、境町
 - メッシュは市町村ポリゴンでクリップせず、「メッシュ中心が対象地域＋3km バッファ内」で選ぶ。
 
@@ -172,9 +185,9 @@ $$T_{xy} = a_x a_y\, W_x W_y \exp(-\gamma\, t_{xy}) \quad (x \ne y)$$
 
 ### 5.1 データ
 
-- 目的変数: S12 の駅別 1日あたり乗降客数（最新年度。コロナ影響の大きい 2020〜2021 年度は避け、2019 年度とも比較する）。
-- 駅グループ（同名・300m 以内）単位に事業者分を合計。S12 の重複コード（多路線駅で中心駅にのみ値がある）に従い二重計上を除く。
-- 対象: 対象地域内の駅。データ無し・休止駅・空港アクセス等の特殊駅は除外し、除外理由を一覧に残す。
+- 目的変数: S12 の駅別 1日あたり乗降客数。2024 年度を主とし、コロナ前の 2019 年度でも推定して比較する（2024 年度の合計は 2019 年度の約 90%）。
+- 集計単位は乗降集計クラスタ（§3.2）。重複コード=1 かつ データ有無=1 の行だけを合計し、二重計上を除く。
+- 除外: 観測値なし、`partial`（一部事業者のデータ無し）、`includesShinkansen`（東京・上野・大宮・熊谷）、外周バッファ内の駅。除外した駅とその理由は一覧に残す。
 
 ### 5.2 手法: ポアソン疑似最尤法（PPML）＋外側の非線形最適化
 

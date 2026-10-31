@@ -1,0 +1,80 @@
+# 前処理パイプラインの設定。データの版を上げるときはここを書き換えて再実行する。
+
+region:
+  # 全域を対象とする都県（JIS 都道府県コード）
+  full_prefectures: ["11", "12", "13", "14"]  # 埼玉, 千葉, 東京, 神奈川
+  # 東京都の島しょ部（大島町〜小笠原村、コード 13361 以上）は除外
+  exclude_tokyo_islands: true
+  # 茨城県のうち対象とする市町村（第6回東京都市圏PT調査 2018 の圏域図より。N03_004 の名称で照合）
+  ibaraki_municipalities:
+    - 土浦市
+    - 古河市
+    - 石岡市
+    - 龍ケ崎市
+    - 下妻市
+    - 常総市
+    - 取手市
+    - 牛久市
+    - つくば市
+    - 鹿嶋市
+    - 潮来市
+    - 守谷市
+    - 坂東市
+    - 稲敷市
+    - かすみがうら市
+    - 神栖市
+    - 行方市
+    - つくばみらい市
+    - 小美玉市
+    - 阿見町
+    - 美浦村
+    - 河内町
+    - 利根町
+    - 八千代町
+    - 五霞町
+    - 境町
+  # メッシュ・駅の抽出に使う外周バッファ [m]（境界付近の駅勢圏の欠けを防ぐ）
+  buffer_m: 3000
+
+# 対象地域をカバーする 1次メッシュ
+primary_meshes: ["5238", "5239", "5240", "5338", "5339", "5340", "5438", "5439", "5440"]
+
+sources:
+  ksj_base: "https://nlftp.mlit.go.jp/ksj/gml/data"
+  N02: { version: "N02-25", file: "N02-25_GML.zip" }          # 鉄道（2025年）
+  S12: { version: "S12-25", file: "S12-25_GML.zip" }          # 駅別乗降客数（2024年度まで収録）
+  N03: { version: "N03-2026", file_pattern: "N03-20260101_{pref}_GML.zip" }  # 行政区域（2026年1月1日）
+  L01: { version: "L01-26", file_pattern: "L01-26_{pref}_GML.zip" }          # 地価公示（2026年）
+  N03_L01_prefectures: ["08", "11", "12", "13", "14"]
+  estat_url: "https://www.e-stat.go.jp/gis/statmap-search/data?statsId={stats_id}&code={mesh}&downloadType=2"
+  # 令和2年国勢調査 2分の1地域メッシュ（JGD2011）「人口等基本集計に関する事項」
+  census:
+    stats_id: "T001141"
+    population_column: "T001141001"  # 人口（総数）
+  # 令和3年経済センサス‐活動調査 2分の1地域メッシュ（JGD2011）「産業（大分類）別全事業所数及び従業者数」
+  econ_census:
+    stats_id: "T001162"
+    employees_column: "T001162022"   # 従業者数 Ａ〜Ｓ全産業
+
+# 都心の基準点（東京駅）
+core_point: [139.7671, 35.6812]
+
+rail:
+  # 駅グループ化: 同名かつこの距離以内の駅を 1 つにまとめる [m]（S12 のグループ定義に合わせる）
+  station_group_radius_m: 300
+  # 路線形状の簡略化許容誤差 [m]
+  simplify_tolerance_m: 10
+  # 出力座標の小数桁（5桁 ≒ 1m）
+  coord_decimals: 5
+  # 除外する路線: 事業者種別 1=JR新幹線（通勤需要の推計対象外）、鉄道区分 13=鋼索鉄道（ケーブルカー）
+  exclude_operator_types: [1]
+  exclude_rail_types: [13]
+  # 異なる名前の近接駅（例: 浜松町と大門）を徒歩乗換で結ぶ距離 [m]
+  walk_transfer_radius_m: 250
+  # 表定速度の初期値 [km/h]（停車時間込み）。（仮置き）M4 で既存の所要時間と照合する
+  # 優先順位: operator_overrides > line_overrides > rail_type > operator_type
+  speed_kmh:
+    operator_type: { "2": 40, "3": 30, "4": 35, "5": 40 }  # JR在来線, 公営, 民営, 第三セクター
+    rail_type: { "21": 15, "14": 27, "15": 27, "16": 27, "22": 27, "23": 27, "24": 27, "25": 27 }  # 路面電車, モノレール, 新交通
+    operator_overrides: { "東京地下鉄": 30, "首都圏新都市鉄道": 55 }  # 地下鉄, つくばエクスプレス
+    line_overrides: {}
