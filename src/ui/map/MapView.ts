@@ -21,6 +21,9 @@ import type { ViewState } from '../../state/viewState';
 maplibregl.setWorkerUrl(workerUrl);
 
 const GSI_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>';
+/** 地図に描く加工データの出典（詳細は「出典」パネル） */
+const KSJ_ATTRIBUTION = '国土数値情報（国土交通省）を加工';
+const ESTAT_ATTRIBUTION = '国勢調査・経済センサス（総務省統計局）を加工';
 
 /** 凡例・フィルタ上の事業者キー（固有色のない事業者は「その他」にまとめる） */
 export function operatorKey(operator: string): string {
@@ -117,7 +120,7 @@ export class MapView {
       source: 'region-mask',
       paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.5 },
     });
-    m.addSource('region', { type: 'geojson', data: this.data.region });
+    m.addSource('region', { type: 'geojson', data: this.data.region, attribution: KSJ_ATTRIBUTION });
     m.addLayer({
       id: 'region-outline',
       type: 'line',
@@ -125,7 +128,7 @@ export class MapView {
       paint: { 'line-color': '#6b6a66', 'line-width': 1.5 },
     });
 
-    m.addSource('rail', { type: 'geojson', data: this.data.railLines });
+    m.addSource('rail', { type: 'geojson', data: this.data.railLines, attribution: KSJ_ATTRIBUTION });
     const lineWidth: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 8, 1.5, 12, 3, 15, 5];
     m.addLayer({
       id: 'rail-casing',
@@ -293,7 +296,7 @@ export class MapView {
   private ensureMeshLayer(): void {
     const m = this.map;
     if (m.getSource('mesh')) return;
-    m.addSource('mesh', { type: 'geojson', data: buildMeshFeatureCollection(this.data.zones) });
+    m.addSource('mesh', { type: 'geojson', data: buildMeshFeatureCollection(this.data.zones), attribution: ESTAT_ATTRIBUTION });
     m.addLayer({
       id: 'mesh-fill',
       type: 'fill',
