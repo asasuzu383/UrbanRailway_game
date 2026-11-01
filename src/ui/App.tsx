@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadBaseData, type BaseData } from '../data/loaders';
-import { scenarioStore } from '../state/appState';
+import { defaultDemandParams } from '../config/demand';
+import { createDemandContext } from '../demand/context';
+import { scenarioStore, setDemandContext } from '../state/appState';
 import { editorStore } from '../state/editorState';
 import { viewStore } from '../state/viewState';
 import { EditorLayer, deleteVertex } from './map/EditorLayer';
@@ -42,7 +44,10 @@ export function App() {
 
   useEffect(() => {
     loadBaseData()
-      .then((data) => setLoad({ status: 'ready', data }))
+      .then((data) => {
+        setDemandContext(createDemandContext(data.zones, data.stations.stations, data.times, defaultDemandParams));
+        setLoad({ status: 'ready', data });
+      })
       .catch((e: unknown) => setLoad({ status: 'error', message: e instanceof Error ? e.message : String(e) }));
   }, []);
 

@@ -1,5 +1,6 @@
 import type { FeatureCollection, LineString, MultiLineString, Polygon, MultiPolygon } from 'geojson';
 import type { NetworkFile, RailLineProperties, StationsFile, ZonesFile } from './schema';
+import { TimeMatrix } from './timeMatrix';
 
 /** アプリ起動時に読み込む加工済みデータ一式。 */
 export interface BaseData {
@@ -8,6 +9,8 @@ export interface BaseData {
   readonly network: NetworkFile;
   readonly railLines: FeatureCollection<LineString | MultiLineString, RailLineProperties>;
   readonly region: FeatureCollection<Polygon | MultiPolygon>;
+  /** 既存駅間の所要時間（stations の並び） */
+  readonly times: TimeMatrix;
 }
 
 /** GitHub Pages のサブパス配信に対応するため、BASE_URL を前置して public/data を参照する。 */
@@ -22,12 +25,17 @@ async function fetchJson<T>(file: string): Promise<T> {
 }
 
 export async function loadBaseData(): Promise<BaseData> {
-  const [zones, stations, network, railLines, region] = await Promise.all([
+  const [zones, stations, network, railLines, region, timesBuf] = await Promise.all([
     fetchJson<ZonesFile>('zones.json'),
     fetchJson<StationsFile>('stations.json'),
     fetchJson<NetworkFile>('network.json'),
     fetchJson<BaseData['railLines']>('rail_lines.geojson'),
     fetchJson<BaseData['region']>('region.geojson'),
+    fetch(dataUrl('times.bin')).then((r) => {
+      if (!r.ok) throw new Error(`times.bin の読み込みに失敗しました（HTTP ${r.status}）`);
+      return r.arrayBuffer();
+    }),
   ]);
-  return { zones, stations, network, railLines, region };
+  const times = new TimeMatrix(stations.stations.length, new Uint8Array(timesBuf));
+  return { zones, stations, network, railLines, region, times };
 }

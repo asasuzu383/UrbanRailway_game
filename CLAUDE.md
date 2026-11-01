@@ -49,11 +49,13 @@ npm run dev        # 開発サーバ
 npm test           # 単体テスト
 npm run typecheck  # 型チェック
 npm run build      # 本番ビルド（dist/）
+$env:EXPLORE='1'; npx vitest run tests/demandExplore.test.ts  # 需要推計を実データの例で試す（数値を表示）
 $env:BASE_PATH='/UrbanRailway_game/'; npx vite build  # Pages と同じサブパスで確認（Git Bash だと MSYS がパスを書き換えるので PowerShell で）
 # Python
 py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
 .\.venv\Scripts\python.exe scripts\run_pipeline.py        # 前処理を全段実行（DL 済みなら約20秒）
 .\.venv\Scripts\python.exe scripts\run_pipeline.py 03 04  # 指定段のみ
+.\.venv\Scripts\python.exe scripts\calibrate.py           # 需要モデルの校正（約1分）→ docs/calibration.md
 ```
 
 ## 規約
@@ -77,7 +79,7 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 | M1 | データ取得・前処理 → 概要報告して停止 | 完了（2026-11-01） |
 | M2 | 地図表示（既存路線・駅・メッシュ） | 完了（2026-11-01） |
 | M3 | 路線エディタ | 完了（2026-11-01） |
-| M4 | 需要推計エンジン＋校正 → 校正結果報告 | 未着手 |
+| M4 | 需要推計エンジン＋校正 → 校正結果報告 | 完了（2026-11-01）、レビュー待ち |
 | M5 | 費用・収支・回収年数と結果 UI | 未着手 |
 | M6 | README、出典表示、Pages デプロイ | 未着手 |
 
@@ -101,10 +103,14 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 編集操作は `src/network/lineModel.ts` の純粋関数。区間は起点駅 id をキーに持ち、途中挿入は元の区間の構造を継承、末尾延伸は「延伸する区間の構造」、駅削除は前側の区間の構造でつなぐ。先頭駅より前・最終駅より後の中間点は未完成部分として計算から除外。
 - 2026-11-01: 編集履歴（undo/redo）は `ScenarioStore`。ドラッグ中は transient 更新で、確定時に 1 回分だけ履歴に積む。localStorage へ 500ms デバウンスで自動保存、再計算は 300ms デバウンス（`src/state/appState.ts` の `computeStore`。M4 で需要推計をここに追加）。
 - 2026-11-01: スナップ半径は画面上 14px を 100〜400m に制限（`src/config/editor.ts`、仮置き）。
+- 2026-11-01: 需要モデルの固定パラメータは `scripts/config/demand.yaml` が唯一の定義元。`calibrate.py` が校正値とあわせて `src/config/demand.calibrated.json` に書き出し、ブラウザはそれだけを読む。
+- 2026-11-01: 校正は非線形パラメータに範囲制約を付けて推定（制約なしだと α≈25・a₁<0・γ≈0.009 と不自然）。結果は docs/calibration.md。
+- 2026-11-01: 分布は全駅間の所要時間行列（`public/data/times.bin`）を使う発生制約型重力モデル＋新線経由の 2 項ロジット（設計の「外部ポータル＋反復比例法」から変更。design.md §4.5）。
 
 ## 未解決・要確認
 
 - S12 の乗降客数は事業者ごとに定義が不統一（乗換客の扱い等）。JR 東日本は乗車人員×2 の乗降換算値。大ターミナルの扱いは M4 で検討。
 - 茨城県南部の公式な対象市町村リスト（東京都市圏交通計画協議会）とは未照合。
 - N02 の路線名は法令上の線名（山手線の一部が「東北線」など）。M4 で同一事業者内の乗換抵抗を下げる設定が必要。
-- 表定速度はすべて仮置き。M4 で時刻表の所要時間と照合する。
+- 表定速度はすべて仮置き（急行を考慮しないため長距離の所要時間は過大。例: 新宿→横浜 52 分）。時刻表との照合は未実施。
+- 校正で α・a₁・γ が範囲の端に張り付いている。OD データ（大都市交通センサス等）で分布・経路側から推定するのが本筋。

@@ -2,7 +2,9 @@
  * アプリ全体の状態の組み立て: シナリオの読込・自動保存・編集後の再計算（デバウンス）。
  */
 import { AUTOSAVE_DEBOUNCE_MS, RECOMPUTE_DEBOUNCE_MS } from '../config/editor';
-import type { Scenario } from '../core/types';
+import type { DemandResult, Scenario } from '../core/types';
+import type { DemandContext } from '../demand/context';
+import { runDemand } from '../demand/engine';
 import { computeLineGeometry, type LineGeometry } from '../network/lineGeometry';
 import { debounce } from './debounce';
 import { loadFromStorage, saveToStorage } from './scenarioIO';
@@ -12,20 +14,53 @@ import { createStore } from './store';
 export const scenarioStore = new ScenarioStore(loadFromStorage() ?? emptyScenario());
 
 /**
- * 再計算の結果。M3 では路線の幾何のみ。M4 で需要推計、M5 で収支を加える。
+ * 再計算の結果。路線の幾何と需要推計（M5 で収支を加える）。
  * 計算中かどうかを UI で示せるよう status を持つ。
  */
 export interface ComputeState {
   readonly status: 'idle' | 'pending';
   readonly geometry: LineGeometry | null;
+  /** 基礎データの読込前は null */
+  readonly demand: DemandResult | null;
+  readonly demandMs: number | null;
+  readonly error: string | null;
   readonly computedFor: Scenario | null;
 }
 
-export const computeStore = createStore<ComputeState>({ status: 'idle', geometry: null, computedFor: null });
+export const computeStore = createStore<ComputeState>({
+  status: 'idle',
+  geometry: null,
+  demand: null,
+  demandMs: null,
+  error: null,
+  computedFor: null,
+});
+
+let demandContext: DemandContext | null = null;
+
+/** 基礎データの読込後に呼ぶ。以後の再計算で需要推計も行う */
+export function setDemandContext(ctx: DemandContext): void {
+  demandContext = ctx;
+  compute(scenarioStore.scenario);
+}
 
 function compute(s: Scenario): void {
   const line = s.lines[0];
-  computeStore.set({ status: 'idle', geometry: line ? computeLineGeometry(line) : null, computedFor: s });
+  const geometry = line ? computeLineGeometry(line) : null;
+  let demand: DemandResult | null = null;
+  let demandMs: number | null = null;
+  let error: string | null = null;
+  if (line && demandContext) {
+    const t0 = performance.now();
+    try {
+      demand = runDemand(line, demandContext);
+    } catch (e) {
+      console.error(e);
+      error = e instanceof Error ? e.message : String(e);
+    }
+    demandMs = performance.now() - t0;
+  }
+  computeStore.set({ status: 'idle', geometry, demand, demandMs, error, computedFor: s });
 }
 
 const recompute = debounce(compute, RECOMPUTE_DEBOUNCE_MS);
@@ -40,6 +75,6 @@ scenarioStore.store.subscribe(({ scenario }) => {
   autosave(scenario);
 });
 
-// 起動時に 1 回計算する。ページを離れる前には保存を確定させる
+// 起動時に 1 回計算する（需要推計は基礎データの読込後）。ページを離れる前には保存を確定させる
 compute(scenarioStore.scenario);
 if (typeof window !== 'undefined') window.addEventListener('beforeunload', () => autosave.flush());

@@ -55,3 +55,26 @@ def write_json(path: Path, obj: object, *, compact: bool = True) -> int:
                       indent=None if compact else 2)
     path.write_text(text, encoding="utf-8")
     return path.stat().st_size
+
+
+def half_mesh_centroid(codes) -> tuple:
+    """2分の1地域メッシュコード（9桁、文字列または整数の配列）の中心経度・緯度。src/data/meshCode.ts と同じ定義。"""
+    import numpy as np
+
+    c = np.asarray(codes, dtype=np.int64)
+    s = c % 10 - 1
+    w = c // 10 % 10
+    r = c // 100 % 10
+    v = c // 1000 % 10
+    q = c // 10000 % 10
+    u = c // 100000 % 100
+    p = c // 10000000
+    dlat3, dlng3 = (2 / 3) / 80, 1 / 80
+    south = p / 1.5 + q * (2 / 3) / 8 + r * dlat3 + (s // 2) * dlat3 / 2
+    west = u + 100 + v / 8 + w * dlng3 + (s % 2) * dlng3 / 2
+    return west + dlng3 / 4, south + dlat3 / 4
+
+
+def load_demand_config() -> dict:
+    with (Path(__file__).resolve().parent / "config" / "demand.yaml").open(encoding="utf-8") as f:
+        return yaml.safe_load(f)

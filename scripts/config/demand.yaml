@@ -1,0 +1,47 @@
+# 需要モデルの固定パラメータ（校正しない値）。docs/design.md §4。
+# calibrate.py が読み、校正値とあわせて src/config/demand.calibrated.json に書き出す。
+# ブラウザ側はその JSON だけを読むので、ここが唯一の定義元になる。
+
+access:
+  # 直線距離 → 道のり距離の迂回係数（仮置き）
+  detour_factor: 1.25
+  # 駅勢圏の上限（道のり距離, km）
+  max_access_km: 2.0
+
+mass:
+  # 集中量 M に加える夜間人口の重み（私事・帰宅トリップ分。仮置き）
+  population_weight: 0.3
+
+network:
+  # 乗換抵抗 [分]（歩行・待ち時間を含む。仮置き）
+  # 同一事業者内: N02 の線名が運行系統と一致しない（山手線の一部が「東北線」など）ため小さめにする
+  transfer_same_operator_min: 3
+  # 他事業者間・新線との乗換
+  transfer_other_operator_min: 8
+  # 名前の異なる近接駅の徒歩乗換: 歩行速度 [km/h] と迂回係数
+  walk_speed_kmh: 4.8
+  walk_detour_factor: 1.3
+
+calibration:
+  # 主に使う年度と比較用の年度（S12）
+  year: 2024
+  compare_year: 2019
+  # 需要構造が駅勢圏で説明できない駅（空港アクセス）を校正から除外
+  exclude_station_names: ["羽田空港第1・第2ターミナル", "羽田空港第3ターミナル", "成田空港", "空港第2ビル", "羽田空港第１・第２ターミナル", "羽田空港第３ターミナル"]
+  # 乗換客の多い大ターミナルを除いた推定（感度分析）の路線数の閾値
+  hub_lines_threshold: 5
+  # 空間交差検証の分割数（2次メッシュ単位でまとめて分割）
+  cv_folds: 5
+  random_seed: 20261101
+
+# 新線の運行（Phase 1 は固定。将来 ServicePlan に置き換える）
+service:
+  # 表定速度 [km/h]（仮置き）
+  scheduled_speed_kmh: 40
+
+# 既存線から新線経由への経路転換（接続駅間の短絡利用）。校正データがないため仮置き
+shortcut:
+  # 接続駅から何分以内の既存駅を、短絡利用の発着候補にするか
+  neighborhood_min: 20
+  # 経路選択ロジットの時間感度 [1/分]（新線経由が 5 分速いと約 82% が転換）
+  route_logit_per_min: 0.3

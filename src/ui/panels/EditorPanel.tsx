@@ -21,6 +21,7 @@ const TOOLS: readonly { value: EditorTool; label: string; hint: string }[] = [
 ];
 
 const km = (x: number): string => `${x.toFixed(1)} km`;
+const people = (x: number): string => `${Math.round(x).toLocaleString('ja-JP')} 人`;
 
 function downloadText(filename: string, text: string): void {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
@@ -41,6 +42,9 @@ export function EditorPanel() {
   const stations = line.vertices.filter((v) => v.kind === 'station');
   const structureOf = new Map(line.segments.map((s) => [s.fromStationId, s.structure]));
   const lengthOf = new Map(geo?.segments.map((s) => [s.fromStationId, s.lengthKm]) ?? []);
+  const demand = compute.demand;
+  const ridershipOf = new Map(demand?.stations.map((s) => [s.stationId, s]) ?? []);
+  const loadOf = new Map(demand?.segments.map((s) => [s.fromStationId, s]) ?? []);
   const update = scenarioStore.updateLine.bind(scenarioStore);
 
   const onImport = async (file: File) => {
@@ -137,7 +141,28 @@ export function EditorPanel() {
                 .map((s) => `${STRUCTURE_LABELS[s]} ${km(geo!.kmByStructure[s])}`)
                 .join(' / ')}
             </dd>
+            {demand && (
+              <>
+                <dt>輸送人員</dt>
+                <dd><strong>{people(demand.dailyPassengers)}</strong>/日</dd>
+                <dt>内訳</dt>
+                <dd>
+                  新線内 {people(demand.tripsByType.local)} / 既存線と乗継 {people(demand.tripsByType.toExisting)} / 既存線からの経路転換 {people(demand.tripsByType.through)}
+                </dd>
+                <dt>輸送人キロ</dt>
+                <dd>{Math.round(demand.dailyPassengerKm).toLocaleString('ja-JP')} 人キロ/日</dd>
+                <dt>平均乗車距離</dt>
+                <dd>{demand.dailyPassengers > 0 ? km(demand.dailyPassengerKm / demand.dailyPassengers) : '-'}</dd>
+              </>
+            )}
           </dl>
+        )}
+        {compute.error && <p class="hint error">需要推計でエラーが発生しました: {compute.error}</p>}
+        {!demand && stations.length >= 2 && <p class="hint">需要推計は基礎データの読み込み後に表示されます。</p>}
+        {demand && stations.length >= 2 && (
+          <p class="hint">
+            人数は 1 日平均（年間平均日）の推計です。手法と精度は docs/calibration.md を参照。
+          </p>
         )}
       </section>
 
@@ -178,6 +203,14 @@ export function EditorPanel() {
                     onChange={(e) => update((l) => renameStation(l, s.id, e.currentTarget.value))}
                   />
                   {s.transferTo && <span class="badge transfer" title="既存駅と接続（乗換駅）">乗換</span>}
+                  {ridershipOf.has(s.id) && (
+                    <span
+                      class="station-ridership"
+                      title={`新線の乗降人員（1日）。駅勢圏 ${people(ridershipOf.get(s.id)!.fromCatchment)}、乗換 ${people(ridershipOf.get(s.id)!.fromTransfer)}`}
+                    >
+                      {Math.round(ridershipOf.get(s.id)!.ridership).toLocaleString('ja-JP')}
+                    </span>
+                  )}
                   <button type="button" class="icon-button" aria-label={`${s.name}を削除`} title="削除" onClick={() => deleteVertex(s.id)}>
                     ×
                   </button>
@@ -185,6 +218,11 @@ export function EditorPanel() {
                 {i + 1 < stations.length && (
                   <li class="segment-row">
                     <span class="segment-length">{km(lengthOf.get(s.id) ?? 0)}</span>
+                    {loadOf.has(s.id) && (
+                      <span class="segment-load" title="断面輸送量（片方向, 人/日）">
+                        {Math.round(loadOf.get(s.id)!.forward).toLocaleString('ja-JP')} 人
+                      </span>
+                    )}
                     <StructureSelect
                       value={structureOf.get(s.id) ?? 'atGrade'}
                       onChange={(st) => update((l) => setSegmentStructure(l, s.id, st))}

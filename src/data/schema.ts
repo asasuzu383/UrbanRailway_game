@@ -27,6 +27,15 @@ export interface StationRecord {
   readonly ridership: Readonly<Record<string, number | null>>;
   readonly partial: boolean;
   readonly includesShinkansen: boolean;
+  /** 以下は scripts/calibrate.py の出力 */
+  /** ACC: 既存網での重力型アクセシビリティ */
+  readonly acc: number;
+  /** M: 目的地としての集中量（従業者＋ψ×人口の幾何的按分） */
+  readonly mass: number;
+  /** X: Huff 按分後の駅勢圏（人口＋ρ×従業者） */
+  readonly catch: number;
+  /** 駅勢圏由来の乗降推計（路線数の項を除く） */
+  readonly muCatch: number;
 }
 
 export interface StationsFile {

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "calibratedAt": "2026-11-01",
+  "year": 2024,
+  "accRef": 1000000.0,
+  "access": {
+    "detourFactor": 1.25,
+    "maxAccessKm": 2.0
+  },
+  "mass": {
+    "populationWeight": 0.3
+  },
+  "network": {
+    "transferSameOperatorMin": 3,
+    "transferOtherOperatorMin": 8,
+    "walkSpeedKmh": 4.8,
+    "walkDetourFactor": 1.3
+  },
+  "service": {
+    "scheduledSpeedKmh": 40
+  },
+  "shortcut": {
+    "neighborhoodMin": 20,
+    "routeLogitPerMin": 0.3
+  },
+  "fitted": {
+    "accessDecayPerKm": 2.2032100324349497,
+    "attractivenessExponent": 1.999999999995394,
+    "outsideConst": -3.3647005672736006,
+    "outsidePerKm": 0.0,
+    "employeeWeight": 1.1079838781543951,
+    "timeDecayPerMin": 0.02,
+    "intercept": -1.207386778577327,
+    "catchmentElasticity": 0.9704467141148144,
+    "accessibilityElasticity": 0.6862830369043024,
+    "hubElasticity": 1.521187525188747
+  },
+  "metrics": {
+    "n": 1421,
+    "pseudoR2": 0.8529812812987128,
+    "logR2": 0.8263714310688698,
+    "rmse": 62473.14940068193,
+    "medianRatio": 1.5826216459254163,
+    "within2x": 0.6798029556650246,
+    "totalRatio": 0.9999999999999964
+  }
+}

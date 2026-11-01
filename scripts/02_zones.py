@@ -18,7 +18,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from common import CRS_GEO, CRS_METRIC, INTERIM, PUBLIC_DATA, RAW, load_config, write_json
+from common import CRS_GEO, CRS_METRIC, INTERIM, PUBLIC_DATA, RAW, half_mesh_centroid, load_config, write_json
 
 
 def read_estat_tables(folder: str, stats_id: str, meshes: list[str], usecols: list[str]) -> pd.DataFrame:
@@ -39,22 +39,6 @@ def to_number(s: pd.Series) -> tuple[pd.Series, int]:
     num = pd.to_numeric(s, errors="coerce")
     n_masked = int(num.isna().sum())
     return num.fillna(0).astype(np.int64), n_masked
-
-
-def half_mesh_centroid(codes: pd.Series) -> tuple[np.ndarray, np.ndarray]:
-    """2分の1地域メッシュコード（9桁）の中心緯度経度。src/data/meshCode.ts と同じ定義。"""
-    c = codes.astype(str)
-    p = c.str[0:2].astype(int).to_numpy()
-    u = c.str[2:4].astype(int).to_numpy()
-    q = c.str[4].astype(int).to_numpy()
-    v = c.str[5].astype(int).to_numpy()
-    r = c.str[6].astype(int).to_numpy()
-    w = c.str[7].astype(int).to_numpy()
-    s = c.str[8].astype(int).to_numpy() - 1
-    dlat3, dlng3 = (2 / 3) / 80, 1 / 80
-    south = p / 1.5 + q * (2 / 3) / 8 + r * dlat3 + (s // 2) * dlat3 / 2
-    west = u + 100 + v / 8 + w * dlng3 + (s % 2) * dlng3 / 2
-    return west + dlng3 / 4, south + dlat3 / 4
 
 
 def main() -> None:

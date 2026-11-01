@@ -158,3 +158,6 @@ button.danger { color: var(--danger); }
 .segment-length { width: 56px; font-variant-numeric: tabular-nums; }
 .help ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: var(--text-secondary); }
 .help summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text-secondary); }
+.station-ridership { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.segment-load { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.hint.error { color: var(--danger); }

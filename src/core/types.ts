@@ -148,9 +148,9 @@ export interface StationDemand {
   readonly fromCatchment: number;
   /** 内訳: 接続駅での他路線との乗換 */
   readonly fromTransfer: number;
-  /** 駅勢圏の Huff 按分後人口・従業者数（説明用） */
-  readonly catchmentPopulation: number;
-  readonly catchmentEmployees: number;
+  /** 駅勢圏の Huff 按分後人口・従業者数（説明用。接続駅は既存駅と一体なので null） */
+  readonly catchmentPopulation: number | null;
+  readonly catchmentEmployees: number | null;
 }
 
 export interface SegmentLoad {
@@ -171,6 +171,14 @@ export interface DemandResult {
   readonly dailyPassengers: number;
   /** 1日平均輸送人キロ（新線区間のみ） */
   readonly dailyPassengerKm: number;
+  /**
+   * 輸送人員の内訳 [人/日]。
+   * local: 両端とも新線の駅勢圏、toExisting: 片方が既存線方面（接続駅で乗換）、
+   * through: 両端とも既存線方面（既存線から新線経由に経路を変えた短絡利用）
+   */
+  readonly tripsByType: { readonly local: number; readonly toExisting: number; readonly through: number };
+  /** 新線によって鉄道を使うようになった人口（駅勢圏の鉄道利用確率の増分 × 人口） [人] */
+  readonly newRailUsersPopulation: number;
 }
 
 // ---------------------------------------------------------------------------
