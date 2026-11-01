@@ -3,7 +3,7 @@
 首都圏の実際の地図の上に鉄道の新線を描くと、乗客数・営業収支・建設費の回収年数を推計するブラウザゲームです。
 
 - 対象地域: 東京都（島しょ部を除く）・神奈川県・埼玉県・千葉県・茨城県南部
-- 公開ページ: `https://<ユーザー名>.github.io/UrbanRailway_game/`（GitHub Pages）
+- 公開ページ: https://asasuzu383.github.io/UrbanRailway_game/ （GitHub Pages）
 
 ## 遊び方
 
@@ -105,4 +105,6 @@ npx vite preview --base /UrbanRailway_game/   # http://localhost:4173/UrbanRailw
 
 ## ライセンス
 
-ソースコードのライセンスは未定です。データの利用条件は上記の各提供元に従います。
+ソースコードにはオープンソースライセンスを付けていません（著作権者がすべての権利を保有します）。閲覧は自由ですが、複製・改変・再配布には著作権者の許可が必要です。
+
+`public/data/` の加工済みデータの利用条件は、上記の各提供元の利用規約（CC BY 4.0 など）に従います。
