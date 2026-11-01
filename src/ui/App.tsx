@@ -2,18 +2,28 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadBaseData, type BaseData } from '../data/loaders';
 import { defaultDemandParams } from '../config/demand';
 import { createDemandContext } from '../demand/context';
-import { scenarioStore, setDemandContext } from '../state/appState';
+import { LandPriceIndex } from '../finance/landPrice';
+import { scenarioStore, setDemandContext, setLandPrice } from '../state/appState';
 import { editorStore } from '../state/editorState';
 import { viewStore } from '../state/viewState';
 import { EditorLayer, deleteVertex } from './map/EditorLayer';
 import { MapView } from './map/MapView';
 import { EditorPanel } from './panels/EditorPanel';
 import { LayerPanel } from './panels/LayerPanel';
+import { ParamsPanel } from './panels/ParamsPanel';
+import { ResultsPanel } from './panels/ResultsPanel';
 import { MeshLegend } from './panels/MeshLegend';
 import { SourcesPanel } from './panels/SourcesPanel';
 
 type LoadState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: BaseData };
-type Tab = 'line' | 'layers';
+type Tab = 'line' | 'results' | 'params' | 'layers';
+
+const TABS: readonly { id: Tab; label: string }[] = [
+  { id: 'line', label: '路線' },
+  { id: 'results', label: '結果' },
+  { id: 'params', label: 'パラメータ' },
+  { id: 'layers', label: '表示' },
+];
 
 /** 入力欄にフォーカスがあるときはショートカットを無効にする */
 const isTyping = (e: KeyboardEvent): boolean =>
@@ -45,6 +55,7 @@ export function App() {
   useEffect(() => {
     loadBaseData()
       .then((data) => {
+        setLandPrice(data.landPrice ? new LandPriceIndex(data.landPrice) : null);
         setDemandContext(createDemandContext(data.zones, data.stations.stations, data.times, defaultDemandParams));
         setLoad({ status: 'ready', data });
       })
@@ -91,14 +102,16 @@ export function App() {
         </div>
         <aside class="side-panel">
           <div class="tabs" role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'line'} class={tab === 'line' ? 'active' : ''} onClick={() => setTab('line')}>
-              路線
-            </button>
-            <button type="button" role="tab" aria-selected={tab === 'layers'} class={tab === 'layers' ? 'active' : ''} onClick={() => setTab('layers')}>
-              表示
-            </button>
+            {TABS.map((t) => (
+              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} class={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
           </div>
-          {tab === 'line' ? <EditorPanel /> : <LayerPanel />}
+          {tab === 'line' && <EditorPanel />}
+          {tab === 'results' && <ResultsPanel />}
+          {tab === 'params' && <ParamsPanel />}
+          {tab === 'layers' && <LayerPanel />}
           <SourcesPanel />
         </aside>
       </main>

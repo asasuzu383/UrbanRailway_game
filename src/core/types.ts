@@ -182,17 +182,37 @@ export interface DemandResult {
 }
 
 // ---------------------------------------------------------------------------
-// 費用・収支の結果
+// 費用・収支の結果（金額はすべて円）
 // ---------------------------------------------------------------------------
 
+export interface StructureCost {
+  readonly lengthKm: number;
+  readonly trackCost: number;
+  readonly stationCount: number;
+  readonly stationCost: number;
+  readonly landCost: number;
+}
+
 export interface ConstructionCostBreakdown {
-  readonly byStructure: Readonly<Record<StructureType, { lengthKm: number; trackCost: number; stationCount: number; stationCost: number; landCost: number }>>;
-  /** 合計 [円] */
+  readonly byStructure: Readonly<Record<StructureType, StructureCost>>;
+  readonly vehicles: { readonly cars: number; readonly trainsets: number; readonly cost: number };
+  /** 地価データが無く用地費を計算できなかった区間がある */
+  readonly landPriceMissing: boolean;
   readonly total: number;
 }
 
+export interface OperatingCostBreakdown {
+  readonly train: number;
+  readonly track: number;
+  readonly stations: number;
+  readonly overhead: number;
+  readonly total: number;
+  /** 年間の車両走行キロ */
+  readonly carKm: number;
+}
+
 export interface AnnualFinance {
-  /** 開業後年数（1 = 開業初年度） */
+  /** 開業後年数（0 = 建設費を計上する開業時点、1 = 開業初年度） */
   readonly year: number;
   readonly demandFactor: number;
   readonly revenue: number;
@@ -205,10 +225,15 @@ export interface AnnualFinance {
 
 export interface FinanceResult {
   readonly construction: ConstructionCostBreakdown;
-  /** 定常状態の年間値 */
+  /** 定常状態（需要の立ち上がり後）の年間値 */
   readonly steadyRevenue: number;
-  readonly steadyOperatingCost: number;
+  readonly steadyOperatingCost: OperatingCostBreakdown;
   readonly steadyOperatingBalance: number;
+  /** 平日・休日 1 日あたりの輸送人員（年平均日から換算） */
+  readonly weekdayPassengers: number;
+  readonly holidayPassengers: number;
+  /** 平均運賃（輸送人員 1 人あたり）[円] */
+  readonly averageFare: number;
   readonly isProfitable: boolean;
   /** 回収不能なら null */
   readonly simplePaybackYears: number | null;

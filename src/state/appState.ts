@@ -1,10 +1,14 @@
 /**
  * アプリ全体の状態の組み立て: シナリオの読込・自動保存・編集後の再計算（デバウンス）。
  */
+import { defaultDemandParams } from '../config/demand';
 import { AUTOSAVE_DEBOUNCE_MS, RECOMPUTE_DEBOUNCE_MS } from '../config/editor';
-import type { DemandResult, Scenario } from '../core/types';
+import type { DemandResult, FinanceResult, Scenario } from '../core/types';
 import type { DemandContext } from '../demand/context';
 import { runDemand } from '../demand/engine';
+import { runFinance } from '../finance/finance';
+import type { LandPriceIndex } from '../finance/landPrice';
+import { costParamsStore } from './costParams';
 import { computeLineGeometry, type LineGeometry } from '../network/lineGeometry';
 import { debounce } from './debounce';
 import { loadFromStorage, saveToStorage } from './scenarioIO';
@@ -74,6 +78,39 @@ scenarioStore.store.subscribe(({ scenario }) => {
   recompute(scenario);
   autosave(scenario);
 });
+
+// ---------------------------------------------------------------------------
+// 収支: 需要推計の結果か費用パラメータが変わるたびに計算し直す（軽いのでデバウンスしない）
+// ---------------------------------------------------------------------------
+
+export const financeStore = createStore<{ finance: FinanceResult | null; error: string | null }>({ finance: null, error: null });
+let landPrice: LandPriceIndex | null = null;
+
+/** 地価データの読込後に呼ぶ（無い場合は用地費 0 で計算） */
+export function setLandPrice(index: LandPriceIndex | null): void {
+  landPrice = index;
+  computeFinance();
+}
+
+function computeFinance(): void {
+  const { geometry, demand } = computeStore.get();
+  if (!geometry || !demand || geometry.segments.length === 0) {
+    financeStore.set({ finance: null, error: null });
+    return;
+  }
+  try {
+    const finance = runFinance(geometry, demand, costParamsStore.get().params, defaultDemandParams.service.scheduledSpeedKmh, landPrice);
+    financeStore.set({ finance, error: null });
+  } catch (e) {
+    console.error(e);
+    financeStore.set({ finance: null, error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
+computeStore.subscribe((s) => {
+  if (s.status === 'idle') computeFinance();
+});
+costParamsStore.subscribe(() => computeFinance());
 
 // 起動時に 1 回計算する（需要推計は基礎データの読込後）。ページを離れる前には保存を確定させる
 compute(scenarioStore.scenario);

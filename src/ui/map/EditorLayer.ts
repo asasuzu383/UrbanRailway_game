@@ -11,12 +11,14 @@ import {
   type StationPlacement,
 } from '../../network/lineModel';
 import { findSnapTarget, type SnapCandidate } from '../../network/snap';
-import { scenarioStore } from '../../state/appState';
+import { computeStore, scenarioStore } from '../../state/appState';
 import { editorStore, type EditorState } from '../../state/editorState';
 
 interface PieceProps {
   readonly afterIndex: number;
   readonly structure: StructureType | 'pending';
+  /** 断面輸送量（片方向, 人/日）。需要推計の前は 0 */
+  readonly load: number;
 }
 
 interface VertexProps {
@@ -52,6 +54,9 @@ export class EditorLayer {
     this.bindEvents();
     this.render();
     this.unsubscribers.push(scenarioStore.store.subscribe(() => this.render()));
+    this.unsubscribers.push(computeStore.subscribe((s) => {
+      if (s.status === 'idle') this.render();
+    }));
     let lastFocus = editorStore.get().focus?.seq;
     this.unsubscribers.push(editorStore.subscribe((s) => {
       this.render();
@@ -71,7 +76,9 @@ export class EditorLayer {
     m.addSource('user-snap', { type: 'geojson', data: EMPTY });
 
     const color = ['get', 'color'] as unknown as string;
-    const width = ['interpolate', ['linear'], ['zoom'], 9, 3, 13, 5, 16, 7] as unknown as number;
+    // 線幅で断面輸送量（片方向）を表す: 0 人で 4px、5 万人で 10px、15 万人で 16px
+    const width = ['interpolate', ['linear'], ['get', 'load'], 0, 4, 10000, 6, 50000, 10, 150000, 16] as unknown as number;
+    const casingWidth = ['interpolate', ['linear'], ['get', 'load'], 0, 8, 10000, 10, 50000, 14, 150000, 20] as unknown as number;
     const isStructure = (s: string) => ['==', ['get', 'structure'], s] as maplibregl.FilterSpecification;
 
     m.addLayer({
@@ -80,7 +87,7 @@ export class EditorLayer {
       source: 'user-pieces',
       filter: ['!=', ['get', 'structure'], 'pending'],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 6, 13, 9, 16, 12] },
+      paint: { 'line-color': '#ffffff', 'line-width': casingWidth },
     });
     // 地平: 実線、高架: 実線＋中央の白線、地下: 破線
     m.addLayer({
@@ -164,7 +171,8 @@ export class EditorLayer {
   private render(): void {
     const line = scenarioStore.activeLine;
     const { selectedVertexId } = editorStore.get();
-    (this.map.getSource('user-pieces') as GeoJSONSource | undefined)?.setData(piecesOf(line));
+    const loads = new Map(computeStore.get().demand?.segments.map((s) => [s.fromStationId, s.forward]) ?? []);
+    (this.map.getSource('user-pieces') as GeoJSONSource | undefined)?.setData(piecesOf(line, loads));
     const vertices: Feature<Point, VertexProps & { color: string }>[] = line.vertices.map((v) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [...v.position] },
@@ -312,7 +320,7 @@ export function deleteVertex(id: string): void {
  * 路線を「隣り合う頂点の組」ごとの線分に分ける。挿入位置（afterIndex）と区間の構造を属性に持つ。
  * 先頭駅より前・最終駅より後は未完成（pending）。
  */
-function piecesOf(line: UserLine): FeatureCollection<LineString, PieceProps & { color: string }> {
+function piecesOf(line: UserLine, loads: ReadonlyMap<string, number>): FeatureCollection<LineString, PieceProps & { color: string }> {
   const structureOf = new Map(line.segments.map((s) => [s.fromStationId, s.structure]));
   const firstStation = line.vertices.findIndex((v) => v.kind === 'station');
   let lastStation = -1;
@@ -321,15 +329,19 @@ function piecesOf(line: UserLine): FeatureCollection<LineString, PieceProps & { 
   });
   const features: Feature<LineString, PieceProps & { color: string }>[] = [];
   let current: StructureType | 'pending' = 'pending';
+  let load = 0;
   for (let i = 0; i + 1 < line.vertices.length; i++) {
     const a = line.vertices[i]!;
     const b = line.vertices[i + 1]!;
-    if (a.kind === 'station') current = structureOf.get(a.id) ?? 'pending';
+    if (a.kind === 'station') {
+      current = structureOf.get(a.id) ?? 'pending';
+      load = loads.get(a.id) ?? 0;
+    }
     const inside = firstStation >= 0 && i >= firstStation && i + 1 <= lastStation;
     features.push({
       type: 'Feature',
       geometry: { type: 'LineString', coordinates: [[...a.position], [...b.position]] },
-      properties: { afterIndex: i, structure: inside ? current : 'pending', color: line.color },
+      properties: { afterIndex: i, structure: inside ? current : 'pending', load: inside ? load : 0, color: line.color },
     });
   }
   return { type: 'FeatureCollection', features };

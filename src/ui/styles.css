@@ -161,3 +161,38 @@ button.danger { color: var(--danger); }
 .station-ridership { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .segment-load { font-variant-numeric: tabular-nums; color: var(--text-muted); }
 .hint.error { color: var(--danger); }
+
+/* ---- 結果・パラメータ ---- */
+:root { --panel-width: 380px; --good: #0ca30c; --bad: #d03b3b; }
+.tabs button { padding: 8px 4px; }
+.verdict { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius); border: 1px solid; margin-bottom: 12px; }
+.verdict.good { border-color: var(--good); background: #eef8ee; }
+.verdict.bad { border-color: var(--bad); background: #fbeeee; }
+.verdict-icon { font-size: 18px; font-weight: 700; line-height: 1.3; }
+.verdict.good .verdict-icon { color: var(--good); }
+.verdict.bad .verdict-icon { color: var(--bad); }
+.verdict strong { font-size: 16px; }
+.verdict-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.kpis > div { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-0); }
+.kpis dt { font-size: 11px; color: var(--text-secondary); }
+.kpis dd { margin: 2px 0 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpis small { display: block; font-size: 11px; color: var(--text-muted); }
+.kpis dd.neg { color: var(--bad); }
+.chart-box { position: relative; height: 240px; }
+.panel-section h3 { font-size: 13px; margin: 0 0 6px; }
+table.breakdown, table.station-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.breakdown th, table.breakdown td, table.station-table th, table.station-table td { padding: 4px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; font-variant-numeric: tabular-nums; }
+table.breakdown thead th, table.station-table thead th { color: var(--text-muted); font-weight: normal; }
+table.breakdown tfoot th, table.breakdown tfoot td { font-weight: 600; border-bottom: none; }
+table.station-table td { text-align: right; }
+.amount { font-weight: 600; }
+.detail { color: var(--text-muted); font-size: 11px; }
+.bar { display: block; height: 4px; border-radius: 2px; background: #6da7ec; margin: 2px 0; }
+button.link { border: none; background: none; padding: 0; color: var(--text-primary); text-decoration: underline; text-decoration-color: var(--border); font-size: 12px; }
+.param-row { display: grid; grid-template-columns: 1fr 88px auto; align-items: center; gap: 4px 6px; margin: 4px 0; font-size: 12px; }
+.param-row input { width: 88px; font: inherit; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; text-align: right; }
+.param-row.changed label { font-weight: 600; }
+.param-row.changed input { border-color: var(--accent); }
+.param-unit { color: var(--text-muted); white-space: nowrap; }
+.param-default { grid-column: 2 / 4; font-size: 11px; color: var(--text-muted); }
