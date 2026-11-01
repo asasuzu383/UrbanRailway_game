@@ -27,6 +27,14 @@ export function SourcesPanel() {
       <p class="note">
         本アプリの推計値は上記データをもとに独自のモデルで算出したものであり、各提供機関および鉄道事業者の見解ではありません。
       </p>
+      <p class="note">
+        推計は簡略化したモデルによる目安で、正確性を保証するものではありません。本アプリの利用により生じたいかなる損害についても、作者は責任を負いません。
+      </p>
+      <p class="note">
+        使用しているオープンソースソフトウェア:{' '}
+        <a href={`${import.meta.env.BASE_URL}third-party-licenses.md`} target="_blank" rel="noopener">ライセンス一覧</a>
+        （MapLibre GL JS、Chart.js、Preact ほか）
+      </p>
     </details>
   );
 }
