@@ -5,6 +5,8 @@ import { focusOn, editorStore } from '../../state/editorState';
 import { int, oku, people, years } from '../format';
 import { useStore } from '../hooks';
 import { CashflowChart } from './CashflowChart';
+import { Warnings } from './Warnings';
+import { defaultCapacityParams } from '../../config/capacity';
 
 /** 割合の横棒（表の中で内訳の大きさを示す） */
 function Bar({ value, max }: { value: number; max: number }) {
@@ -46,6 +48,7 @@ export function ResultsPanel() {
         <h2>
           収支の見通し {compute.status === 'pending' && <span class="pending">計算中…</span>}
         </h2>
+        <Warnings items={compute.warnings} />
         <div class={`verdict ${finance.isProfitable ? 'good' : 'bad'}`} role="status">
           <span class="verdict-icon" aria-hidden="true">{finance.isProfitable ? '✓' : '✕'}</span>
           <div>
@@ -77,6 +80,61 @@ export function ResultsPanel() {
           <div><dt>割引回収年数（{(params.evaluation.discountRate * 100).toFixed(1)}%）</dt><dd>{years(finance.discountedPaybackYears)}</dd></div>
         </dl>
       </section>
+
+      {compute.operation && compute.plan && (
+        <section class="panel-section">
+          <h2>種別ごとの所要時間</h2>
+          <table class="breakdown">
+            <thead>
+              <tr><th>種別</th><th>停車駅</th><th>所要時間</th><th>表定速度</th><th>ピーク / 日中</th><th>必要編成</th></tr>
+            </thead>
+            <tbody>
+              {compute.operation.patterns.map((po) => (
+                <tr key={po.pattern.id}>
+                  <th>{po.pattern.name}</th>
+                  <td>{po.stops.filter(Boolean).length} 駅</td>
+                  <td>{po.oneWayMin.toFixed(0)} 分</td>
+                  <td>{(geo.totalKm / (po.oneWayMin / 60)).toFixed(0)} km/h</td>
+                  <td>{po.pattern.tphPeak} / {po.pattern.tphOffpeak} 本/時</td>
+                  <td>{po.trainsets} 編成 × {po.pattern.carsPerTrain} 両</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {compute.capacity && (
+        <section class="panel-section">
+          <h2>区間ごとの混雑率（ピーク 1 時間）</h2>
+          <ul class="congestion" aria-label="区間ごとの混雑率">
+            {compute.capacity.congestion.map((r, k) => {
+              const seg = demand.segments[k];
+              const maxScale = Math.max(2, ...compute.capacity!.congestion.filter(Number.isFinite)) * 1.05;
+              const cls = r > defaultCapacityParams.warn.limit ? 'over-limit' : r > defaultCapacityParams.warn.target ? 'over-target' : '';
+              const name = `${geo.stations[k]?.name}〜${geo.stations[k + 1]?.name}`;
+              return (
+                <li key={seg?.fromStationId ?? k}>
+                  <span class="seg" title={name}>{name}</span>
+                  <span class="track">
+                    <span class={`fill ${cls}`} style={{ width: `${Math.min(100, (r / maxScale) * 100)}%` }} />
+                    {[1, defaultCapacityParams.warn.target, defaultCapacityParams.warn.limit].map((x) => (
+                      <span key={x} class="tick" style={{ left: `${(x / maxScale) * 100}%` }} />
+                    ))}
+                  </span>
+                  <span class="val">{Number.isFinite(r) ? `${Math.round(r * 100)}%` : '—'}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <p class="hint">
+            輸送力 {int(compute.capacity.capacity[0] ?? 0)} 人/時（全種別のピーク本数 × 編成両数 × 1 両の定員）。目盛りは 100%（定員）・
+            {Math.round(defaultCapacityParams.warn.target * 100)}%・{Math.round(defaultCapacityParams.warn.limit * 100)}%（国交省の混雑緩和の目標の水準）。
+            ピーク 1 時間の断面輸送量は 1 日の片方向の {Math.round(defaultCapacityParams.peakHourShare * 100)}%（仮置き）。
+            {compute.capacity.iterations > 1 && ` 混雑による不効用を入れて ${compute.capacity.iterations} 回の均衡計算をしました${compute.capacity.converged ? '' : '（収束しきっていません）'}。`}
+          </p>
+        </section>
+      )}
 
       <section class="panel-section">
         <h2>累積キャッシュフロー</h2>
@@ -110,6 +168,13 @@ export function ResultsPanel() {
                 </tr>
               );
             })}
+            {c.passing.stations.length > 0 && (
+              <tr>
+                <th>待避設備</th>
+                <td colSpan={2}>{c.passing.stations.map((i) => geo.stations[i]?.name).join('、')}</td>
+                <td><div class="amount">{oku(c.passing.cost)}</div><Bar value={c.passing.cost} max={maxPart} /></td>
+              </tr>
+            )}
             <tr>
               <th>車両</th>
               <td colSpan={2}>{c.vehicles.trainsets} 編成 {c.vehicles.cars} 両</td>

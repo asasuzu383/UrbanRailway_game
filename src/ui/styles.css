@@ -196,3 +196,29 @@ button.link { border: none; background: none; padding: 0; color: var(--text-prim
 .param-row.changed input { border-color: var(--accent); }
 .param-unit { color: var(--text-muted); white-space: nowrap; }
 .param-default { grid-column: 2 / 4; font-size: 11px; color: var(--text-muted); }
+
+/* ---- Phase 2: 警告・運行体系・混雑率 ---- */
+.warnings { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--bad); border-radius: var(--radius); background: #fbeeee; font-size: 12px; }
+.warnings p { margin: 2px 0; display: flex; gap: 6px; align-items: flex-start; }
+.warn-icon { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--bad); color: #fff; font-weight: 700; font-size: 11px; line-height: 16px; text-align: center; }
+.pattern-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin: 8px 0; background: var(--surface-0); }
+.pattern-card .pattern-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.pattern-card .pattern-head input[type=text] { flex: 1; min-width: 0; font: inherit; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; }
+.pattern-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; }
+.pattern-nums label { display: flex; flex-direction: column; gap: 2px; color: var(--text-secondary); }
+.pattern-nums input { width: 100%; font: inherit; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; text-align: right; }
+.stop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 6px; font-size: 12px; max-height: 220px; overflow: auto; }
+.stop-list label { display: flex; gap: 4px; align-items: center; }
+.pattern-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.congestion { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.congestion li { display: grid; grid-template-columns: minmax(0, 1fr) 2fr 44px; gap: 6px; align-items: center; padding: 2px 0; }
+.congestion .seg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.congestion .track { position: relative; height: 8px; background: var(--surface-0); border-radius: 4px; }
+.congestion .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #6da7ec; }
+.congestion .fill.over-target { background: #e3a33b; }
+.congestion .fill.over-limit { background: var(--bad); }
+.congestion .tick { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--text-muted); }
+.congestion .val { text-align: right; font-variant-numeric: tabular-nums; }
+.quality-legend span { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; font-size: 12px; }
+.quality-legend i { display: inline-block; width: 22px; height: 3px; background: #555; }
+.quality-legend i.provisional { opacity: 0.35; height: 2px; }

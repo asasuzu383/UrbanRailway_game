@@ -5,7 +5,17 @@ import { TRANSIT_TYPE_ORDER, type TransitTypeId } from '../config/transitTypes';
 import { CURRENT_REGION } from '../config/regions';
 
 const STORAGE_KEY = CURRENT_REGION.storageKeys.scenario;
-import type { LineVertex, Scenario, SegmentAttributes, StructureType, UserLine } from '../core/types';
+import {
+  MAX_SERVICE_PATTERNS,
+  SCENARIO_SCHEMA_VERSION,
+  type LineVertex,
+  type Scenario,
+  type SegmentAttributes,
+  type ServicePattern,
+  type ServicePlan,
+  type StructureType,
+  type UserLine,
+} from '../core/types';
 
 const STRUCTURES: readonly StructureType[] = ['street', 'atGrade', 'elevated', 'underground'];
 
@@ -63,11 +73,56 @@ function parseLine(l: unknown, path: string): UserLine {
   return l.transitType === undefined ? base : { ...base, transitType: l.transitType as TransitTypeId };
 }
 
+function parsePattern(p: unknown, path: string): ServicePattern {
+  if (!isObj(p)) fail(path, 'オブジェクトではありません');
+  if (!isStr(p.id) || !isStr(p.name)) fail(path, 'id / name がありません');
+  if (p.stopStationIds !== null && !(Array.isArray(p.stopStationIds) && p.stopStationIds.every(isStr))) {
+    fail(path, 'stopStationIds は駅 id の配列か null です');
+  }
+  for (const k of ['tphPeak', 'tphOffpeak', 'carsPerTrain'] as const) {
+    if (!isNum(p[k]) || (p[k] as number) < 0) fail(path, `${k} は 0 以上の数です`);
+  }
+  if ((p.carsPerTrain as number) < 1) fail(path, 'carsPerTrain は 1 以上です');
+  return {
+    id: p.id, name: p.name, stopStationIds: p.stopStationIds as string[] | null,
+    tphPeak: p.tphPeak as number, tphOffpeak: p.tphOffpeak as number, carsPerTrain: p.carsPerTrain as number,
+  };
+}
+
+function parsePlan(pl: unknown, path: string, lineIds: ReadonlySet<string>): ServicePlan {
+  if (!isObj(pl) || !isStr(pl.lineId) || !lineIds.has(pl.lineId)) fail(path, 'lineId が路線の id ではありません');
+  if (!Array.isArray(pl.patterns) || pl.patterns.length === 0 || pl.patterns.length > MAX_SERVICE_PATTERNS) {
+    fail(path, `patterns は 1〜${MAX_SERVICE_PATTERNS} 個です`);
+  }
+  const through = Array.isArray(pl.through) ? pl.through : [];
+  return {
+    lineId: pl.lineId,
+    patterns: pl.patterns.map((p, i) => parsePattern(p, `${path}.patterns[${i}]`)),
+    through: through.map((t, i) => {
+      if (!isObj(t) || !isStr(t.atStationId) || !isStr(t.routeId)) fail(`${path}.through[${i}]`, 'atStationId / routeId がありません');
+      return { atStationId: t.atStationId, routeId: t.routeId };
+    }),
+  };
+}
+
+/**
+ * シナリオを検証し、最新の版にして返す。古い版の移行:
+ *   1 → 2: 運行計画（servicePlans）が無いので空にする（実行時に既定の計画 = 各停のみを使う）。路線の形はそのまま
+ */
 export function validateScenario(data: unknown): Scenario {
   if (!isObj(data)) fail('$', 'オブジェクトではありません');
-  if (data.schemaVersion !== 1) fail('$.schemaVersion', `未対応のバージョンです（${String(data.schemaVersion)}）`);
+  if (data.schemaVersion !== 1 && data.schemaVersion !== SCENARIO_SCHEMA_VERSION) {
+    fail('$.schemaVersion', `未対応のバージョンです（${String(data.schemaVersion)}）`);
+  }
   if (!Array.isArray(data.lines) || data.lines.length === 0) fail('$.lines', '路線が 1 つ以上必要です');
-  return { schemaVersion: 1, lines: data.lines.map((l, i) => parseLine(l, `$.lines[${i}]`)) };
+  const lines = data.lines.map((l, i) => parseLine(l, `$.lines[${i}]`));
+  const lineIds = new Set(lines.map((l) => l.id));
+  const plans = data.schemaVersion === 1 || !Array.isArray(data.servicePlans) ? [] : data.servicePlans;
+  return {
+    schemaVersion: SCENARIO_SCHEMA_VERSION,
+    lines,
+    servicePlans: plans.map((p, i) => parsePlan(p, `$.servicePlans[${i}]`, lineIds)),
+  };
 }
 
 export function serializeScenario(s: Scenario): string {

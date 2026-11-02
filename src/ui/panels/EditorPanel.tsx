@@ -1,7 +1,8 @@
 import { Fragment } from 'preact';
 import { useRef } from 'preact/hooks';
 import { STRUCTURE_LABELS, STRUCTURE_ORDER } from '../../config/editor';
-import type { StructureType } from '../../core/types';
+import { DEFAULT_TRANSIT_TYPE, TRANSIT_TYPE_ORDER, TRANSIT_TYPES } from '../../config/transitTypes';
+import type { StructureType, TransitTypeId } from '../../core/types';
 import {
   renameStation,
   reverseLine,
@@ -13,6 +14,7 @@ import { editorStore, focusOn, type EditorTool } from '../../state/editorState';
 import { ScenarioFormatError, parseScenarioJson, serializeScenario } from '../../state/scenarioIO';
 import { useStore } from '../hooks';
 import { deleteVertex } from '../map/EditorLayer';
+import { Warnings } from './Warnings';
 
 const TOOLS: readonly { value: EditorTool; label: string; hint: string }[] = [
   { value: 'select', label: '選択・移動', hint: '駅や中間点をドラッグで移動（Esc）' },
@@ -46,6 +48,19 @@ export function EditorPanel() {
   const ridershipOf = new Map(demand?.stations.map((s) => [s.stationId, s]) ?? []);
   const loadOf = new Map(demand?.segments.map((s) => [s.fromStationId, s]) ?? []);
   const update = scenarioStore.updateLine.bind(scenarioStore);
+  const ttype = TRANSIT_TYPES[line.transitType ?? DEFAULT_TRANSIT_TYPE];
+  const allowed = ttype.structures;
+  const invalidCount = line.segments.filter((s) => !allowed.includes(s.structure)).length;
+
+  /** 交通機関タイプを変える。延伸する区間の構造が選べなくなるなら、選べる最初の構造にする */
+  const changeType = (id: TransitTypeId) => {
+    update((l) => ({ ...l, transitType: id }));
+    const next = TRANSIT_TYPES[id].structures;
+    if (!next.includes(ed.defaultStructure)) editorStore.set({ defaultStructure: next[0]! });
+  };
+  /** 選べない構造の区間を、選べる最初の構造に変える */
+  const fixStructures = () =>
+    update((l) => ({ ...l, segments: l.segments.map((s) => (allowed.includes(s.structure) ? s : { ...s, structure: allowed[0]! })) }));
 
   const onImport = async (file: File) => {
     try {
@@ -92,6 +107,23 @@ export function EditorPanel() {
           />
         </div>
 
+        <div class="field-row">
+          <span>交通機関</span>
+          <select aria-label="交通機関タイプ" value={ttype.id} onChange={(e) => changeType(e.currentTarget.value as TransitTypeId)}>
+            {TRANSIT_TYPE_ORDER.map((id) => (
+              <option key={id} value={id}>{TRANSIT_TYPES[id].name}</option>
+            ))}
+          </select>
+        </div>
+        {invalidCount > 0 && (
+          <div class="button-row">
+            <button type="button" onClick={fixStructures}>
+              選べない {invalidCount} 区間を「{STRUCTURE_LABELS[allowed[0]!]}」に変更
+            </button>
+          </div>
+        )}
+        <Warnings items={compute.warnings} />
+
         <div class="segmented tools" role="radiogroup" aria-label="編集ツール">
           {TOOLS.map((t) => (
             <label key={t.value} class={ed.tool === t.value ? 'active' : ''}>
@@ -113,6 +145,7 @@ export function EditorPanel() {
             value={ed.defaultStructure}
             onChange={(s) => editorStore.set({ defaultStructure: s })}
             label="延伸する区間の構造"
+            options={allowed}
           />
         </div>
 
@@ -176,6 +209,7 @@ export function EditorPanel() {
                 value={null}
                 onChange={(s) => update((l) => setAllSegmentsStructure(l, s))}
                 label="全区間の構造"
+                options={allowed}
               />
             </div>
           )}
@@ -227,6 +261,7 @@ export function EditorPanel() {
                       value={structureOf.get(s.id) ?? 'atGrade'}
                       onChange={(st) => update((l) => setSegmentStructure(l, s.id, st))}
                       label={`${s.name}〜${stations[i + 1]!.name}の構造`}
+                      options={allowed}
                     />
                   </li>
                 )}
@@ -272,7 +307,14 @@ export function EditorPanel() {
   );
 }
 
-function StructureSelect(props: { value: StructureType | null; onChange: (s: StructureType) => void; label: string }) {
+/** 構造の選択。options は交通機関タイプで選べる構造（選べない値が入っていれば「選べません」と表示して残す） */
+function StructureSelect(props: {
+  value: StructureType | null;
+  onChange: (s: StructureType) => void;
+  label: string;
+  options: readonly StructureType[];
+}) {
+  const shown = STRUCTURE_ORDER.filter((s) => props.options.includes(s) || s === props.value);
   return (
     <select
       aria-label={props.label}
@@ -283,8 +325,8 @@ function StructureSelect(props: { value: StructureType | null; onChange: (s: Str
       }}
     >
       {props.value === null && <option value="">選択…</option>}
-      {STRUCTURE_ORDER.map((s) => (
-        <option key={s} value={s}>{STRUCTURE_LABELS[s]}</option>
+      {shown.map((s) => (
+        <option key={s} value={s}>{STRUCTURE_LABELS[s]}{props.options.includes(s) ? '' : '（選べません）'}</option>
       ))}
     </select>
   );

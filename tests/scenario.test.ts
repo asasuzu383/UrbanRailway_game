@@ -5,7 +5,7 @@ import { ScenarioFormatError, parseScenarioJson, serializeScenario, validateScen
 import { ScenarioStore } from '../src/state/scenarioStore';
 
 const base: Scenario = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   lines: [{
     id: 'L', name: '新線', color: '#222',
     vertices: [
@@ -15,7 +15,32 @@ const base: Scenario = {
     ],
     segments: [{ fromStationId: 'a', structure: 'underground' }],
   }],
+  servicePlans: [],
 };
+
+describe('保存形式の版と移行', () => {
+  it('版 1（Phase 1 の保存データ）は版 2 に移行し、運行計画は空（既定の計画を使う）', () => {
+    const { servicePlans: _drop, ...rest } = base;
+    const v1 = { ...rest, schemaVersion: 1 };
+    const s = validateScenario(JSON.parse(JSON.stringify(v1)));
+    expect(s.schemaVersion).toBe(2);
+    expect(s.servicePlans).toEqual([]);
+    expect(s.lines).toEqual(base.lines);
+  });
+
+  it('運行計画（種別・直通）を保存して読み戻せる。不正な計画は拒否する', () => {
+    const plan = {
+      lineId: 'L',
+      patterns: [{ id: 'p1', name: '快速', stopStationIds: ['a', 'b'], tphPeak: 6, tphOffpeak: 3, carsPerTrain: 8 }],
+      through: [{ atStationId: 'a', routeId: 'jr_yamanote' }],
+    };
+    const s: Scenario = { ...base, servicePlans: [plan] };
+    expect(parseScenarioJson(serializeScenario(s))).toEqual(s);
+    expect(() => validateScenario({ ...s, servicePlans: [{ ...plan, lineId: 'X' }] })).toThrow(ScenarioFormatError);
+    expect(() => validateScenario({ ...s, servicePlans: [{ ...plan, patterns: [] }] })).toThrow(ScenarioFormatError);
+    expect(() => validateScenario({ ...s, servicePlans: [{ ...plan, patterns: [{ ...plan.patterns[0], carsPerTrain: 0 }] }] })).toThrow(ScenarioFormatError);
+  });
+});
 
 describe('scenarioIO', () => {
   it('シリアライズして読み戻すと同じになる', () => {
@@ -24,7 +49,7 @@ describe('scenarioIO', () => {
 
   it.each([
     ['JSON でない', '{'],
-    ['バージョン違い', JSON.stringify({ ...base, schemaVersion: 2 })],
+    ['バージョン違い', JSON.stringify({ ...base, schemaVersion: 99 })],
     ['構造の値が不正', JSON.stringify({ ...base, lines: [{ ...base.lines[0], segments: [{ fromStationId: 'a', structure: 'tunnel' }] }] })],
     ['区間と駅の不一致', JSON.stringify({ ...base, lines: [{ ...base.lines[0], segments: [] }] })],
     ['座標が範囲外', JSON.stringify({ ...base, lines: [{ ...base.lines[0], vertices: [{ kind: 'shape', id: 'z', position: [0, 0] }], segments: [] }] })],

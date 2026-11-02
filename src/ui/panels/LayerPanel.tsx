@@ -73,6 +73,14 @@ export function LayerPanel() {
           <button type="button" disabled={!s.showLines} onClick={() => setAllOperators(true)}>すべて表示</button>
           <button type="button" disabled={!s.showLines} onClick={() => setAllOperators(false)}>すべて隠す</button>
         </div>
+        <p class="quality-legend" aria-label="既存線の運行データの品質">
+          <span><i />時刻表・公表資料</span>
+          <span><i class="provisional" />仮置き（薄く表示）</span>
+        </p>
+        <p class="hint">
+          既存線の所要時間・本数のもと: 時刻表（ODPT のオープンデータ）、公表資料（国交省の混雑率データ・各社の停車駅）、仮置き（路線ごとの表定速度）。
+          路線にマウスを重ねると表示します。
+        </p>
       </fieldset>
 
       <label class="check">

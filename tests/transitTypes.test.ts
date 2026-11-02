@@ -108,6 +108,19 @@ describe('費用（タイプ別）', () => {
   });
 });
 
+describe('費用（併用軌道）', () => {
+  it('建設費の内訳はすべての構造を持ち、LRT の併用軌道は LRT の単価で計算される', () => {
+    const l = line(['street', 'atGrade'], 'lrt');
+    const g = computeLineGeometry(l);
+    const p = effectiveCostParams(defaultCostParams, TRANSIT_TYPES.lrt);
+    const op = computeLinePlanOperation(g, defaultServicePlan(l, { tphPeak: 8, tphOffpeak: 6, carsPerTrain: 3 }), TRANSIT_TYPES.lrt, hours, 0.1);
+    const c = estimateConstruction(g, p, op, null);
+    expect(Object.keys(c.byStructure).sort()).toEqual(['atGrade', 'elevated', 'street', 'underground']);
+    expect(c.byStructure.street.trackCost).toBeCloseTo(g.segments[0]!.lengthKm * 25 * OKU, 0);
+    expect(c.byStructure.atGrade.trackCost).toBeCloseTo(g.segments[1]!.lengthKm * 35 * OKU, 0);
+  });
+});
+
 describe('シナリオの保存形式', () => {
   it('交通機関タイプと併用軌道を読み込み、不正なタイプは拒否する', () => {
     const ok = validateScenario({ schemaVersion: 1, lines: [line(['street', 'atGrade'], 'lrt')] });

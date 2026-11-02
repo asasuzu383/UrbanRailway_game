@@ -12,15 +12,17 @@ import { MapView } from './map/MapView';
 import { EditorPanel } from './panels/EditorPanel';
 import { LayerPanel } from './panels/LayerPanel';
 import { ParamsPanel } from './panels/ParamsPanel';
+import { ServicePanel } from './panels/ServicePanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { MeshLegend } from './panels/MeshLegend';
 import { SourcesPanel } from './panels/SourcesPanel';
 
 type LoadState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: BaseData };
-type Tab = 'line' | 'results' | 'params' | 'layers';
+type Tab = 'line' | 'service' | 'results' | 'params' | 'layers';
 
 const TABS: readonly { id: Tab; label: string }[] = [
   { id: 'line', label: '路線' },
+  { id: 'service', label: '運行' },
   { id: 'results', label: '結果' },
   { id: 'params', label: 'パラメータ' },
   { id: 'layers', label: '表示' },
@@ -111,6 +113,7 @@ export function App() {
           </div>
           {tab === 'line' && <EditorPanel />}
           {tab === 'results' && <ResultsPanel />}
+          {tab === 'service' && <ServicePanel />}
           {tab === 'params' && <ParamsPanel />}
           {tab === 'layers' && <LayerPanel />}
           <SourcesPanel />

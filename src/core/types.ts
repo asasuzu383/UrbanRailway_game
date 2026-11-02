@@ -112,11 +112,14 @@ export interface UserLine {
 }
 
 /** 保存・エクスポート単位。将来は複数路線・運行計画を含む。 */
+/** シナリオの保存形式の版。1 = Phase 1（路線のみ）、2 = Phase 2（運行計画・交通機関タイプ）。古い版は読み込み時に移行する */
+export const SCENARIO_SCHEMA_VERSION = 2;
+
 export interface Scenario {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: typeof SCENARIO_SCHEMA_VERSION;
   readonly lines: readonly UserLine[];
-  /** 路線ごとの運行計画（Phase 2 M3〜。無い路線は既定の計画 = 各停のみ） */
-  readonly servicePlans?: readonly ServicePlan[];
+  /** 路線ごとの運行計画（無い路線は既定の計画 = 各停のみ） */
+  readonly servicePlans: readonly ServicePlan[];
 }
 
 // ---------------------------------------------------------------------------

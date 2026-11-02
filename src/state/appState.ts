@@ -84,6 +84,16 @@ function planFor(s: Scenario, line: UserLine, geometry: LineGeometry): { plan: S
   return { plan, operation };
 }
 
+/** 直通先の候補: 既存駅（stations.json の id）を通る既存の運行系統。運行データの読込前は空 */
+export function throughCandidates(existingStationId: string | null): { id: string; name: string; operator: string; quality: string }[] {
+  if (!servicesData || !demandContext || !existingStationId) return [];
+  const idx = demandContext.stations.byId.get(existingStationId);
+  if (idx === undefined) return [];
+  return servicesData.routes
+    .filter((r) => r.stations.includes(idx))
+    .map((r) => ({ id: r.id, name: r.name, operator: r.operator, quality: r.quality }));
+}
+
 /** 直通運転: 接続駅から直通先の系統の各駅までの乗車時間 */
 function throughFor(plan: ServicePlan, geometry: LineGeometry, ctx: DemandContext): DemandThrough[] {
   if (!servicesData) return [];

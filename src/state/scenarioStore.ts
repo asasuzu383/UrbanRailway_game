@@ -1,5 +1,5 @@
 import { DEFAULT_LINE_COLOR, DEFAULT_LINE_NAME, UNDO_LIMIT } from '../config/editor';
-import type { Scenario, UserLine } from '../core/types';
+import { SCENARIO_SCHEMA_VERSION, type Scenario, type ServicePlan, type UserLine } from '../core/types';
 import { createLine, defaultIdGen } from '../network/lineModel';
 import { createStore, type Store } from './store';
 
@@ -10,7 +10,7 @@ export interface ScenarioState {
 }
 
 export function emptyScenario(): Scenario {
-  return { schemaVersion: 1, lines: [createLine(defaultIdGen(), DEFAULT_LINE_NAME, DEFAULT_LINE_COLOR)] };
+  return { schemaVersion: SCENARIO_SCHEMA_VERSION, lines: [createLine(defaultIdGen(), DEFAULT_LINE_NAME, DEFAULT_LINE_COLOR)], servicePlans: [] };
 }
 
 /**
@@ -41,6 +41,24 @@ export class ScenarioStore {
     const next = fn(line);
     if (next === line) return;
     this.apply({ ...s, lines: [next, ...s.lines.slice(1)] }, opts.transient ?? false);
+  }
+
+  /** 編集中の路線の運行計画を更新する（計画が無ければ base から始める） */
+  updatePlan(fn: (plan: ServicePlan) => ServicePlan, base: ServicePlan): void {
+    const s = this.scenario;
+    const lineId = s.lines[0]!.id;
+    const current = s.servicePlans.find((p) => p.lineId === lineId) ?? base;
+    const next = fn(current);
+    if (next === current) return;
+    this.apply({ ...s, servicePlans: [...s.servicePlans.filter((p) => p.lineId !== lineId), { ...next, lineId }] }, false);
+  }
+
+  /** 編集中の路線の運行計画を消して既定の計画に戻す */
+  resetPlan(): void {
+    const s = this.scenario;
+    const lineId = s.lines[0]!.id;
+    if (!s.servicePlans.some((p) => p.lineId === lineId)) return;
+    this.apply({ ...s, servicePlans: s.servicePlans.filter((p) => p.lineId !== lineId) }, false);
   }
 
   replace(scenario: Scenario): void {

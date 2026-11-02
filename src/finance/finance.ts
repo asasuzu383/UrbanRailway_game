@@ -18,7 +18,7 @@ import type {
 import type { LineGeometry } from '../network/lineGeometry';
 import type { LandPriceIndex } from './landPrice';
 
-const STRUCTURES: readonly StructureType[] = ['atGrade', 'elevated', 'underground'];
+const STRUCTURES: readonly StructureType[] = ['street', 'atGrade', 'elevated', 'underground'];
 const RANK: Record<StructureType, number> = { street: 0, atGrade: 1, elevated: 2, underground: 3 };
 /** 用地費を求めるときの区間の標本間隔 [km] */
 const LAND_SAMPLE_KM = 0.1;
