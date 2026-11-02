@@ -166,8 +166,205 @@ mlit_peak_jr:
   埼京線: { tph: 19, cars: 10, section: 板橋→池袋 }
 
 # --- 公表資料ベースの系統 --------------------------------------------------------
-# id: 系統 ID、lines: 走る N02 の線（"運営会社/線名"）、from/to: 起終点の駅名（lines の上の最短経路をたどる）
-# peak: 国交省「最混雑区間における混雑率（令和6年度）」のピーク 1 時間の編成両数と本数（系統全体、片方向）
+# id: 系統 ID、operator: 事業者（N02 の運営会社名）、lines: 走る N02 の線（"運営会社/線名"。省略すると operator の全線）
+# 駅の並びの指定（どれか 1 つ）:
+#   stations: 停車駅の一覧（快速など）。駅間の延長は lines の上の最短経路
+#   waypoints: 経由駅の一覧。各駅停車として途中駅の多い経路でつなぐ（N02 の線には快速線と緩行線が同じ線名で入っているため）
+#   from / to: waypoints が 2 駅のときの略記
+# peak: ピーク 1 時間の本数・編成両数（片方向）。mlit_jr / mlit_line で国交省の混雑率データ（上の表）を引くか、tph・cars・source を直接書く
 # services: 種別。stops は "all" か停車駅名の一覧、share はピーク本数のうちその種別の割合（資料がなければ仮置き）
-# max_speed_kmh: 最高速度（公表値。なければ仮置き）、through: 直通する系統 ID
-routes: []
+# max_speed_kmh: 最高速度（公表値。なければ仮置き）
+# through: 直通先。系統 ID か { line: "運営会社/線名", at: 接続駅 }（その線を走る系統。仮置き・時刻表ベースも含む）
+#
+# JR東日本: 停車駅は JR東日本「路線ネットワーク」（東京近郊路線図、2026.3.14 版。https://www.jreast.co.jp/map/ の
+# 「東京近郊路線図（車内掲出版）」。ユーザが手動で取得し data/raw/maps/map_tokyo.pdf に配置）で系統ごとの停車駅を確認した。
+# 路線図に載っていない種別（中央特快・通勤快速、京浜東北線の日中の快速、湘南新宿ラインの快速・特別快速など）は扱わず、
+# 各系統の基本の停車パターンだけを持つ。最高速度はすべて仮置き（通勤形電車の一般的な値）。
+routes:
+  - id: jr_yamanote
+    name: 山手線
+    operator: 東日本旅客鉄道
+    # 環状線。大崎から品川まで外回りの順にたどる（品川〜大崎の 1 区間は系統に含めない）
+    waypoints: [大崎, 渋谷, 新宿, 池袋, 田端, 上野, 東京, 品川]
+    peak: { mlit_jr: 山手線内回り }
+    max_speed_kmh: 90
+    services: [{ name: 各停, stops: all }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_keihin_tohoku
+    name: 京浜東北線・根岸線
+    operator: 東日本旅客鉄道
+    waypoints: [大宮, 浦和, 赤羽, 王子, 田端, 上野, 東京, 品川, 大井町, 蒲田, 川崎, 鶴見, 東神奈川, 横浜, 桜木町, 磯子, 大船]
+    peak: { mlit_jr: 京浜東北線（南） }
+    max_speed_kmh: 90
+    services: [{ name: 各停, stops: all }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_chuo_rapid
+    name: 中央線快速
+    operator: 東日本旅客鉄道
+    stations: [東京, 神田, 御茶ノ水, 四ツ谷, 新宿, 中野, 高円寺, 阿佐ヶ谷, 荻窪, 西荻窪, 吉祥寺, 三鷹, 武蔵境, 東小金井, 武蔵小金井, 国分寺, 西国分寺, 国立, 立川, 日野, 豊田, 八王子, 西八王子, 高尾]
+    peak: { mlit_jr: 中央線快速 }
+    max_speed_kmh: 100
+    services: [{ name: 快速, stops: all }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14。高円寺・阿佐ヶ谷・西荻窪は平日のみ停車）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_chuo_sobu_local
+    name: 中央・総武線各駅停車
+    operator: 東日本旅客鉄道
+    waypoints: [三鷹, 中野, 新宿, 四ツ谷, 御茶ノ水, 秋葉原, 錦糸町, 西船橋, 津田沼, 千葉]
+    peak: { mlit_jr: 中央・総武線各駅停車（総武） }
+    max_speed_kmh: 95
+    services: [{ name: 各停, stops: all }]
+    through:
+      - { line: 東京地下鉄/5号線東西線, at: 中野 }
+      - { line: 東京地下鉄/5号線東西線, at: 西船橋 }
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_sobu_rapid
+    name: 総武線快速
+    operator: 東日本旅客鉄道
+    stations: [東京, 新日本橋, 馬喰町, 錦糸町, 新小岩, 市川, 船橋, 津田沼, 稲毛, 千葉]
+    peak: { mlit_jr: 総武線快速 }
+    max_speed_kmh: 120
+    services: [{ name: 快速, stops: all }]
+    through: [jr_yokosuka]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_yokosuka
+    name: 横須賀線
+    operator: 東日本旅客鉄道
+    stations: [東京, 新橋, 品川, 西大井, 武蔵小杉, 新川崎, 横浜, 保土ヶ谷, 東戸塚, 戸塚, 大船, 北鎌倉, 鎌倉, 逗子, 東逗子, 田浦, 横須賀, 衣笠, 久里浜]
+    peak: { mlit_jr: 横須賀線 }
+    max_speed_kmh: 120
+    services: [{ name: 普通, stops: all }]
+    through: [jr_sobu_rapid]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_tokaido
+    name: 東海道線
+    operator: 東日本旅客鉄道
+    stations: [東京, 新橋, 品川, 川崎, 横浜, 戸塚, 大船, 藤沢, 辻堂, 茅ヶ崎, 平塚, 大磯, 二宮, 国府津, 鴨宮, 小田原]
+    peak: { mlit_jr: 東海道線 }
+    max_speed_kmh: 120
+    services: [{ name: 普通, stops: all }]
+    # 上野東京ライン（宇都宮線・高崎線と東京駅をはさんで直通）
+    through: [jr_utsunomiya, jr_takasaki]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_utsunomiya
+    name: 宇都宮線（上野東京ライン）
+    operator: 東日本旅客鉄道
+    stations: [東京, 上野, 尾久, 赤羽, 浦和, さいたま新都心, 大宮, 土呂, 東大宮, 蓮田, 白岡, 新白岡, 久喜, 東鷲宮, 栗橋, 古河]
+    peak: { mlit_jr: 宇都宮線 }
+    max_speed_kmh: 120
+    services: [{ name: 普通, stops: all }]
+    through: [jr_tokaido]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_takasaki
+    name: 高崎線（上野東京ライン）
+    operator: 東日本旅客鉄道
+    stations: [東京, 上野, 尾久, 赤羽, 浦和, さいたま新都心, 大宮, 宮原, 上尾, 北上尾, 桶川, 北本, 鴻巣, 北鴻巣, 吹上, 行田, 熊谷, 籠原, 深谷, 岡部, 本庄, 神保原]
+    peak: { mlit_jr: 高崎線 }
+    max_speed_kmh: 120
+    services: [{ name: 普通, stops: all }]
+    through: [jr_tokaido]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_joban_rapid
+    name: 常磐線快速（上野東京ライン）
+    operator: 東日本旅客鉄道
+    stations: [品川, 新橋, 東京, 上野, 日暮里, 三河島, 南千住, 北千住, 松戸, 柏, 我孫子, 天王台, 取手, 藤代, 龍ケ崎市, 牛久, ひたち野うしく, 荒川沖, 土浦]
+    peak: { mlit_jr: 常磐線快速 }
+    max_speed_kmh: 120
+    services: [{ name: 快速, stops: all }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_joban_local
+    name: 常磐線各駅停車
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/常磐線]
+    waypoints: [綾瀬, 松戸, 我孫子, 取手]
+    peak: { mlit_jr: 常磐線各駅停車 }
+    max_speed_kmh: 90
+    services: [{ name: 各停, stops: all }]
+    through: [{ line: 東京地下鉄/9号線千代田線, at: 綾瀬 }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_saikyo
+    name: 埼京線
+    operator: 東日本旅客鉄道
+    stations: [大崎, 恵比寿, 渋谷, 新宿, 池袋, 板橋, 十条, 赤羽, 北赤羽, 浮間舟渡, 戸田公園, 戸田, 北戸田, 武蔵浦和, 中浦和, 南与野, 与野本町, 北与野, 大宮]
+    peak: { mlit_jr: 埼京線 }
+    max_speed_kmh: 100
+    services: [{ name: 各停, stops: all }]
+    through: [{ line: 東京臨海高速鉄道/臨海副都心線, at: 大崎 }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_shonan_shinjuku
+    name: 湘南新宿ライン
+    operator: 東日本旅客鉄道
+    stations: [大宮, さいたま新都心, 浦和, 赤羽, 池袋, 新宿, 渋谷, 恵比寿, 大崎, 西大井, 武蔵小杉, 新川崎, 横浜, 戸塚, 大船]
+    # 国交省の混雑率データに系統別の値がないため仮置き
+    peak: { tph: 4, cars: 12, source: 仮置き }
+    max_speed_kmh: 120
+    services: [{ name: 普通, stops: all }]
+    source: 停車駅 JR東日本 路線ネットワーク（2026.3.14）、ピーク本数・編成・最高速度 仮置き
+
+  - id: jr_musashino
+    name: 武蔵野線
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/武蔵野線]
+    from: 府中本町
+    to: 西船橋
+    peak: { mlit_line: 東日本旅客鉄道/武蔵野線 }
+    max_speed_kmh: 95
+    services: [{ name: 各停, stops: all }]
+    source: 停車駅 N02 の武蔵野線の全駅（路線ネットワークで全駅停車を確認）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_nambu
+    name: 南武線
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/南武線]
+    from: 川崎
+    to: 立川
+    peak: { mlit_line: 東日本旅客鉄道/南武線 }
+    max_speed_kmh: 95
+    services: [{ name: 各停, stops: all }]
+    source: 停車駅 N02 の南武線の全駅（快速は扱わない）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_yokohama
+    name: 横浜線
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/横浜線]
+    from: 東神奈川
+    to: 八王子
+    peak: { mlit_line: 東日本旅客鉄道/横浜線 }
+    max_speed_kmh: 95
+    services: [{ name: 各停, stops: all }]
+    through: [jr_keihin_tohoku]
+    source: 停車駅 N02 の横浜線の全駅（快速は扱わない）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_keiyo
+    name: 京葉線
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/京葉線]
+    from: 東京
+    to: 蘇我
+    peak: { mlit_line: 東日本旅客鉄道/京葉線 }
+    max_speed_kmh: 100
+    services: [{ name: 各停, stops: all }]
+    source: 停車駅 N02 の京葉線の全駅（快速は扱わない）、ピーク本数・編成 国交省、最高速度 仮置き
+
+  - id: jr_ome
+    name: 青梅線
+    operator: 東日本旅客鉄道
+    lines: [東日本旅客鉄道/青梅線]
+    from: 立川
+    to: 青梅
+    peak: { mlit_line: 東日本旅客鉄道/青梅線 }
+    max_speed_kmh: 85
+    services: [{ name: 各停, stops: all }]
+    through: [jr_chuo_rapid]
+    source: 停車駅 N02 の青梅線の全駅、ピーク本数・編成 国交省、最高速度 仮置き

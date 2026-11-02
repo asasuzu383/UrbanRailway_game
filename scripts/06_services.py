@@ -62,8 +62,11 @@ class Network:
                 and (operator is None or self.lines[li]["operator"] == operator)
                 and (lines is None or li in lines)]
 
-    def path(self, a: int, b: int, lines: set | None = None, operator: str | None = None) -> list[int] | None:
-        """駅 a から b までの最短経路（駅の並び）。lines / operator で使う線を制限する"""
+    def path(self, a: int, b: int, lines: set | None = None, operator: str | None = None,
+             prefer_stations: bool = False) -> list[int] | None:
+        """駅 a から b までの最短経路（駅の並び）。lines / operator で使う線を制限する。
+        prefer_stations: 各駅停車の系統用。エッジの重みを（延長 − 300m）にして、同じくらいの延長なら途中駅の多い経路
+        （緩行線）を選ぶ（N02 の法令上の線には快速線と緩行線が同じ線名で入っているため）"""
         dist = {a: 0.0}
         prev: dict[int, int] = {}
         heap = [(0.0, a)]
@@ -78,7 +81,7 @@ class Network:
                     continue
                 if operator is not None and self.lines[li]["operator"] != operator:
                     continue
-                nd = d + w
+                nd = d + (max(w - 300.0, 10.0) if prefer_stations else w)
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd
                     prev[m] = n
@@ -268,9 +271,73 @@ def odpt_routes(scfg: dict, nw: Network) -> tuple[list, dict]:
 
 def station_on_lines(nw: Network, name: str, lines: set) -> int:
     cands = [i for i, s in enumerate(nw.stations) if s["name"] == name and set(s["lines"]) & lines]
-    if len(cands) != 1:
-        raise SystemExit(f"駅「{name}」が線 {sorted(lines)} 上に {len(cands)} 件あります")
+    if not cands:
+        raise SystemExit(f"駅「{name}」が線 {sorted(lines)} 上にありません")
+    if len(cands) > 1:
+        # 同名の駅グループが複数ある（例: 東京駅の京葉線ホーム）ときは、指定の線が多く乗り入れる方
+        cands.sort(key=lambda i: -len(set(nw.stations[i]["lines"]) & lines))
+        if len(set(nw.stations[cands[0]]["lines"]) & lines) == len(set(nw.stations[cands[1]]["lines"]) & lines):
+            raise SystemExit(f"駅「{name}」が線 {sorted(lines)} 上に複数あり区別できません")
     return cands[0]
+
+
+def route_lines(nw: Network, r: dict) -> set:
+    """系統が走る N02 の線: lines（"運営会社/線名"）の指定、なければ operator の全線"""
+    if r.get("lines"):
+        out = set()
+        for k in r["lines"]:
+            if k not in nw.line_key:
+                raise SystemExit(f"{r['id']}: network.json に線 {k} がありません")
+            out.add(nw.line_key[k])
+        return out
+    return {i for i, l in enumerate(nw.lines) if l["operator"] == r["operator"]}
+
+
+def route_sequence(nw: Network, r: dict, lines: set) -> list[int]:
+    """系統の駅の並び。
+    stations: 駅名の一覧（停車駅だけを並べた快速など。駅間の延長は線の上の最短経路）
+    waypoints: 経由駅の一覧。各駅停車として駅の多い経路でつなぐ（from/to は waypoints の 2 駅の場合の略記）"""
+    if r.get("stations"):
+        # 同名の駅グループが複数ある駅（例: 武蔵小杉の横須賀線ホーム）は、前の駅から線路をたどって近い方を選ぶ
+        names = r["stations"]
+        cands = [[i for i, s in enumerate(nw.stations) if s["name"] == x and set(s["lines"]) & lines] for x in names]
+        for x, c in zip(names, cands):
+            if not c:
+                raise SystemExit(f"{r['id']}: 駅「{x}」が線の上にありません")
+        seq: list[int] = []
+        for k, c in enumerate(cands):
+            if len(c) == 1:
+                seq.append(c[0])
+                continue
+            ref = seq[-1] if seq else next((cc[0] for cc in cands[k + 1:] if len(cc) == 1), None)
+            if ref is None:
+                seq.append(station_on_lines(nw, names[k], lines))
+                continue
+            seq.append(min(c, key=lambda i: nw.leg_length(ref, i, lines)[0]))
+        return seq
+    wps = r.get("waypoints") or [r["from"], r["to"]]
+    pts = [station_on_lines(nw, x, lines) for x in wps]
+    seq = [pts[0]]
+    for u, v in zip(pts[:-1], pts[1:]):
+        part = nw.path(u, v, lines, prefer_stations=True)
+        if part is None:
+            raise SystemExit(f"{r['id']}: {nw.stations[u]['name']} から {nw.stations[v]['name']} までつながっていません")
+        seq.extend(part[1:])
+    if len(set(seq)) != len(seq):
+        raise SystemExit(f"{r['id']}: 経路が同じ駅を 2 回通ります（waypoints を見直す）: {[nw.stations[i]['name'] for i in seq]}")
+    return seq
+
+
+def peak_of(scfg: dict, r: dict) -> dict:
+    """ピーク本数・編成: peak に {tph, cars} を直接書くか、mlit_jr で国交省の JR 系統別の値を引く"""
+    pk = dict(r["peak"])
+    if "mlit_jr" in pk:
+        m = scfg["mlit_peak_jr"][pk["mlit_jr"]]
+        pk = {"tph": m["tph"], "cars": m["cars"], "source": f"国交省 混雑率データ（{pk['mlit_jr']} {m['section']}）"}
+    elif "mlit_line" in pk:
+        m = scfg["mlit_peak"]["lines"][pk["mlit_line"]]
+        pk = {"tph": m["tph"], "cars": m["cars"], "source": f"国交省 混雑率データ（{m['section']}）"}
+    return pk
 
 
 def published_routes(scfg: dict, nw: Network) -> list:
@@ -278,16 +345,10 @@ def published_routes(scfg: dict, nw: Network) -> list:
     ratio = scfg["provisional"]["offpeak_ratio"]
     out = []
     for r in scfg.get("routes") or []:
-        lines = set()
-        for k in r["lines"]:
-            if k not in nw.line_key:
-                raise SystemExit(f"{r['id']}: network.json に線 {k} がありません")
-            lines.add(nw.line_key[k])
-        a, b = station_on_lines(nw, r["from"], lines), station_on_lines(nw, r["to"], lines)
-        seq = nw.path(a, b, lines)
-        if seq is None:
-            raise SystemExit(f"{r['id']}: {r['from']} から {r['to']} まで {r['lines']} でつながっていません")
+        lines = route_lines(nw, r)
+        seq = route_sequence(nw, r, lines)
         names = [nw.stations[i]["name"] for i in seq]
+        pk = peak_of(scfg, r)
         services = []
         for s in r["services"]:
             if s["stops"] == "all":
@@ -301,18 +362,20 @@ def published_routes(scfg: dict, nw: Network) -> list:
             legs = []
             for i, j in zip(stops[:-1], stops[1:]):
                 dist, _ = nw.leg_length(seq[i], seq[j], lines)
+                if not math.isfinite(dist):
+                    raise SystemExit(f"{r['id']}: {names[i]}〜{names[j]} の線路がつながっていません")
                 dwell = rcfg["dwell_major_s"] if len(nw.stations[seq[j]]["lines"]) >= 2 else rcfg["dwell_s"]
                 sec = (run_seconds(dist, vmax, rcfg["accel_kmh_per_s"], rcfg["decel_kmh_per_s"]) + dwell) * rcfg["margin"]
                 legs.append(round(sec / 60, 2))
-            peak = r["peak"]["tph"] * s.get("share", 1.0)
+            peak = pk["tph"] * s.get("share", 1.0)
             off = s.get("offpeak_tph", peak * ratio)
             services.append({"name": s["name"], "stops": stops, "legMinutes": legs,
                              "tph": {"peak": round(peak, 1), "offpeak": round(off, 1)}})
         out.append({
-            "id": r["id"], "name": r["name"], "operator": nw.lines[next(iter(lines))]["operator"], "quality": "published",
-            "source": r.get("source", ""), "stations": seq, "cars": r["peak"].get("cars"),
+            "id": r["id"], "name": r["name"], "operator": r.get("operator") or nw.lines[next(iter(lines))]["operator"],
+            "quality": "published", "source": r.get("source", ""), "stations": seq, "cars": pk.get("cars"),
             "throughIds": r.get("through", []), "services": services, "lineSet": sorted(lines),
-            "frequencySource": r["peak"].get("source", "国交省 混雑率データ"),
+            "frequencySource": pk.get("source", "国交省 混雑率データ"),
         })
     return out
 
@@ -392,16 +455,26 @@ def covered_edges(route: dict, nw: Network) -> set:
     return used
 
 
-def resolve_through(routes: list) -> None:
+def resolve_through(routes: list, lines_meta: list, stations_meta: list) -> None:
     """直通の関係を系統 ID の組にする: YAML の through（ID 指定）と ODPT の直通先（事業者・接続駅）"""
     by_id = {r["id"]: r for r in routes}
     for r in routes:
         out = []
-        for tid in r.pop("throughIds", []):
-            if tid not in by_id:
-                raise SystemExit(f"{r['id']}: 直通先 {tid} が見つかりません")
-            at = set(r["stations"]) & set(by_id[tid]["stations"])
-            out.append({"route": tid, "at": sorted(at), "share": None})
+        for t in r.pop("throughIds", []):
+            if isinstance(t, dict):
+                # {line: "運営会社/線名", at: 駅名}: その線を走る系統（仮置きを含む）のうち接続駅を含むもの
+                li = next((k for k, l in enumerate(lines_meta) if f"{l['operator']}/{l['name']}" == t["line"]), None)
+                at_idx = [k for k in r["stations"] if stations_meta[k]["name"] == t["at"]]
+                cands = [o for o in routes if o is not r and li in o["_lines"] and set(at_idx) & set(o["stations"])]
+                if not cands:
+                    raise SystemExit(f"{r['id']}: 直通先 {t} の系統が見つかりません")
+                for o in cands:
+                    out.append({"route": o["id"], "at": at_idx, "share": None})
+                continue
+            if t not in by_id:
+                raise SystemExit(f"{r['id']}: 直通先 {t} が見つかりません")
+            at = set(r["stations"]) & set(by_id[t]["stations"])
+            out.append({"route": t, "at": sorted(at), "share": None})
         for t in r.pop("throughRaw", []):
             cands = [o for o in routes if o is not r and o["operator"] == t["operator"] and t["at"] in o["stations"]]
             for o in cands:
@@ -432,15 +505,19 @@ def main() -> None:
     routes = tt + pub
     covered: dict[int, str] = {}
     for r in routes:
-        for ei in covered_edges(r, nw):
+        eis = covered_edges(r, nw)
+        r["_lines"] = {nw.edges[ei][2] for ei in eis}
+        for ei in eis:
             if ei not in covered or QUALITIES.index(r["quality"]) < QUALITIES.index(covered[ei]):
                 covered[ei] = r["quality"]
     prov = provisional_routes(scfg, nw, set(covered))
     for r in prov:
-        for ei in covered_edges(r, nw):
+        eis = covered_edges(r, nw)
+        r["_lines"] = {nw.edges[ei][2] for ei in eis}
+        for ei in eis:
             covered.setdefault(ei, "provisional")
     routes += prov
-    resolve_through(routes)
+    resolve_through(routes, nw.lines, nw.stations)
 
     # 路線（N02 の線）ごとの品質: 延長の内訳と、最も長い品質
     km = defaultdict(lambda: Counter())
@@ -455,6 +532,7 @@ def main() -> None:
 
     for r in routes:
         r.pop("lineSet", None)
+        r.pop("_lines", None)
     out = {
         "version": 1,
         "generatedAt": dt.date.today().isoformat(),

@@ -113,7 +113,9 @@ ODPT の利用ルール（本プロジェクト）:
 - ダイヤ改正などでデータが更新されたら `odpt_download.py` → `06_services.py` を再実行する。取得日は `data/raw/odpt/manifest.json`、ダイヤの発行日は services.json の `dataIssued` に記録される。
 
 - JR東日本の時刻表サイト（https://timetables.jreast.co.jp/）は「時刻データを無断で転載・複写し、又は…いかなる媒体に加工することも禁じます」と明記しているため、時刻表からは値を取らない。
-- JR東日本の東京近郊路線図（PDF、https://www.jreast.co.jp/map/pdf/map_tokyo.pdf）は自動取得がアクセス拒否された（回避はしない）。停車駅の確認に使う場合は手動で取得する。
+- JR東日本の東京近郊路線図（PDF、https://www.jreast.co.jp/map/pdf/map_tokyo.pdf）は自動取得がアクセス拒否された（回避はしない）。
+  ユーザが手動で取得し `data/raw/maps/map_tokyo.pdf`（git 管理外。「路線ネットワーク」2026.3.14 版）に配置した（2026-11-02）。
+  系統ごとの停車駅を目視で確認し、`scripts/config/regions/shutoken/services.yaml` の JR の系統に入力した（路線図そのものは再配布しない）。
 - 以上から、JR・大手私鉄は国交省の混雑率データ（ピーク本数・編成）と各社公式の停車駅・最高速度を使い、所要時間は運転曲線の簡易計算で求める（design.md §11）。
 
 ## 利用条件と出典表示
