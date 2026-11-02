@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime as dt
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import time
@@ -463,12 +464,20 @@ def prepare(cases: list, bcfg: dict) -> dict:
 # 5. 推計（TypeScript）
 # ---------------------------------------------------------------------------
 
-def run_engine() -> None:
+def run_engine(manifest_path: Path, manifest: dict) -> None:
+    """推計（TypeScript）を実行する。前回の結果ファイルを消してから回し、全ケースの結果ができたことを確かめる
+    （マニフェストが見つからず推計が飛ばされたまま古い結果を評価するのを防ぐ）。"""
+    outs = [ROOT / v["out"] for c in manifest["cases"] for v in c["variants"]]
+    for o in outs:
+        o.unlink(missing_ok=True)
     cmd = "npx vitest run --config vitest.backtest.config.ts"
-    print(f"\n> {cmd}")
-    r = subprocess.run(cmd, cwd=ROOT, shell=True)
+    print(f"\n> BACKTEST_MANIFEST={rel(manifest_path)} {cmd}")
+    r = subprocess.run(cmd, cwd=ROOT, shell=True, env={**os.environ, "BACKTEST_MANIFEST": rel(manifest_path)})
     if r.returncode != 0:
         raise SystemExit(f"推計（vitest）が失敗しました（終了コード {r.returncode}）")
+    missing = [rel(o) for o in outs if not o.exists()]
+    if missing:
+        raise SystemExit(f"推計の結果ができていません（{len(missing)} 件）: {missing[:3]}")
 
 
 # ---------------------------------------------------------------------------
@@ -674,7 +683,7 @@ def main(argv: list[str]) -> int:
     if not cases:
         raise SystemExit(f"ケースが見つかりません: {ids}")
     manifest = prepare(cases, bcfg)
-    run_engine()
+    run_engine(ROOT / bcfg["work_dir"] / "manifest.json", manifest)
     res = evaluate(manifest, bcfg)
     check_against_previous(res)
     if check:

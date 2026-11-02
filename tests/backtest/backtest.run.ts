@@ -33,6 +33,7 @@ interface Manifest {
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(resolve(ROOT, path), 'utf-8')) as T;
 
+// マニフェストは scripts/backtest.py が BACKTEST_MANIFEST で渡す（無ければ飛ばす。backtest.py 側で結果の有無を確かめる）
 test.skipIf(!existsSync(MANIFEST))('バックテストの推計', () => {
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf-8')) as Manifest;
   for (const c of manifest.cases) {
