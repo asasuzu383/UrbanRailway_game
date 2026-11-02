@@ -63,6 +63,8 @@ export interface LineFlows {
   /** 駅別の乗降人員のうち、駅勢圏の利用者 / 乗換客 */
   readonly fromCatchment: Float64Array;
   readonly fromTransfer: Float64Array;
+  /** fromTransfer のうち、両端とも既存線方面の流動（既存線から新線経由への経路転換）の分 */
+  readonly fromThrough: Float64Array;
   readonly tripsByType: { local: number; toExisting: number; through: number };
 }
 
@@ -87,6 +89,7 @@ export function distributeFlows(
   const od = new Float64Array(ns * ns);
   const fromCatchment = new Float64Array(ns);
   const fromTransfer = new Float64Array(ns);
+  const fromThrough = new Float64Array(ns);
   const trips = { local: 0, toExisting: 0, through: 0 };
 
   const add = (b: number, a: number, flow: number, bLocal: boolean, aLocal: boolean) => {
@@ -97,7 +100,11 @@ export function distributeFlows(
     (aLocal ? fromCatchment : fromTransfer)[a]! += flow;
     if (bLocal && aLocal) trips.local += flow;
     else if (bLocal || aLocal) trips.toExisting += flow;
-    else trips.through += flow;
+    else {
+      trips.through += flow;
+      fromThrough[b]! += flow;
+      fromThrough[a]! += flow;
+    }
   };
 
   const outTime = new Float64Array(nt);
@@ -152,5 +159,5 @@ export function distributeFlows(
       add(f, kStop, prod * st.mass[d]! * Math.exp(-gamma * time), true, net.stops[kStop]!.existing === d);
     }
   }
-  return { od, fromCatchment, fromTransfer, tripsByType: trips };
+  return { od, fromCatchment, fromTransfer, fromThrough, tripsByType: trips };
 }

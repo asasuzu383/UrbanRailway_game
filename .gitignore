@@ -18,3 +18,6 @@ data/interim/
 .idea/
 .DS_Store
 Thumbs.db
+
+# バックテストの作業データ（scripts/backtest.py が生成）
+data/backtest/

@@ -55,6 +55,11 @@ sources:
   econ_census:
     stats_id: "T001162"
     employees_column: "T001162022"   # 従業者数 Ａ〜Ｓ全産業
+  # 平成12年国勢調査 4次メッシュ（500m、世界測地系）「男女別人口総数及び世帯総数」。
+  # バックテスト（TX 開業前の人口時点）でのみ使う（scripts/backtest.py）
+  census2000:
+    stats_id: "T000386"
+    population_column: "T000386001"  # 人口総数
 
 # 都心の基準点（東京駅）
 core_point: [139.7671, 35.6812]

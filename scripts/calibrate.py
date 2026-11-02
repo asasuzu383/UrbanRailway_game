@@ -67,10 +67,15 @@ class Inputs:
     tram_only: np.ndarray  # 路面電車（鉄道区分 21 = 軌道）の路線だけが乗り入れる駅
 
 
-def load_inputs(dcfg: dict) -> Inputs:
-    zones = json.loads((PUBLIC_DATA / "zones.json").read_text(encoding="utf-8"))
-    st = json.loads((PUBLIC_DATA / "stations.json").read_text(encoding="utf-8"))["stations"]
-    net = json.loads((PUBLIC_DATA / "network.json").read_text(encoding="utf-8"))
+def load_inputs(dcfg: dict, zones: dict | None = None, st: list | None = None, net: dict | None = None,
+                verbose: bool = True) -> Inputs:
+    """校正の入力。引数を省略すると public/data から読む（バックテストでは除外後のデータを渡す）。"""
+    if zones is None:
+        zones = json.loads((PUBLIC_DATA / "zones.json").read_text(encoding="utf-8"))
+    if st is None:
+        st = json.loads((PUBLIC_DATA / "stations.json").read_text(encoding="utf-8"))["stations"]
+    if net is None:
+        net = json.loads((PUBLIC_DATA / "network.json").read_text(encoding="utf-8"))
 
     zlng, zlat = half_mesh_centroid(zones["code"])
     pop = np.asarray(zones["pop"], float)
@@ -91,14 +96,15 @@ def load_inputs(dcfg: dict) -> Inputs:
     ps = np.concatenate([np.asarray(n, dtype=int) for n in neigh]) if len(pz) else np.array([], int)
     pdist = np.hypot(zx[pz] - sx[ps], zy[pz] - sy[ps]) / 1000 * detour
 
-    times = travel_times(st, net, dcfg["network"])
+    times = travel_times(st, net, dcfg["network"], verbose)
     n_lines = np.array([max(1, len(s["lines"])) for s in st])
     tram_only = np.array([all(net["lines"][li]["railType"] == 21 for li in s["lines"]) for s in st])
-    print(f"ゾーン {len(pop):,} / 駅 {len(st):,} / ゾーン-駅ペア {len(pz):,}")
+    if verbose:
+        print(f"ゾーン {len(pop):,} / 駅 {len(st):,} / ゾーン-駅ペア {len(pz):,}")
     return Inputs(pop, emp, dist_core, pz, ps, pdist, times, st, n_lines, tram_only)
 
 
-def travel_times(st: list, net: dict, ncfg: dict) -> np.ndarray:
+def travel_times(st: list, net: dict, ncfg: dict, verbose: bool = True) -> np.ndarray:
     """駅間の最短所要時間 [分]。
 
     ノード: 駅 S、（駅, 事業者）、（駅, 路線）。乗換抵抗は
@@ -145,9 +151,17 @@ def travel_times(st: list, net: dict, ncfg: dict) -> np.ndarray:
     # ブラウザへは整数分（uint8）で渡すので、校正も同じ丸めた値で行う。255 分以上は到達不能扱い
     times = np.round(times)
     times[times >= 255] = np.inf
-    reach = np.isfinite(times).mean()
-    print(f"所要時間行列 {n}×{n}（{time.time() - t0:.1f}s）、到達可能な組 {reach:.1%}")
+    if verbose:
+        reach = np.isfinite(times).mean()
+        print(f"所要時間行列 {n}×{n}（{time.time() - t0:.1f}s）、到達可能な組 {reach:.1%}")
     return times
+
+
+def pack_times(times: np.ndarray) -> bytes:
+    """駅間所要時間を public/data/times.bin の形式にする: 上三角（i<j）を行優先で uint8（分）。255 = 到達不能"""
+    iu = np.triu_indices(len(times), 1)
+    tri = times[iu]
+    return np.where(np.isfinite(tri), np.minimum(tri, 254), 255).astype(np.uint8).tobytes()
 
 
 # ---------------------------------------------------------------------------
@@ -222,7 +236,9 @@ class Obs:
     cv_group: np.ndarray
 
 
-def build_obs(inp: Inputs, year: int, dcfg: dict, excluded: list | None = None) -> Obs:
+def build_obs(inp: Inputs, year: int, dcfg: dict, excluded: list | None = None,
+              holdout_clusters: set | None = None) -> Obs:
+    """holdout_clusters: 校正から外す乗降集計クラスタ（バックテストの対象路線の駅）"""
     st = inp.stations
     by_cluster: dict[str, list[int]] = {}
     for i, s in enumerate(st):
@@ -231,10 +247,17 @@ def build_obs(inp: Inputs, year: int, dcfg: dict, excluded: list | None = None) 
     skip = set(dcfg["calibration"]["exclude_station_names"])
     idx, y, names, nl, grp = [], [], [], [], []
     for cid, members in by_cluster.items():
+        if cid not in id_to_idx:
+            # 代表駅が除外された（バックテストで対象路線の単独駅を消した）クラスタ
+            if excluded is not None:
+                excluded.append((st[members[0]]["name"], "バックテスト対象路線の駅"))
+            continue
         rep = st[id_to_idx[cid]]
         reason = None
         v = rep["ridership"].get(str(year))
-        if not rep["inRegion"]:
+        if holdout_clusters and cid in holdout_clusters:
+            reason = "バックテスト対象路線の駅"
+        elif not rep["inRegion"]:
             reason = "外周バッファ内"
         elif v is None or v <= 0:
             reason = "観測値なし"
@@ -273,6 +296,46 @@ def design(terms: Terms, obs: Obs, rho: float, with_hub: bool = True) -> np.ndar
 def fit_glm(y: np.ndarray, x: np.ndarray, robust: bool = False):
     model = sm.GLM(y, x, family=sm.families.Poisson())
     return model.fit(cov_type="HC1") if robust else model.fit()
+
+
+START = {"accessDecayPerKm": 1.0, "attractivenessExponent": 0.5, "outsideConst": 0.0,
+         "outsidePerKm": 0.05, "employeeWeight": 0.5, "timeDecayPerMin": 0.05}
+
+
+def fit_nonlinear(inp: Inputs, obs: Obs, psi: float, bounds: dict, verbose: bool = True):
+    """非線形パラメータを GLM の逸脱度の最小化で推定する（Nelder–Mead）。戻り値: (OptimizeResult, 評価回数)"""
+    evals = {"n": 0, "best": np.inf}
+
+    def objective(u: np.ndarray) -> float:
+        p = unpack(u)
+        terms = model_terms(inp, p, psi)
+        x = design(terms, obs, p["employeeWeight"])
+        try:
+            dev = fit_glm(obs.y, x).deviance
+        except Exception:  # noqa: BLE001 — 発散したパラメータは大きな値で返す
+            return 1e30
+        evals["n"] += 1
+        if dev < evals["best"]:
+            evals["best"] = dev
+        if verbose and evals["n"] % 50 == 0:
+            print(f"  評価 {evals['n']}: 最良逸脱度 {evals['best']:,.0f} / 現在 {p}", flush=True)
+        return dev
+
+    t0 = time.time()
+    r = minimize(objective, pack(START), method="Nelder-Mead", bounds=[bounds[k] for k in PARAM_NAMES],
+                 options={"maxiter": 2000, "xatol": 1e-4, "fatol": 1.0, "adaptive": True})
+    print(f"最適化 {time.time() - t0:.0f}s / 評価 {evals['n']} 回 / 収束 {r.success}: {r.message}")
+    return r, evals["n"]
+
+
+def station_outputs(inp: Inputs, p: dict, coef: dict, psi: float) -> dict[str, np.ndarray]:
+    """stations.json に書く駅別の値: acc（ACC）、mass（集中量 M）、catch（駅勢圏 X）、muCatch（駅勢圏由来の乗降）。
+    muCatch は路線数の項を基準値 1 路線に固定した推計で、新線の駅・接続駅の推計に使う。"""
+    terms = model_terms(inp, p, psi)
+    catch = terms.catch_pop + p["employeeWeight"] * terms.catch_emp
+    lin = coef["intercept"] + coef["catchmentElasticity"] * np.log(np.maximum(catch, 1.0)) \
+        + coef["accessibilityElasticity"] * np.log(np.maximum(terms.acc, 1.0) / ACC_REF)
+    return {"acc": terms.acc, "mass": terms.mass, "catch": catch, "muCatch": np.exp(lin)}
 
 
 # ---------------------------------------------------------------------------
@@ -323,41 +386,13 @@ def main() -> None:
     obs = build_obs(inp, ccfg["year"], dcfg, excluded)
     print(f"{ccfg['year']}年度 校正対象 {len(obs.y):,} 駅（除外 {len(excluded)}）")
 
-    evals = {"n": 0, "best": np.inf}
-
-    def objective(u: np.ndarray) -> float:
-        p = unpack(u)
-        terms = model_terms(inp, p, psi)
-        x = design(terms, obs, p["employeeWeight"])
-        try:
-            dev = fit_glm(obs.y, x).deviance
-        except Exception:  # noqa: BLE001 — 発散したパラメータは大きな値で返す
-            return 1e30
-        evals["n"] += 1
-        if dev < evals["best"]:
-            evals["best"] = dev
-        if evals["n"] % 50 == 0:
-            print(f"  評価 {evals['n']}: 最良逸脱度 {evals['best']:,.0f} / 現在 {p}", flush=True)
-        return dev
-
-    start = {"accessDecayPerKm": 1.0, "attractivenessExponent": 0.5, "outsideConst": 0.0,
-             "outsidePerKm": 0.05, "employeeWeight": 0.5, "timeDecayPerMin": 0.05}
-
-    def optimize(bounds: dict):
-        evals["n"], evals["best"] = 0, np.inf
-        t0 = time.time()
-        r = minimize(objective, pack(start), method="Nelder-Mead", bounds=[bounds[k] for k in PARAM_NAMES],
-                     options={"maxiter": 2000, "xatol": 1e-4, "fatol": 1.0, "adaptive": True})
-        print(f"最適化 {time.time() - t0:.0f}s / 評価 {evals['n']} 回 / 収束 {r.success}: {r.message}")
-        return r, evals["n"]
-
     print("制約なしの推定（参考）")
-    res_free, _ = optimize(UNBOUNDED)
+    res_free, _ = fit_nonlinear(inp, obs, psi, UNBOUNDED)
     p_free = unpack(res_free.x)
     terms_free = model_terms(inp, p_free, psi)
     m_free = metrics(obs.y, fit_glm(obs.y, design(terms_free, obs, p_free["employeeWeight"])).fittedvalues)
     print("制約付きの推定（採用）")
-    res, n_eval = optimize(BOUNDS)
+    res, n_eval = fit_nonlinear(inp, obs, psi, BOUNDS)
     p = unpack(res.x)
     at_bound = [k for k in PARAM_NAMES
                 if abs(p[k] - BOUNDS[k][0]) < 1e-3 * max(1, abs(BOUNDS[k][0])) or abs(p[k] - BOUNDS[k][1]) < 1e-3 * max(1, abs(BOUNDS[k][1]))]
@@ -384,9 +419,8 @@ def main() -> None:
     m_cmp = metrics(obs_cmp.y, glm_cmp.fittedvalues)
 
     # 駅勢圏由来の乗降（路線数の項を基準値 1 路線に固定）: 新線の駅・接続駅の推計に使う値
-    lin = coef["intercept"] + coef["catchmentElasticity"] * np.log(np.maximum(terms.catch_pop + p["employeeWeight"] * terms.catch_emp, 1.0)) \
-        + coef["accessibilityElasticity"] * np.log(np.maximum(terms.acc, 1.0) / ACC_REF)
-    mu_catch = np.exp(lin)
+    outs = station_outputs(inp, p, coef, psi)
+    mu_catch = outs["muCatch"]
 
     # 暗黙の原単位: 対象地域の人口あたりの駅勢圏由来乗降（往復の両端を数える）
     in_region = np.array([s["inRegion"] for s in inp.stations], bool)
@@ -420,21 +454,17 @@ def main() -> None:
 
     stations_path = PUBLIC_DATA / "stations.json"
     sdata = json.loads(stations_path.read_text(encoding="utf-8"))
-    catch = terms.catch_pop + p["employeeWeight"] * terms.catch_emp
     for i, s in enumerate(sdata["stations"]):
-        s["acc"] = round(float(terms.acc[i]))
-        s["mass"] = round(float(terms.mass[i]))
-        s["catch"] = round(float(catch[i]), 1)
+        s["acc"] = round(float(outs["acc"][i]))
+        s["mass"] = round(float(outs["mass"][i]))
+        s["catch"] = round(float(outs["catch"][i]), 1)
         s["muCatch"] = round(float(mu_catch[i]))
     sdata["note"] = sdata["note"].split("accessibility は")[0].split("acc/mass")[0] + "acc/mass/catch/muCatch は calibrate.py の出力。"
     stations_path.write_text(json.dumps(sdata, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
-    # 駅間所要時間: 上三角（i<j）を行優先で uint8（分）。255 = 到達不能
-    iu = np.triu_indices(len(inp.stations), 1)
-    tri = inp.times[iu]
-    packed = np.where(np.isfinite(tri), np.minimum(tri, 254), 255).astype(np.uint8)
-    (PUBLIC_DATA / "times.bin").write_bytes(packed.tobytes())
-    print(f"times.bin: {packed.nbytes / 1024 / 1024:.2f} MB")
+    packed = pack_times(inp.times)
+    (PUBLIC_DATA / "times.bin").write_bytes(packed)
+    print(f"times.bin: {len(packed) / 1024 / 1024:.2f} MB")
 
     table = pd.DataFrame({
         "name": obs.names, "lines": obs.n_lines.astype(int), "observed": obs.y.round(),

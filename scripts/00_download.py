@@ -37,7 +37,8 @@ def plan_downloads(cfg: dict) -> list[tuple[str, Path]]:
             fname = s[key]["file_pattern"].format(pref=pref)
             jobs.append((f"{base}/{key}/{ver}/{fname}", RAW / "ksj" / key / fname))
 
-    for sub, stats_id in (("census2020", s["census"]["stats_id"]), ("econ2021", s["econ_census"]["stats_id"])):
+    for sub, stats_id in (("census2020", s["census"]["stats_id"]), ("econ2021", s["econ_census"]["stats_id"]),
+                          ("census2000", s["census2000"]["stats_id"])):
         for mesh in cfg["primary_meshes"]:
             url = s["estat_url"].format(stats_id=stats_id, mesh=mesh)
             jobs.append((url, RAW / "estat" / sub / f"{stats_id}_{mesh}.zip"))

@@ -37,7 +37,30 @@ export function runDemand(line: UserLine, ctx: DemandContext): DemandResult {
   return runDemandForStops(stops, ctx);
 }
 
+/** 推計の途中の値（バックテストの誤差分析用。新線の駅の並び = stops） */
+export interface DemandDiagnostics {
+  readonly stops: readonly LineStop[];
+  /** 新駅の駅勢圏 X（人口＋ρ×従業者、Huff 按分後）。接続駅は 0 */
+  readonly stopCatch: Float64Array;
+  /** 新線の各駅の ACC（新線あり。接続駅は既存駅の値） */
+  readonly stopAcc: Float64Array;
+  /** 駅勢圏由来の乗降 μ（発生・集中）。新駅はモデル式、接続駅は既存駅の値（新線あり） */
+  readonly stopTripEnds: Float64Array;
+  /** 乗降のうち、既存線から新線経由への経路転換（両端とも既存線方面）の分 */
+  readonly stopThrough: Float64Array;
+}
+
+export function runDemandDetailed(line: UserLine, ctx: DemandContext): { result: DemandResult; diagnostics: DemandDiagnostics | null } {
+  const stops = lineStopsOf(line, ctx);
+  if (stops.length < 2) return { result: EMPTY_DEMAND, diagnostics: null };
+  return computeDemand(stops, ctx);
+}
+
 export function runDemandForStops(stops: readonly LineStop[], ctx: DemandContext): DemandResult {
+  return computeDemand(stops, ctx).result;
+}
+
+function computeDemand(stops: readonly LineStop[], ctx: DemandContext): { result: DemandResult; diagnostics: DemandDiagnostics } {
   const fp = ctx.params.fitted;
   const st = ctx.stations;
 
@@ -85,13 +108,17 @@ export function runDemandForStops(stops: readonly LineStop[], ctx: DemandContext
     od.set(b.vertexId, row);
   });
 
+  const stopTripEnds = Float64Array.from(stops, (s, k) => (s.existing === null ? muStops[k]! : muExisting[s.existing]!));
   return {
-    stations,
-    segments: assigned.segments,
-    od,
-    dailyPassengers: assigned.dailyPassengers,
-    dailyPassengerKm: assigned.dailyPassengerKm,
-    tripsByType: flows.tripsByType,
-    newRailUsersPopulation: catchment.newRailUsersPopulation,
+    result: {
+      stations,
+      segments: assigned.segments,
+      od,
+      dailyPassengers: assigned.dailyPassengers,
+      dailyPassengerKm: assigned.dailyPassengerKm,
+      tripsByType: flows.tripsByType,
+      newRailUsersPopulation: catchment.newRailUsersPopulation,
+    },
+    diagnostics: { stops, stopCatch: catchment.stopCatch, stopAcc: acc.stops, stopTripEnds, stopThrough: flows.fromThrough },
   };
 }

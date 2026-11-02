@@ -1,0 +1,4622 @@
+{
+ "generatedAt": "2026-11-02T11:07:56",
+ "primaryYear": 2024,
+ "cases": {
+  "tx": {
+   "info": {
+    "case": {
+     "id": "tx",
+     "name": "つくばエクスプレス",
+     "lines": [
+      "首都圏新都市鉄道/常磐新線"
+     ],
+     "termini": [
+      "秋葉原",
+      "つくば"
+     ],
+     "populations": [
+      2020,
+      2000
+     ],
+     "color": "#c6302b",
+     "structures": [
+      {
+       "from": "秋葉原",
+       "to": "南千住",
+       "structure": "underground"
+      },
+      {
+       "from": "南千住",
+       "to": "北千住",
+       "structure": "atGrade",
+       "note": "JR・日比谷線の間の地上区間。北千住駅は高架（3階）"
+      },
+      {
+       "from": "北千住",
+       "to": "八潮",
+       "structure": "underground",
+       "note": "荒川橋梁の後、綾瀬川沿いに地下。八潮の手前で地上に出る"
+      },
+      {
+       "from": "八潮",
+       "to": "三郷中央",
+       "structure": "elevated",
+       "note": "仮置き（地上区間とだけ記述があり、地上か高架かは不明）"
+      },
+      {
+       "from": "三郷中央",
+       "to": "南流山",
+       "structure": "underground",
+       "note": "江戸川を渡った後に地下"
+      },
+      {
+       "from": "南流山",
+       "to": "流山セントラルパーク",
+       "structure": "underground",
+       "note": "仮置き（地下から流鉄の下をくぐって高架へ。割合は不明）"
+      },
+      {
+       "from": "流山セントラルパーク",
+       "to": "守谷",
+       "structure": "elevated",
+       "note": "利根川橋梁を含む"
+      },
+      {
+       "from": "守谷",
+       "to": "研究学園",
+       "structure": "elevated",
+       "note": "仮置き（高架と掘割が混在。割合は不明）"
+      },
+      {
+       "from": "研究学園",
+       "to": "つくば",
+       "structure": "underground",
+       "note": "仮置き（終点付近がつくばトンネル。割合は不明）"
+      }
+     ]
+    },
+    "meta": [
+     {
+      "vertexId": "s0",
+      "name": "秋葉原",
+      "group": "003624",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": null
+     },
+     {
+      "vertexId": "s1",
+      "name": "新御徒町",
+      "group": "003556",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": null
+     },
+     {
+      "vertexId": "s2",
+      "name": "浅草",
+      "group": "003502",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": null
+     },
+     {
+      "vertexId": "s3",
+      "name": "南千住",
+      "group": "003363",
+      "transfer": true,
+      "structureToNext": "atGrade",
+      "structureNote": "JR・日比谷線の間の地上区間。北千住駅は高架（3階）"
+     },
+     {
+      "vertexId": "s4",
+      "name": "北千住",
+      "group": "003260",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": "荒川橋梁の後、綾瀬川沿いに地下。八潮の手前で地上に出る"
+     },
+     {
+      "vertexId": "s5",
+      "name": "青井",
+      "group": "003177",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": "荒川橋梁の後、綾瀬川沿いに地下。八潮の手前で地上に出る"
+     },
+     {
+      "vertexId": "s6",
+      "name": "六町",
+      "group": "003133",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": "荒川橋梁の後、綾瀬川沿いに地下。八潮の手前で地上に出る"
+     },
+     {
+      "vertexId": "s7",
+      "name": "八潮",
+      "group": "003073",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "仮置き（地上区間とだけ記述があり、地上か高架かは不明）"
+     },
+     {
+      "vertexId": "s8",
+      "name": "三郷中央",
+      "group": "003047",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": "江戸川を渡った後に地下"
+     },
+     {
+      "vertexId": "s9",
+      "name": "南流山",
+      "group": "003024",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（地下から流鉄の下をくぐって高架へ。割合は不明）"
+     },
+     {
+      "vertexId": "s10",
+      "name": "流山セントラルパーク",
+      "group": "002993",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "利根川橋梁を含む"
+     },
+     {
+      "vertexId": "s11",
+      "name": "流山おおたかの森",
+      "group": "002969",
+      "transfer": true,
+      "structureToNext": "elevated",
+      "structureNote": "利根川橋梁を含む"
+     },
+     {
+      "vertexId": "s12",
+      "name": "柏の葉キャンパス",
+      "group": "002935",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "利根川橋梁を含む"
+     },
+     {
+      "vertexId": "s13",
+      "name": "柏たなか",
+      "group": "002900",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "利根川橋梁を含む"
+     },
+     {
+      "vertexId": "s14",
+      "name": "守谷",
+      "group": "002830",
+      "transfer": true,
+      "structureToNext": "elevated",
+      "structureNote": "仮置き（高架と掘割が混在。割合は不明）"
+     },
+     {
+      "vertexId": "s15",
+      "name": "みらい平",
+      "group": "002765",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "仮置き（高架と掘割が混在。割合は不明）"
+     },
+     {
+      "vertexId": "s16",
+      "name": "みどりの",
+      "group": "002724",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "仮置き（高架と掘割が混在。割合は不明）"
+     },
+     {
+      "vertexId": "s17",
+      "name": "万博記念公園",
+      "group": "002694",
+      "transfer": false,
+      "structureToNext": "elevated",
+      "structureNote": "仮置き（高架と掘割が混在。割合は不明）"
+     },
+     {
+      "vertexId": "s18",
+      "name": "研究学園",
+      "group": "002656",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（終点付近がつくばトンネル。割合は不明）"
+     },
+     {
+      "vertexId": "s19",
+      "name": "つくば",
+      "group": "002655",
+      "transfer": false,
+      "structureToNext": null,
+      "structureNote": null
+     }
+    ],
+    "openingYears": {
+     "首都圏新都市鉄道 柏たなか": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 守谷": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 万博記念公園": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 流山おおたかの森": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 みどりの": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 つくば": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 みらい平": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 研究学園": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 柏の葉キャンパス": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 北千住": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 三郷中央": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 六町": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 浅草": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 八潮": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 南流山": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 青井": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 秋葉原": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 南千住": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 流山セントラルパーク": {
+      "firstYear": 2011,
+      "note": ""
+     },
+     "首都圏新都市鉄道 新御徒町": {
+      "firstYear": 2011,
+      "note": ""
+     }
+    },
+    "stageA": {
+     "s2": {
+      "mu": 35150.94186060653,
+      "catchment": 33707.170567145535,
+      "acc": 9673364.45661576
+     },
+     "s5": {
+      "mu": 39230.898828953876,
+      "catchment": 40782.28200057073,
+      "acc": 8670760.385891775
+     },
+     "s6": {
+      "mu": 78058.16144226423,
+      "catchment": 84452.60992761223,
+      "acc": 8440882.274891278
+     },
+     "s7": {
+      "mu": 75747.75597130426,
+      "catchment": 85224.89261973687,
+      "acc": 7975981.701849766
+     },
+     "s8": {
+      "mu": 39120.436511297354,
+      "catchment": 44418.91010097132,
+      "acc": 7652727.8239307515
+     },
+     "s10": {
+      "mu": 17117.19891288667,
+      "catchment": 19881.42655904327,
+      "acc": 7152017.164269524
+     },
+     "s12": {
+      "mu": 41746.55439259904,
+      "catchment": 54102.3286686723,
+      "acc": 6365319.597804249
+     },
+     "s13": {
+      "mu": 17460.14362146334,
+      "catchment": 22639.375531436606,
+      "acc": 6126393.013466593
+     },
+     "s15": {
+      "mu": 12373.921786462624,
+      "catchment": 19045.35700634004,
+      "acc": 4736602.382527926
+     },
+     "s16": {
+      "mu": 13728.908081702277,
+      "catchment": 22627.69213884113,
+      "acc": 4318976.309917902
+     },
+     "s17": {
+      "mu": 5312.9548376210905,
+      "catchment": 8911.60975680259,
+      "acc": 4044425.607876901
+     },
+     "s18": {
+      "mu": 19057.10226527364,
+      "catchment": 35317.70932067225,
+      "acc": 3711023.580942639
+     },
+     "s19": {
+      "mu": 29757.97513100313,
+      "catchment": 58387.63859094613,
+      "acc": 3489677.3340591914
+     }
+    },
+    "baseCatch": {
+     "s0": 51697.9,
+     "s1": 30075.4,
+     "s2": 33707.2,
+     "s3": 39632.9,
+     "s4": 53803.4,
+     "s5": 40782.3,
+     "s6": 84452.6,
+     "s7": 85224.9,
+     "s8": 44418.9,
+     "s9": 35987.4,
+     "s10": 19881.4,
+     "s11": 43460.7,
+     "s12": 54102.3,
+     "s13": 22639.4,
+     "s14": 37640.0,
+     "s15": 19045.4,
+     "s16": 22627.7,
+     "s17": 8911.6,
+     "s18": 35317.7,
+     "s19": 58387.6
+    },
+    "holdout": {
+     "fitted": {
+      "accessDecayPerKm": 2.186153630282137,
+      "attractivenessExponent": 2.0,
+      "outsideConst": -2.0730331778175892,
+      "outsidePerKm": 0.0,
+      "employeeWeight": 1.255652959964951,
+      "timeDecayPerMin": 0.02,
+      "intercept": -1.2848000642701205,
+      "catchmentElasticity": 0.9986124003345518,
+      "accessibilityElasticity": 0.5660518703233125,
+      "hubElasticity": 1.4686928384920712
+     },
+     "metrics": {
+      "n": 1401,
+      "pseudoR2": 0.8515480862288812,
+      "logR2": 0.8305444448109576,
+      "rmse": 59083.15247391486,
+      "medianRatio": 1.5931964967246206,
+      "within2x": 0.6837972876516774,
+      "totalRatio": 0.9999999999999847
+     },
+     "nEval": 1052,
+     "converged": true,
+     "nHoldoutClusters": 7
+    },
+    "population": {
+     "2020": {},
+     "2000": {
+      "regionPop2000": 34952874,
+      "regionPop2020": 38454708,
+      "masked": 0,
+      "popNotInZones": 8960711
+     }
+    },
+    "speedKmh": 55.0,
+    "fullFitted": {
+     "accessDecayPerKm": 2.2032100324349497,
+     "attractivenessExponent": 1.999999999995394,
+     "outsideConst": -3.3647005672736006,
+     "outsidePerKm": 0.0,
+     "employeeWeight": 1.1079838781543951,
+     "timeDecayPerMin": 0.02,
+     "intercept": -1.207386778577327,
+     "catchmentElasticity": 0.9704467141148144,
+     "accessibilityElasticity": 0.6862830369043024,
+     "hubElasticity": 1.521187525188747
+    },
+    "removedStations": 13,
+    "touchedClusters": 20,
+    "fullMetrics": {
+     "n": 1421,
+     "pseudoR2": 0.8529812812987128,
+     "logR2": 0.8263714310688698,
+     "rmse": 62473.14940068193,
+     "medianRatio": 1.5826216459254163,
+     "within2x": 0.6798029556650246,
+     "totalRatio": 0.9999999999999964
+    }
+   },
+   "actuals": {
+    "s0": {
+     "2011": {
+      "value": 115200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 118300,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 124300,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 123500,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 124800,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 127700,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 133000,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 137400,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 138700,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 87400,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 90700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 105000,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 116600,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 123783,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s1": {
+     "2011": {
+      "value": 29600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 31400,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 33600,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 34300,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 36900,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 38800,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 42200,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 44600,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 46800,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 32800,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 35300,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 39700,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 42900,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 48374,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s2": {
+     "2011": {
+      "value": 16800,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 18200,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 18700,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 19000,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 20500,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 21100,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 21800,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 22700,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 23500,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 13500,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 15000,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 18600,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 22400,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 24412,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s3": {
+     "2011": {
+      "value": 8200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 8800,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 9300,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 9300,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 9700,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 10000,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 11200,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 12100,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 12600,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 9600,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 10700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 11800,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 12500,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 12890,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s4": {
+     "2011": {
+      "value": 74600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 79500,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 83500,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 83700,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 89200,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 93100,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 99200,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 103200,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 105100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 74300,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 82900,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 94800,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 100600,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 108181,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s5": {
+     "2011": {
+      "value": 11600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 12000,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 12300,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 12100,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 12400,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 12900,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 13100,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 13200,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 13100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 10400,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 11200,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 12000,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 12900,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 13288,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s6": {
+     "2011": {
+      "value": 21200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 22900,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 24800,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 25300,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 26900,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 27800,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 28600,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 29500,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 30100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 23700,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 26400,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 29500,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 32300,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 34213,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s7": {
+     "2011": {
+      "value": 29800,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 32400,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 35200,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 36000,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 38400,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 41200,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 44400,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 47400,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 49100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 37600,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 40500,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 44200,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 48300,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 50219,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s8": {
+     "2011": {
+      "value": 17400,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 19700,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 22800,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 23500,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 25000,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 26300,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 27900,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 29900,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 30500,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 23600,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 25700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 28000,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 30200,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 30722,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s9": {
+     "2011": {
+      "value": 58600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 61100,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 63900,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 63800,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 66300,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 69200,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 71800,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 74100,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 75100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 55400,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 62000,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 69700,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 75200,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 78095,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s10": {
+     "2011": {
+      "value": 5600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 6000,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 6600,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 6800,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 7200,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 8700,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 9200,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 10300,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 10300,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 8000,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 8800,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 9500,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 10600,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 11233,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s11": {
+     "2011": {
+      "value": 58200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 60900,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 63700,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 64200,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 66300,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 69400,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 72800,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 76200,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 79200,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 58300,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 64900,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 75200,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 82100,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 85328,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s12": {
+     "2011": {
+      "value": 24200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 25500,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 27900,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 28600,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 30000,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 30900,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 33000,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 34400,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 36100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 27000,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 30300,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 34600,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 37400,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 39740,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s13": {
+     "2011": {
+      "value": 5600,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 6100,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 6800,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 7300,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 8000,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 8900,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 9800,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 11700,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 13600,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 11200,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 12400,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 13900,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 15100,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 16066,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s14": {
+     "2011": {
+      "value": 45400,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 47400,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 48700,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 47200,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 48100,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 49000,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 48700,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 49700,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 50000,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 34100,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 37700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 43000,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 47500,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 48627,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s15": {
+     "2011": {
+      "value": 6800,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 7400,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 8000,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 8500,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 9200,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 9700,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 9900,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 10200,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 10600,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 7800,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 8700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 10200,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 11600,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 11885,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s16": {
+     "2011": {
+      "value": 5400,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 5800,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 6400,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 6700,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 7400,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 7900,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 8400,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 9000,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 9400,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 6500,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 7600,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 9300,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 10700,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 11096,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s17": {
+     "2011": {
+      "value": 4200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 4400,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 4800,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 4900,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 5300,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 5400,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 5700,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 6000,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 6300,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 4200,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 5000,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 6200,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 7100,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 7133,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s18": {
+     "2011": {
+      "value": 9800,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 10600,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 11900,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 12200,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 13000,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 13600,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 14100,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 14600,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 14600,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 9600,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 11100,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 13400,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 15000,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 15919,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s19": {
+     "2011": {
+      "value": 31200,
+      "status": "ok",
+      "note": ""
+     },
+     "2012": {
+      "value": 33300,
+      "status": "ok",
+      "note": ""
+     },
+     "2013": {
+      "value": 34800,
+      "status": "ok",
+      "note": ""
+     },
+     "2014": {
+      "value": 34300,
+      "status": "ok",
+      "note": ""
+     },
+     "2015": {
+      "value": 35700,
+      "status": "ok",
+      "note": ""
+     },
+     "2016": {
+      "value": 36900,
+      "status": "ok",
+      "note": ""
+     },
+     "2017": {
+      "value": 35800,
+      "status": "ok",
+      "note": ""
+     },
+     "2018": {
+      "value": 36400,
+      "status": "ok",
+      "note": ""
+     },
+     "2019": {
+      "value": 36100,
+      "status": "ok",
+      "note": ""
+     },
+     "2020": {
+      "value": 21000,
+      "status": "ok",
+      "note": ""
+     },
+     "2021": {
+      "value": 24700,
+      "status": "ok",
+      "note": ""
+     },
+     "2022": {
+      "value": 30000,
+      "status": "ok",
+      "note": ""
+     },
+     "2023": {
+      "value": 34500,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 35590,
+      "status": "ok",
+      "note": ""
+     }
+    }
+   },
+   "variants": {
+    "full-2020-55kmh": {
+     "metricsWithoutThrough": {
+      "n": 20,
+      "predSum": 1028785.6096013493,
+      "actualSum": 806794.0,
+      "totalRatio": 1.2751527770426518,
+      "mape": 0.539304539542909,
+      "meanLogError": 0.1886856167854033,
+      "sdLogError": 0.491905552524409,
+      "medianRatio": 1.1772484737766513,
+      "within2x": 0.85
+     },
+     "params": "full",
+     "population": 2020,
+     "speedKmh": 55.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "秋葉原",
+       "transfer": true,
+       "pred": 574623.1160089668,
+       "actual": 123783,
+       "status": "ok",
+       "fromCatchment": 8642.473577061084,
+       "fromTransfer": 565980.6424319057,
+       "fromThrough": 332723.94410299923,
+       "tripEnds": 60200.05720547708,
+       "catchment": 0,
+       "acc": 11567095.495940996
+      },
+      {
+       "vertexId": "s1",
+       "name": "新御徒町",
+       "transfer": true,
+       "pred": 229648.32367089816,
+       "actual": 48374,
+       "status": "ok",
+       "fromCatchment": 17819.709581993764,
+       "fromTransfer": 211828.6140889044,
+       "fromThrough": 145058.11300019114,
+       "tripEnds": 33379.209556153975,
+       "catchment": 0,
+       "acc": 10536826.996858064
+      },
+      {
+       "vertexId": "s2",
+       "name": "浅草",
+       "transfer": false,
+       "pred": 36945.46410303353,
+       "actual": 24412,
+       "status": "ok",
+       "fromCatchment": 36945.46410303353,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 35155.47192639687,
+       "catchment": 33649.160695515646,
+       "acc": 9698775.501422301
+      },
+      {
+       "vertexId": "s3",
+       "name": "南千住",
+       "transfer": true,
+       "pred": 90254.57332643196,
+       "actual": 12890,
+       "status": "ok",
+       "fromCatchment": 13710.386559429184,
+       "fromTransfer": 76544.18676700277,
+       "fromThrough": 43965.65307718656,
+       "tripEnds": 42119.67614001495,
+       "catchment": 0,
+       "acc": 10011468.914487809
+      },
+      {
+       "vertexId": "s4",
+       "name": "北千住",
+       "transfer": true,
+       "pred": 317886.2022457801,
+       "actual": 108181,
+       "status": "ok",
+       "fromCatchment": 19125.028486343614,
+       "fromTransfer": 298761.17375943647,
+       "fromThrough": 232854.61669978927,
+       "tripEnds": 55891.87513049178,
+       "catchment": 0,
+       "acc": 9807637.742186049
+      },
+      {
+       "vertexId": "s5",
+       "name": "青井",
+       "transfer": false,
+       "pred": 34833.99287991453,
+       "actual": 13288,
+       "status": "ok",
+       "fromCatchment": 34833.99287991453,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 39333.90060102944,
+       "catchment": 40788.457850123246,
+       "acc": 8702088.677887367
+      },
+      {
+       "vertexId": "s6",
+       "name": "六町",
+       "transfer": false,
+       "pred": 73926.13554860263,
+       "actual": 34213,
+       "status": "ok",
+       "fromCatchment": 73926.13554860263,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 78323.70054116391,
+       "catchment": 84509.60130116255,
+       "acc": 8474666.95818464
+      },
+      {
+       "vertexId": "s7",
+       "name": "八潮",
+       "transfer": false,
+       "pred": 69617.45899302156,
+       "actual": 50219,
+       "status": "ok",
+       "fromCatchment": 69617.45899302156,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 71804.16489343112,
+       "catchment": 80418.35755364619,
+       "acc": 8009396.66476229
+      },
+      {
+       "vertexId": "s8",
+       "name": "三郷中央",
+       "transfer": false,
+       "pred": 37644.603995322424,
+       "actual": 30722,
+       "status": "ok",
+       "fromCatchment": 37644.603995322424,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 39228.84088968414,
+       "catchment": 44425.15486887432,
+       "acc": 7682119.966389183
+      },
+      {
+       "vertexId": "s9",
+       "name": "南流山",
+       "transfer": true,
+       "pred": 212619.19799958324,
+       "actual": 78095,
+       "status": "ok",
+       "fromCatchment": 17046.316790744106,
+       "fromTransfer": 195572.88120883913,
+       "fromThrough": 119572.13638957728,
+       "tripEnds": 32343.005976964992,
+       "catchment": 0,
+       "acc": 7815081.122550678
+      },
+      {
+       "vertexId": "s10",
+       "name": "流山セントラルパーク",
+       "transfer": false,
+       "pred": 14134.728064316814,
+       "actual": 11233,
+       "status": "ok",
+       "fromCatchment": 14134.728064316814,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 17147.36287705496,
+       "catchment": 19870.84335614799,
+       "acc": 7175789.9606685275
+      },
+      {
+       "vertexId": "s11",
+       "name": "流山おおたかの森",
+       "transfer": true,
+       "pred": 210960.96695683675,
+       "actual": 85328,
+       "status": "ok",
+       "fromCatchment": 27929.40911936508,
+       "fromTransfer": 183031.5578374717,
+       "fromThrough": 161314.77522011244,
+       "tripEnds": 36018.560378307586,
+       "catchment": 0,
+       "acc": 6984275.698338831
+      },
+      {
+       "vertexId": "s12",
+       "name": "柏の葉キャンパス",
+       "transfer": false,
+       "pred": 41182.89104185476,
+       "actual": 39740,
+       "status": "ok",
+       "fromCatchment": 41182.89104185476,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 41869.83341587644,
+       "catchment": 54110.50016845629,
+       "acc": 6391362.572553975
+      },
+      {
+       "vertexId": "s13",
+       "name": "柏たなか",
+       "transfer": false,
+       "pred": 16634.707935109804,
+       "actual": 16066,
+       "status": "ok",
+       "fromCatchment": 16634.707935109804,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 17505.497705848098,
+       "catchment": 22640.64212089358,
+       "acc": 6149108.670882644
+      },
+      {
+       "vertexId": "s14",
+       "name": "守谷",
+       "transfer": true,
+       "pred": 95134.91605155451,
+       "actual": 48627,
+       "status": "ok",
+       "fromCatchment": 22734.810161159552,
+       "fromTransfer": 72400.10589039496,
+       "fromThrough": 66501.10813687828,
+       "tripEnds": 26515.22184513216,
+       "catchment": 0,
+       "acc": 5485639.118484175
+      },
+      {
+       "vertexId": "s15",
+       "name": "みらい平",
+       "transfer": false,
+       "pred": 10196.607668329687,
+       "actual": 11885,
+       "status": "ok",
+       "fromCatchment": 10196.607668329687,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 12404.26260037,
+       "catchment": 19047.099762589674,
+       "acc": 4752920.089555462
+      },
+      {
+       "vertexId": "s16",
+       "name": "みどりの",
+       "transfer": false,
+       "pred": 12626.535143549563,
+       "actual": 11096,
+       "status": "ok",
+       "fromCatchment": 12626.535143549563,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 13768.161702211872,
+       "catchment": 22633.201887004947,
+       "acc": 4335488.93336475
+      },
+      {
+       "vertexId": "s17",
+       "name": "万博記念公園",
+       "transfer": false,
+       "pred": 4326.500775595609,
+       "actual": 7133,
+       "status": "ok",
+       "fromCatchment": 4326.500775595609,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 5325.285154917185,
+       "catchment": 8912.674672549094,
+       "acc": 4057424.2589151044
+      },
+      {
+       "vertexId": "s18",
+       "name": "研究学園",
+       "transfer": false,
+       "pred": 18517.085050079855,
+       "actual": 15919,
+       "status": "ok",
+       "fromCatchment": 18517.085050079855,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 19111.03970457214,
+       "catchment": 35329.87898075031,
+       "acc": 3724523.230510948
+      },
+      {
+       "vertexId": "s19",
+       "name": "つくば",
+       "transfer": false,
+       "pred": 29061.948769301292,
+       "actual": 35590,
+       "status": "ok",
+       "fromCatchment": 29061.948769301292,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 29842.017527035983,
+       "catchment": 58401.67860317466,
+       "acc": 3502856.2177587985
+      }
+     ],
+     "metrics": {
+      "n": 20,
+      "predSum": 2130775.9562280835,
+      "actualSum": 806794.0,
+      "totalRatio": 2.6410409053960286,
+      "mape": 1.2369302009993859,
+      "meanLogError": 0.5548947670942614,
+      "sdLogError": 0.6528669297144508,
+      "medianRatio": 1.4484514278018086,
+      "within2x": 0.6
+     },
+     "metricsInclNoted": {
+      "n": 20,
+      "predSum": 2130775.9562280835,
+      "actualSum": 806794.0,
+      "totalRatio": 2.6410409053960286,
+      "mape": 1.2369302009993859,
+      "meanLogError": 0.5548947670942614,
+      "sdLogError": 0.6528669297144508,
+      "medianRatio": 1.4484514278018086,
+      "within2x": 0.6
+     },
+     "metricsFresh": {
+      "n": 13,
+      "predSum": 399648.65996803204,
+      "actualSum": 301516.0,
+      "totalRatio": 1.3254641875324429,
+      "mape": 0.4044118306433741,
+      "meanLogError": 0.18486075991922574,
+      "sdLogError": 0.3880673278433261,
+      "medianRatio": 1.163206548783206,
+      "within2x": 0.8461538461538461
+     },
+     "metricsTransfer": {
+      "n": 7,
+      "predSum": 1731127.2962600514,
+      "actualSum": 505278.0,
+      "totalRatio": 3.42608879915621,
+      "mape": 2.7830357459462656,
+      "meanLogError": 1.2421007804193276,
+      "sdLogError": 0.44824145684331107,
+      "medianRatio": 2.938466109998799,
+      "within2x": 0.14285714285714285
+     },
+     "dailyPassengers": 1065387.9781140538,
+     "dailyPassengerKm": 17836109.536210068,
+     "tripsByType": {
+      "local": 12263.989443451788,
+      "toExisting": 502128.81535722845,
+      "through": 550995.1733133554
+     },
+     "totalKm": 58.31483451184162
+    },
+    "full-2020-40kmh": {
+     "metricsWithoutThrough": {
+      "n": 20,
+      "predSum": 879642.4149943371,
+      "actualSum": 806794.0,
+      "totalRatio": 1.0902936994999184,
+      "mape": 0.4845266076789394,
+      "meanLogError": 0.026672639890490773,
+      "sdLogError": 0.5304503592108442,
+      "medianRatio": 0.9952511513537339,
+      "within2x": 0.75
+     },
+     "params": "full",
+     "population": 2020,
+     "speedKmh": 40,
+     "main": false,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "秋葉原",
+       "transfer": true,
+       "pred": 338757.62068456755,
+       "actual": 123783,
+       "status": "ok",
+       "fromCatchment": 6344.598954865982,
+       "fromTransfer": 332413.02172970155,
+       "fromThrough": 160001.26004797374,
+       "tripEnds": 59553.58736178072,
+       "catchment": 0,
+       "acc": 11483060.078840937
+      },
+      {
+       "vertexId": "s1",
+       "name": "新御徒町",
+       "transfer": true,
+       "pred": 168858.21182244155,
+       "actual": 48374,
+       "status": "ok",
+       "fromCatchment": 15935.33592135958,
+       "fromTransfer": 152922.87590108198,
+       "fromThrough": 95990.35796915898,
+       "tripEnds": 32628.740513173583,
+       "catchment": 0,
+       "acc": 10400864.626608124
+      },
+      {
+       "vertexId": "s2",
+       "name": "浅草",
+       "transfer": false,
+       "pred": 35336.977785737494,
+       "actual": 24412,
+       "status": "ok",
+       "fromCatchment": 35336.977785737494,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 33104.479378982134,
+       "catchment": 32312.540843307812,
+       "acc": 9409550.376795772
+      },
+      {
+       "vertexId": "s3",
+       "name": "南千住",
+       "transfer": true,
+       "pred": 83404.04316062019,
+       "actual": 12890,
+       "status": "ok",
+       "fromCatchment": 9811.694154080618,
+       "fromTransfer": 73592.34900653957,
+       "fromThrough": 41709.663680733844,
+       "tripEnds": 41473.32768829849,
+       "catchment": 0,
+       "acc": 9899878.022596199
+      },
+      {
+       "vertexId": "s4",
+       "name": "北千住",
+       "transfer": true,
+       "pred": 226174.72673900248,
+       "actual": 108181,
+       "status": "ok",
+       "fromCatchment": 12175.414556355809,
+       "fromTransfer": 213999.31218264668,
+       "fromThrough": 146272.97007532173,
+       "tripEnds": 55122.56384866183,
+       "catchment": 0,
+       "acc": 9692491.638579171
+      },
+      {
+       "vertexId": "s5",
+       "name": "青井",
+       "transfer": false,
+       "pred": 31961.59573102689,
+       "actual": 13288,
+       "status": "ok",
+       "fromCatchment": 31961.59573102689,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 35530.700922891534,
+       "catchment": 38567.084147565794,
+       "acc": 8121996.877911428
+      },
+      {
+       "vertexId": "s6",
+       "name": "六町",
+       "transfer": false,
+       "pred": 68751.46673491737,
+       "actual": 34213,
+       "status": "ok",
+       "fromCatchment": 68751.46673491737,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 73041.44699209282,
+       "catchment": 83163.16677572063,
+       "acc": 7830692.445642821
+      },
+      {
+       "vertexId": "s7",
+       "name": "八潮",
+       "transfer": false,
+       "pred": 64094.769926671695,
+       "actual": 50219,
+       "status": "ok",
+       "fromCatchment": 64094.769926671695,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 66823.8095130542,
+       "catchment": 80168.63976294846,
+       "acc": 7244703.942402331
+      },
+      {
+       "vertexId": "s8",
+       "name": "三郷中央",
+       "transfer": false,
+       "pred": 34412.01862346653,
+       "actual": 30722,
+       "status": "ok",
+       "fromCatchment": 34412.01862346653,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 36203.51906451896,
+       "catchment": 44249.15260616399,
+       "acc": 6872761.713837793
+      },
+      {
+       "vertexId": "s9",
+       "name": "南流山",
+       "transfer": true,
+       "pred": 134220.10741316012,
+       "actual": 78095,
+       "status": "ok",
+       "fromCatchment": 11497.199659081736,
+       "fromTransfer": 122722.90775407839,
+       "fromThrough": 46638.35580721661,
+       "tripEnds": 28641.074552177623,
+       "catchment": 0,
+       "acc": 7072627.866492874
+      },
+      {
+       "vertexId": "s10",
+       "name": "流山セントラルパーク",
+       "transfer": false,
+       "pred": 12298.181955075648,
+       "actual": 11233,
+       "status": "ok",
+       "fromCatchment": 12298.181955075648,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 14645.309019628614,
+       "catchment": 18490.1004828627,
+       "acc": 6313731.05226653
+      },
+      {
+       "vertexId": "s11",
+       "name": "流山おおたかの森",
+       "transfer": true,
+       "pred": 137630.2596168541,
+       "actual": 85328,
+       "status": "ok",
+       "fromCatchment": 23943.345455224808,
+       "fromTransfer": 113686.91416162929,
+       "fromThrough": 94965.83804800891,
+       "tripEnds": 32474.40989477253,
+       "catchment": 0,
+       "acc": 6080301.766023603
+      },
+      {
+       "vertexId": "s12",
+       "name": "柏の葉キャンパス",
+       "transfer": false,
+       "pred": 35954.0720780797,
+       "actual": 39740,
+       "status": "ok",
+       "fromCatchment": 35954.0720780797,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 37079.75234262088,
+       "catchment": 53817.81186906159,
+       "acc": 5395602.782607398
+      },
+      {
+       "vertexId": "s13",
+       "name": "柏たなか",
+       "transfer": false,
+       "pred": 14341.388621913971,
+       "actual": 16066,
+       "status": "ok",
+       "fromCatchment": 14341.388621913971,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 15315.943049412288,
+       "catchment": 22471.43176792259,
+       "acc": 5115183.017385521
+      },
+      {
+       "vertexId": "s14",
+       "name": "守谷",
+       "transfer": true,
+       "pred": 67772.57520145565,
+       "actual": 48627,
+       "status": "ok",
+       "fromCatchment": 18663.61084327048,
+       "fromTransfer": 49108.96435818516,
+       "fromThrough": 43910.26736275979,
+       "tripEnds": 22519.710311349423,
+       "catchment": 0,
+       "acc": 4381818.292132964
+      },
+      {
+       "vertexId": "s15",
+       "name": "みらい平",
+       "transfer": false,
+       "pred": 8136.222121073874,
+       "actual": 11885,
+       "status": "ok",
+       "fromCatchment": 8136.222121073874,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10087.86374278575,
+       "catchment": 18732.98386965616,
+       "acc": 3600510.5862694425
+      },
+      {
+       "vertexId": "s16",
+       "name": "みどりの",
+       "transfer": false,
+       "pred": 9693.927035621266,
+       "actual": 11096,
+       "status": "ok",
+       "fromCatchment": 9693.927035621266,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10786.945428156248,
+       "catchment": 21936.249854628935,
+       "acc": 3175585.047108417
+      },
+      {
+       "vertexId": "s17",
+       "name": "万博記念公園",
+       "transfer": false,
+       "pred": 3287.57725366262,
+       "actual": 7133,
+       "status": "ok",
+       "fromCatchment": 3287.57725366262,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 4141.585454212122,
+       "catchment": 8720.4982031644,
+       "acc": 2901039.212344876
+      },
+      {
+       "vertexId": "s18",
+       "name": "研究学園",
+       "transfer": false,
+       "pred": 13455.605382326265,
+       "actual": 15919,
+       "status": "ok",
+       "fromCatchment": 13455.605382326265,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 14206.275367065231,
+       "catchment": 33732.49619917385,
+       "acc": 2581075.797590339
+      },
+      {
+       "vertexId": "s19",
+       "name": "つくば",
+       "transfer": false,
+       "pred": 20589.780097835777,
+       "actual": 35590,
+       "status": "ok",
+       "fromCatchment": 20589.780097835777,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 21591.013028101108,
+       "catchment": 55115.46213486001,
+       "acc": 2372368.8737157257
+      }
+     ],
+     "metrics": {
+      "n": 20,
+      "predSum": 1509131.1279855107,
+      "actualSum": 806794.0,
+      "totalRatio": 1.8705284471445136,
+      "mape": 0.881359268298913,
+      "meanLogError": 0.31944687325294396,
+      "sdLogError": 0.6401147462455701,
+      "medianRatio": 1.3337226351590588,
+      "within2x": 0.65
+     },
+     "metricsInclNoted": {
+      "n": 20,
+      "predSum": 1509131.1279855107,
+      "actualSum": 806794.0,
+      "totalRatio": 1.8705284471445136,
+      "mape": 0.881359268298913,
+      "meanLogError": 0.31944687325294396,
+      "sdLogError": 0.6401147462455701,
+      "medianRatio": 1.3337226351590588,
+      "within2x": 0.65
+     },
+     "metricsFresh": {
+      "n": 13,
+      "predSum": 352313.5833474091,
+      "actualSum": 301516.0,
+      "totalRatio": 1.1684739229341365,
+      "mape": 0.393330048353422,
+      "meanLogError": 0.013518217510128886,
+      "sdLogError": 0.4641201203553527,
+      "medianRatio": 0.9047325636154931,
+      "within2x": 0.7692307692307693
+     },
+     "metricsTransfer": {
+      "n": 7,
+      "predSum": 1156817.5446381017,
+      "actualSum": 505278.0,
+      "totalRatio": 2.2894674706559592,
+      "mape": 1.7876992481976814,
+      "meanLogError": 0.8876000910610292,
+      "sdLogError": 0.5360370077143195,
+      "medianRatio": 2.0907065634353765,
+      "within2x": 0.42857142857142855
+     },
+     "dailyPassengers": 754565.5639927482,
+     "dailyPassengerKm": 11167993.564927783,
+     "tripsByType": {
+      "local": 10863.575394481451,
+      "toExisting": 428957.6321026833,
+      "through": 314744.35649558646
+     },
+     "totalKm": 58.31483451184162
+    },
+    "full-2000-55kmh": {
+     "metricsWithoutThrough": {
+      "n": 20,
+      "predSum": 796343.0066151284,
+      "actualSum": 806794.0,
+      "totalRatio": 0.9870462678392853,
+      "mape": 0.507839083630173,
+      "meanLogError": -0.1634104317455694,
+      "sdLogError": 0.6492817571391282,
+      "medianRatio": 0.8260953903650409,
+      "within2x": 0.7
+     },
+     "params": "full",
+     "population": 2000,
+     "speedKmh": 55.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "秋葉原",
+       "transfer": true,
+       "pred": 494954.71532388765,
+       "actual": 123783,
+       "status": "ok",
+       "fromCatchment": 7793.5625592270435,
+       "fromTransfer": 487161.1527646606,
+       "fromThrough": 303470.0234673756,
+       "tripEnds": 55375.19718407973,
+       "catchment": 0,
+       "acc": 11042550.250853196
+      },
+      {
+       "vertexId": "s1",
+       "name": "新御徒町",
+       "transfer": true,
+       "pred": 196386.58879801724,
+       "actual": 48374,
+       "status": "ok",
+       "fromCatchment": 15585.506096263975,
+       "fromTransfer": 180801.08270175327,
+       "fromThrough": 129405.83141642188,
+       "tripEnds": 28622.552613781056,
+       "catchment": 0,
+       "acc": 10055857.665414844
+      },
+      {
+       "vertexId": "s2",
+       "name": "浅草",
+       "transfer": false,
+       "pred": 31458.075906682454,
+       "actual": 24412,
+       "status": "ok",
+       "fromCatchment": 31458.075906682454,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 29493.41895962983,
+       "catchment": 29024.902108826354,
+       "acc": 9254924.409454904
+      },
+      {
+       "vertexId": "s3",
+       "name": "南千住",
+       "transfer": true,
+       "pred": 76545.0284411585,
+       "actual": 12890,
+       "status": "ok",
+       "fromCatchment": 11458.960953326969,
+       "fromTransfer": 65086.06748783153,
+       "fromThrough": 39763.50466239781,
+       "tripEnds": 35207.72658517407,
+       "catchment": 0,
+       "acc": 9552699.268564953
+      },
+      {
+       "vertexId": "s4",
+       "name": "北千住",
+       "transfer": true,
+       "pred": 282142.2218286407,
+       "actual": 108181,
+       "status": "ok",
+       "fromCatchment": 17321.05624225115,
+       "fromTransfer": 264821.16558638954,
+       "fromThrough": 212312.93729737677,
+       "tripEnds": 51550.39455176918,
+       "catchment": 0,
+       "acc": 9356465.441804133
+      },
+      {
+       "vertexId": "s5",
+       "name": "青井",
+       "transfer": false,
+       "pred": 31260.528037513926,
+       "actual": 13288,
+       "status": "ok",
+       "fromCatchment": 31260.528037513926,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 35551.661123950165,
+       "catchment": 38013.35933798109,
+       "acc": 8296924.03227137
+      },
+      {
+       "vertexId": "s6",
+       "name": "六町",
+       "transfer": false,
+       "pred": 65840.70934160979,
+       "actual": 34213,
+       "status": "ok",
+       "fromCatchment": 65840.70934160979,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 70114.4138016252,
+       "catchment": 77992.9025072459,
+       "acc": 8078615.3040028475
+      },
+      {
+       "vertexId": "s7",
+       "name": "八潮",
+       "transfer": false,
+       "pred": 53129.79880414398,
+       "actual": 50219,
+       "status": "ok",
+       "fromCatchment": 53129.79880414398,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 52835.48515763001,
+       "catchment": 60642.40287995979,
+       "acc": 7635015.424970798
+      },
+      {
+       "vertexId": "s8",
+       "name": "三郷中央",
+       "transfer": false,
+       "pred": 26348.084097797804,
+       "actual": 30722,
+       "status": "ok",
+       "fromCatchment": 26348.084097797804,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 25796.920981674673,
+       "catchment": 29847.73245884566,
+       "acc": 7319189.321003804
+      },
+      {
+       "vertexId": "s9",
+       "name": "南流山",
+       "transfer": true,
+       "pred": 176757.1992057028,
+       "actual": 78095,
+       "status": "ok",
+       "fromCatchment": 13895.955517701985,
+       "fromTransfer": 162861.24368800083,
+       "fromThrough": 107484.15521183598,
+       "tripEnds": 26424.52323157682,
+       "catchment": 0,
+       "acc": 7440134.438990642
+      },
+      {
+       "vertexId": "s10",
+       "name": "流山セントラルパーク",
+       "transfer": false,
+       "pred": 10452.434469103577,
+       "actual": 11233,
+       "status": "ok",
+       "fromCatchment": 10452.434469103577,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 12494.364803722754,
+       "catchment": 14847.7172343493,
+       "acc": 6831223.493259146
+      },
+      {
+       "vertexId": "s11",
+       "name": "流山おおたかの森",
+       "transfer": true,
+       "pred": 176224.19681578554,
+       "actual": 85328,
+       "status": "ok",
+       "fromCatchment": 14235.927818100361,
+       "fromTransfer": 161988.2689976852,
+       "fromThrough": 145110.5177440004,
+       "tripEnds": 16450.0584532587,
+       "catchment": 0,
+       "acc": 6654493.996706612
+      },
+      {
+       "vertexId": "s12",
+       "name": "柏の葉キャンパス",
+       "transfer": false,
+       "pred": 31621.95412057937,
+       "actual": 39740,
+       "status": "ok",
+       "fromCatchment": 31621.95412057937,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 30736.385514002493,
+       "catchment": 40746.363596197836,
+       "acc": 6083854.63202634
+      },
+      {
+       "vertexId": "s13",
+       "name": "柏たなか",
+       "transfer": false,
+       "pred": 11048.972287502003,
+       "actual": 16066,
+       "status": "ok",
+       "fromCatchment": 11048.972287502003,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10647.029849115073,
+       "catchment": 14046.57448700101,
+       "acc": 5852115.016806039
+      },
+      {
+       "vertexId": "s14",
+       "name": "守谷",
+       "transfer": true,
+       "pred": 83368.77052170032,
+       "actual": 48627,
+       "status": "ok",
+       "fromCatchment": 15543.768227165276,
+       "fromTransfer": 67825.00229453505,
+       "fromThrough": 63160.50781025813,
+       "tripEnds": 17169.93854360158,
+       "catchment": 0,
+       "acc": 5221568.724321153
+      },
+      {
+       "vertexId": "s15",
+       "name": "みらい平",
+       "transfer": false,
+       "pred": 3760.6037046061538,
+       "actual": 11885,
+       "status": "ok",
+       "fromCatchment": 3760.6037046061538,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 3913.396097361847,
+       "catchment": 6010.153459803591,
+       "acc": 4521482.689258127
+      },
+      {
+       "vertexId": "s16",
+       "name": "みどりの",
+       "transfer": false,
+       "pred": 7584.942994049195,
+       "actual": 11096,
+       "status": "ok",
+       "fromCatchment": 7584.942994049195,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 7295.21358196622,
+       "catchment": 12189.631987825147,
+       "acc": 4122347.1878694952
+      },
+      {
+       "vertexId": "s17",
+       "name": "万博記念公園",
+       "transfer": false,
+       "pred": 1731.3692492739617,
+       "actual": 7133,
+       "status": "ok",
+       "fromCatchment": 1731.3692492739617,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 1836.2155586819474,
+       "catchment": 3083.9847688626514,
+       "acc": 3856409.974729335
+      },
+      {
+       "vertexId": "s18",
+       "name": "研究学園",
+       "transfer": false,
+       "pred": 11552.373393944863,
+       "actual": 15919,
+       "status": "ok",
+       "fromCatchment": 11552.373393944863,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10228.157673406658,
+       "catchment": 19223.83241094627,
+       "acc": 3541767.5314711295
+      },
+      {
+       "vertexId": "s19",
+       "name": "つくば",
+       "transfer": false,
+       "pred": 24881.91688309527,
+       "actual": 35590,
+       "status": "ok",
+       "fromCatchment": 24881.91688309527,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 25212.030981007963,
+       "catchment": 50901.16140173131,
+       "acc": 3327723.899134326
+      }
+     ],
+     "metrics": {
+      "n": 20,
+      "predSum": 1797050.4842247951,
+      "actualSum": 806794.0,
+      "totalRatio": 2.22739693679526,
+      "mape": 1.0666109629346414,
+      "meanLogError": 0.24871918515214766,
+      "sdLogError": 0.8390571463315578,
+      "medianRatio": 1.1676144278544731,
+      "within2x": 0.55
+     },
+     "metricsInclNoted": {
+      "n": 20,
+      "predSum": 1797050.4842247951,
+      "actualSum": 806794.0,
+      "totalRatio": 2.22739693679526,
+      "mape": 1.0666109629346414,
+      "meanLogError": 0.24871918515214766,
+      "sdLogError": 0.8390571463315578,
+      "medianRatio": 1.1676144278544731,
+      "within2x": 0.55
+     },
+     "metricsFresh": {
+      "n": 13,
+      "predSum": 310671.76328990236,
+      "actualSum": 301516.0,
+      "totalRatio": 1.0303657626457712,
+      "mape": 0.43726468625611603,
+      "meanLogError": -0.20260832933680578,
+      "sdLogError": 0.6204608035312889,
+      "medianRatio": 0.7957210397730088,
+      "within2x": 0.7692307692307693
+     },
+     "metricsTransfer": {
+      "n": 7,
+      "predSum": 1486378.7209348928,
+      "actualSum": 505278.0,
+      "totalRatio": 2.9417048059383006,
+      "mape": 2.235396905337617,
+      "meanLogError": 1.086898854917347,
+      "sdLogError": 0.44549424907638446,
+      "medianRatio": 2.608057069435859,
+      "within2x": 0.14285714285714285
+     },
+     "dailyPassengers": 898525.2421123974,
+     "dailyPassengerKm": 14635349.906101812,
+     "tripsByType": {
+      "local": 8334.997396375502,
+      "toExisting": 389836.50591118843,
+      "through": 500353.738804832
+     },
+     "totalKm": 58.31483451184162
+    },
+    "holdout-2020-55kmh": {
+     "metricsWithoutThrough": {
+      "n": 20,
+      "predSum": 1036208.170341381,
+      "actualSum": 806794.0,
+      "totalRatio": 1.2843528463788538,
+      "mape": 0.5441952017738558,
+      "meanLogError": 0.19399419044922672,
+      "sdLogError": 0.4916358048140121,
+      "medianRatio": 1.1894742050629692,
+      "within2x": 0.85
+     },
+     "params": "holdout",
+     "population": 2020,
+     "speedKmh": 55.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "秋葉原",
+       "transfer": true,
+       "pred": 580117.1621218993,
+       "actual": 123783,
+       "status": "ok",
+       "fromCatchment": 8812.134608923163,
+       "fromTransfer": 571305.0275129762,
+       "fromThrough": 335589.7895004999,
+       "tripEnds": 63052.26283921011,
+       "catchment": 0,
+       "acc": 11566704.16342993
+      },
+      {
+       "vertexId": "s1",
+       "name": "新御徒町",
+       "transfer": true,
+       "pred": 231460.541204632,
+       "actual": 48374,
+       "status": "ok",
+       "fromCatchment": 18081.003231792816,
+       "fromTransfer": 213379.53797283917,
+       "fromThrough": 146105.68753705348,
+       "tripEnds": 33880.6900047365,
+       "catchment": 0,
+       "acc": 10536495.392055694
+      },
+      {
+       "vertexId": "s2",
+       "name": "浅草",
+       "transfer": false,
+       "pred": 37152.08875740194,
+       "actual": 24412,
+       "status": "ok",
+       "fromCatchment": 37152.08875740194,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 34994.66931165035,
+       "catchment": 35462.68053648207,
+       "acc": 9698468.697142806
+      },
+      {
+       "vertexId": "s3",
+       "name": "南千住",
+       "transfer": true,
+       "pred": 90377.22476577683,
+       "actual": 12890,
+       "status": "ok",
+       "fromCatchment": 13613.499544430046,
+       "fromTransfer": 76763.72522134679,
+       "fromThrough": 44022.97585553511,
+       "tripEnds": 41196.859235602016,
+       "catchment": 0,
+       "acc": 10011187.791739322
+      },
+      {
+       "vertexId": "s4",
+       "name": "北千住",
+       "transfer": true,
+       "pred": 320853.3189102845,
+       "actual": 108181,
+       "status": "ok",
+       "fromCatchment": 19234.71970388035,
+       "fromTransfer": 301618.5992064041,
+       "fromThrough": 235589.1683794219,
+       "tripEnds": 55853.78116397083,
+       "catchment": 0,
+       "acc": 9807484.413037837
+      },
+      {
+       "vertexId": "s5",
+       "name": "青井",
+       "transfer": false,
+       "pred": 34854.69436293343,
+       "actual": 13288,
+       "status": "ok",
+       "fromCatchment": 34854.69436293343,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 38903.279394522695,
+       "catchment": 41928.9457372712,
+       "acc": 8701819.811881749
+      },
+      {
+       "vertexId": "s6",
+       "name": "六町",
+       "transfer": false,
+       "pred": 74231.59056676368,
+       "actual": 34213,
+       "status": "ok",
+       "fromCatchment": 74231.59056676368,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 77948.85286451182,
+       "catchment": 85364.11863223219,
+       "acc": 8474426.530828323
+      },
+      {
+       "vertexId": "s7",
+       "name": "八潮",
+       "transfer": false,
+       "pred": 69991.85351064365,
+       "actual": 50219,
+       "status": "ok",
+       "fromCatchment": 69991.85351064365,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 71612.35441724645,
+       "catchment": 80966.0713904367,
+       "acc": 8009164.203822719
+      },
+      {
+       "vertexId": "s8",
+       "name": "三郷中央",
+       "transfer": false,
+       "pred": 37909.17290735181,
+       "actual": 30722,
+       "status": "ok",
+       "fromCatchment": 37909.17290735181,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 39271.05880209196,
+       "catchment": 45425.06325340987,
+       "acc": 7681897.649464345
+      },
+      {
+       "vertexId": "s9",
+       "name": "南流山",
+       "transfer": true,
+       "pred": 213069.94695935605,
+       "actual": 78095,
+       "status": "ok",
+       "fromCatchment": 17003.72127567462,
+       "fromTransfer": 196066.22568368143,
+       "fromThrough": 119605.6987856432,
+       "tripEnds": 31943.654858228732,
+       "catchment": 0,
+       "acc": 7814886.084962105
+      },
+      {
+       "vertexId": "s10",
+       "name": "流山セントラルパーク",
+       "transfer": false,
+       "pred": 14021.223561763805,
+       "actual": 11233,
+       "status": "ok",
+       "fromCatchment": 14021.223561763805,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 16777.540784141263,
+       "catchment": 20147.573264439136,
+       "acc": 7175586.250753394
+      },
+      {
+       "vertexId": "s11",
+       "name": "流山おおたかの森",
+       "transfer": true,
+       "pred": 212002.45987726015,
+       "actual": 85328,
+       "status": "ok",
+       "fromCatchment": 28237.3298649772,
+       "fromTransfer": 183765.13001228296,
+       "fromThrough": 161935.57875735592,
+       "tripEnds": 36340.53500007338,
+       "catchment": 0,
+       "acc": 6984095.718965655
+      },
+      {
+       "vertexId": "s12",
+       "name": "柏の葉キャンパス",
+       "transfer": false,
+       "pred": 41817.70466937577,
+       "actual": 39740,
+       "status": "ok",
+       "fromCatchment": 41817.70466937577,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 42619.97988228346,
+       "catchment": 54722.872225856445,
+       "acc": 6391178.872651612
+      },
+      {
+       "vertexId": "s13",
+       "name": "柏たなか",
+       "transfer": false,
+       "pred": 16776.427471735533,
+       "actual": 16066,
+       "status": "ok",
+       "fromCatchment": 16776.427471735533,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 17593.013344739553,
+       "catchment": 23060.778393050226,
+       "acc": 6148937.76448224
+      },
+      {
+       "vertexId": "s14",
+       "name": "守谷",
+       "transfer": true,
+       "pred": 93135.57598018776,
+       "actual": 48627,
+       "status": "ok",
+       "fromCatchment": 23094.951362696465,
+       "fromTransfer": 70040.6246174913,
+       "fromThrough": 64289.89331429311,
+       "tripEnds": 26971.569356477063,
+       "catchment": 0,
+       "acc": 5485490.071958322
+      },
+      {
+       "vertexId": "s15",
+       "name": "みらい平",
+       "transfer": false,
+       "pred": 10121.812141811919,
+       "actual": 11885,
+       "status": "ok",
+       "fromCatchment": 10121.812141811919,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 12156.331411602683,
+       "catchment": 18429.56481877688,
+       "acc": 4752786.54283121
+      },
+      {
+       "vertexId": "s16",
+       "name": "みどりの",
+       "transfer": false,
+       "pred": 12630.927242588377,
+       "actual": 11096,
+       "status": "ok",
+       "fromCatchment": 12630.927242588377,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 13635.531594706525,
+       "catchment": 21781.283879058043,
+       "acc": 4335367.289351441
+      },
+      {
+       "vertexId": "s17",
+       "name": "万博記念公園",
+       "transfer": false,
+       "pred": 4293.37545674603,
+       "actual": 7133,
+       "status": "ok",
+       "fromCatchment": 4293.37545674603,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 5218.075304012852,
+       "catchment": 8642.910418994012,
+       "acc": 4057310.843778649
+      },
+      {
+       "vertexId": "s18",
+       "name": "研究学園",
+       "transfer": false,
+       "pred": 18819.303744780646,
+       "actual": 15919,
+       "status": "ok",
+       "fromCatchment": 18819.303744780646,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 19495.135453653074,
+       "catchment": 33958.32806246809,
+       "acc": 3724417.853028859
+      },
+      {
+       "vertexId": "s19",
+       "name": "つくば",
+       "transfer": false,
+       "pred": 29710.55825789036,
+       "actual": 35590,
+       "status": "ok",
+       "fromCatchment": 29710.55825789036,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 30797.77689134954,
+       "catchment": 55580.260836733294,
+       "acc": 3502758.598674259
+      }
+     ],
+     "metrics": {
+      "n": 20,
+      "predSum": 2143346.962471184,
+      "actualSum": 806794.0,
+      "totalRatio": 2.6566223378844955,
+      "mape": 1.2448028221152803,
+      "meanLogError": 0.5586831804741367,
+      "sdLogError": 0.6530201083143748,
+      "medianRatio": 1.4563965927111786,
+      "within2x": 0.6
+     },
+     "metricsInclNoted": {
+      "n": 20,
+      "predSum": 2143346.962471184,
+      "actualSum": 806794.0,
+      "totalRatio": 2.6566223378844955,
+      "mape": 1.2448028221152803,
+      "meanLogError": 0.5586831804741367,
+      "sdLogError": 0.6530201083143748,
+      "medianRatio": 1.4563965927111786,
+      "within2x": 0.6
+     },
+     "metricsFresh": {
+      "n": 13,
+      "predSum": 402330.73265178694,
+      "actualSum": 301516.0,
+      "totalRatio": 1.3343594789390512,
+      "mape": 0.4091657533988886,
+      "meanLogError": 0.1896254483917821,
+      "sdLogError": 0.3881308818783591,
+      "medianRatio": 1.1821913276449931,
+      "within2x": 0.8461538461538461
+     },
+     "metricsTransfer": {
+      "n": 7,
+      "predSum": 1741016.2298193965,
+      "actualSum": 505278.0,
+      "totalRatio": 3.4456600719196095,
+      "mape": 2.796700235445722,
+      "meanLogError": 1.2440761114842236,
+      "sdLogError": 0.4537862535941637,
+      "medianRatio": 2.965893446263988,
+      "within2x": 0.14285714285714285
+     },
+     "dailyPassengers": 1071673.4812355898,
+     "dailyPassengerKm": 17921257.98711624,
+     "tripsByType": {
+      "local": 12304.007073475736,
+      "toExisting": 505800.07809720637,
+      "through": 553569.3960649213
+     },
+     "totalKm": 58.31483451184162
+    },
+    "holdout-2000-55kmh": {
+     "metricsWithoutThrough": {
+      "n": 20,
+      "predSum": 806546.5598757647,
+      "actualSum": 806794.0,
+      "totalRatio": 0.9996933044566081,
+      "mape": 0.5095316739012319,
+      "meanLogError": -0.15285562722323215,
+      "sdLogError": 0.6506521664680607,
+      "medianRatio": 0.8396321845759224,
+      "within2x": 0.7
+     },
+     "params": "holdout",
+     "population": 2000,
+     "speedKmh": 55.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "秋葉原",
+       "transfer": true,
+       "pred": 502089.41859357327,
+       "actual": 123783,
+       "status": "ok",
+       "fromCatchment": 7998.127348527944,
+       "fromTransfer": 494091.2912450453,
+       "fromThrough": 307288.1556531116,
+       "tripEnds": 58562.89981546154,
+       "catchment": 0,
+       "acc": 11042166.467584431
+      },
+      {
+       "vertexId": "s1",
+       "name": "新御徒町",
+       "transfer": true,
+       "pred": 199106.5722922378,
+       "actual": 48374,
+       "status": "ok",
+       "fromCatchment": 15942.693570188661,
+       "fromTransfer": 183163.87872204915,
+       "fromThrough": 131000.8022580123,
+       "tripEnds": 29431.152695539688,
+       "catchment": 0,
+       "acc": 10055537.717093213
+      },
+      {
+       "vertexId": "s2",
+       "name": "浅草",
+       "transfer": false,
+       "pred": 31885.1022924413,
+       "actual": 24412,
+       "status": "ok",
+       "fromCatchment": 31885.1022924413,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 29646.370052303737,
+       "catchment": 30844.166956140627,
+       "acc": 9254625.474139294
+      },
+      {
+       "vertexId": "s3",
+       "name": "南千住",
+       "transfer": true,
+       "pred": 77018.51380913402,
+       "actual": 12890,
+       "status": "ok",
+       "fromCatchment": 11454.299846351532,
+       "fromTransfer": 65564.21396278248,
+       "fromThrough": 39980.32854403489,
+       "tripEnds": 34680.270295030234,
+       "catchment": 0,
+       "acc": 9552423.045101983
+      },
+      {
+       "vertexId": "s4",
+       "name": "北千住",
+       "transfer": true,
+       "pred": 286278.2084647142,
+       "actual": 108181,
+       "status": "ok",
+       "fromCatchment": 17528.375700340257,
+       "fromTransfer": 268749.8327643739,
+       "fromThrough": 215886.67163371472,
+       "tripEnds": 51831.336921903945,
+       "catchment": 0,
+       "acc": 9356316.606150802
+      },
+      {
+       "vertexId": "s5",
+       "name": "青井",
+       "transfer": false,
+       "pred": 31446.456290703918,
+       "actual": 13288,
+       "status": "ok",
+       "fromCatchment": 31446.456290703918,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 35349.33449017333,
+       "catchment": 39137.07840254184,
+       "acc": 8296665.548310767
+      },
+      {
+       "vertexId": "s6",
+       "name": "六町",
+       "transfer": false,
+       "pred": 66388.24868288756,
+       "actual": 34213,
+       "status": "ok",
+       "fromCatchment": 66388.24868288756,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 69973.7557383446,
+       "catchment": 78725.96232103709,
+       "acc": 8078381.049238153
+      },
+      {
+       "vertexId": "s7",
+       "name": "八潮",
+       "transfer": false,
+       "pred": 53610.88763882888,
+       "actual": 50219,
+       "status": "ok",
+       "fromCatchment": 53610.88763882888,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 52746.020851808564,
+       "catchment": 61249.83240025823,
+       "acc": 7634790.421777287
+      },
+      {
+       "vertexId": "s8",
+       "name": "三郷中央",
+       "transfer": false,
+       "pred": 26723.199655737182,
+       "actual": 30722,
+       "status": "ok",
+       "fromCatchment": 26723.199655737182,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 26035.060122074912,
+       "catchment": 30934.8080196232,
+       "acc": 7318974.785752248
+      },
+      {
+       "vertexId": "s9",
+       "name": "南流山",
+       "transfer": true,
+       "pred": 177594.3526369142,
+       "actual": 78095,
+       "status": "ok",
+       "fromCatchment": 13946.544979309918,
+       "fromTransfer": 163647.80765760428,
+       "fromThrough": 107750.5134171208,
+       "tripEnds": 26246.30517996796,
+       "catchment": 0,
+       "acc": 7439945.963342521
+      },
+      {
+       "vertexId": "s10",
+       "name": "流山セントラルパーク",
+       "transfer": false,
+       "pred": 10417.75296818403,
+       "actual": 11233,
+       "status": "ok",
+       "fromCatchment": 10417.75296818403,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 12271.91794735773,
+       "catchment": 15147.196439717827,
+       "acc": 6831027.80302723
+      },
+      {
+       "vertexId": "s11",
+       "name": "流山おおたかの森",
+       "transfer": true,
+       "pred": 177752.89057771768,
+       "actual": 85328,
+       "status": "ok",
+       "fromCatchment": 14577.150953018485,
+       "fromTransfer": 163175.7396246992,
+       "fromThrough": 146162.0325101441,
+       "tripEnds": 16898.506273549505,
+       "catchment": 0,
+       "acc": 6654309.9695781395
+      },
+      {
+       "vertexId": "s12",
+       "name": "柏の葉キャンパス",
+       "transfer": false,
+       "pred": 32208.2438917761,
+       "actual": 39740,
+       "status": "ok",
+       "fromCatchment": 32208.2438917761,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 31318.89584254144,
+       "catchment": 41334.70772671757,
+       "acc": 6083677.787731908
+      },
+      {
+       "vertexId": "s13",
+       "name": "柏たなか",
+       "transfer": false,
+       "pred": 11202.277832789807,
+       "actual": 16066,
+       "status": "ok",
+       "fromCatchment": 11202.277832789807,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10753.551068371242,
+       "catchment": 14486.891175218689,
+       "acc": 5851952.538718683
+      },
+      {
+       "vertexId": "s14",
+       "name": "守谷",
+       "transfer": true,
+       "pred": 81427.15590412809,
+       "actual": 48627,
+       "status": "ok",
+       "fromCatchment": 15882.239900322093,
+       "fromTransfer": 65544.91600380599,
+       "fromThrough": 61008.224933981284,
+       "tripEnds": 17572.37023952768,
+       "catchment": 0,
+       "acc": 5221424.994521767
+      },
+      {
+       "vertexId": "s15",
+       "name": "みらい平",
+       "transfer": false,
+       "pred": 3735.219098827347,
+       "actual": 11885,
+       "status": "ok",
+       "fromCatchment": 3735.219098827347,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 3799.7774718842747,
+       "catchment": 5916.404146491657,
+       "acc": 4521354.896617077
+      },
+      {
+       "vertexId": "s16",
+       "name": "みどりの",
+       "transfer": false,
+       "pred": 7576.605760120106,
+       "actual": 11096,
+       "status": "ok",
+       "fromCatchment": 7576.605760120106,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 7140.929642005121,
+       "catchment": 11726.973488728452,
+       "acc": 4122230.782484857
+      },
+      {
+       "vertexId": "s17",
+       "name": "万博記念公園",
+       "transfer": false,
+       "pred": 1734.2065036342206,
+       "actual": 7133,
+       "status": "ok",
+       "fromCatchment": 1734.2065036342206,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 1813.5201012900466,
+       "catchment": 3087.0443150894685,
+       "acc": 3856301.4416976385
+      },
+      {
+       "vertexId": "s18",
+       "name": "研究学園",
+       "transfer": false,
+       "pred": 11895.068006142099,
+       "actual": 15919,
+       "status": "ok",
+       "fromCatchment": 11895.068006142099,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 10689.525121943621,
+       "catchment": 19142.631289438377,
+       "acc": 3541667.004713347
+      },
+      {
+       "vertexId": "s19",
+       "name": "つくば",
+       "transfer": false,
+       "pred": 25532.90792539265,
+       "actual": 35590,
+       "status": "ok",
+       "fromCatchment": 25532.90792539265,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 26089.730846450235,
+       "catchment": 48461.52840874439,
+       "acc": 3327630.196968283
+      }
+     ],
+     "metrics": {
+      "n": 20,
+      "predSum": 1815623.2888258842,
+      "actualSum": 806794.0,
+      "totalRatio": 2.250417440915381,
+      "mape": 1.0748039329730024,
+      "meanLogError": 0.2570732317951169,
+      "sdLogError": 0.8397848739419063,
+      "medianRatio": 1.1808227054751657,
+      "within2x": 0.55
+     },
+     "metricsInclNoted": {
+      "n": 20,
+      "predSum": 1815623.2888258842,
+      "actualSum": 806794.0,
+      "totalRatio": 2.250417440915381,
+      "mape": 1.0748039329730024,
+      "meanLogError": 0.2570732317951169,
+      "sdLogError": 0.8397848739419063,
+      "medianRatio": 1.1808227054751657,
+      "within2x": 0.55
+     },
+     "metricsFresh": {
+      "n": 13,
+      "predSum": 314356.1765474652,
+      "actualSum": 301516.0,
+      "totalRatio": 1.042585390319138,
+      "mape": 0.43621246178483697,
+      "meanLogError": -0.1927239408481928,
+      "sdLogError": 0.6227596857313744,
+      "medianRatio": 0.8104741794608983,
+      "within2x": 0.7692307692307693
+     },
+     "metricsTransfer": {
+      "n": 7,
+      "predSum": 1501267.112278419,
+      "actualSum": 505278.0,
+      "totalRatio": 2.9711705482495163,
+      "mape": 2.260759522322453,
+      "meanLogError": 1.092410838132692,
+      "sdLogError": 0.45294014887888046,
+      "medianRatio": 2.6462891678271987,
+      "within2x": 0.14285714285714285
+     },
+     "dailyPassengers": 907811.6444129454,
+     "dailyPassengerKm": 14758488.430971032,
+     "tripsByType": {
+      "local": 8412.32890763473,
+      "toExisting": 394860.9510302522,
+      "through": 504538.3644750353
+     },
+     "totalKm": 58.31483451184162
+    }
+   }
+  },
+  "shinyoko": {
+   "info": {
+    "case": {
+     "id": "shinyoko",
+     "name": "東急新横浜線・相鉄新横浜線",
+     "lines": [
+      "相模鉄道/相鉄新横浜線",
+      "東急電鉄/東急新横浜線"
+     ],
+     "termini": [
+      "西谷",
+      "日吉"
+     ],
+     "populations": [
+      2020
+     ],
+     "color": "#0071bc",
+     "structures": [
+      {
+       "from": "西谷",
+       "to": "日吉",
+       "structure": "underground",
+       "note": "仮置き（全線おおむね地下）"
+      }
+     ]
+    },
+    "meta": [
+     {
+      "vertexId": "s0",
+      "name": "西谷",
+      "group": "004594",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（全線おおむね地下）"
+     },
+     {
+      "vertexId": "s1",
+      "name": "羽沢横浜国大",
+      "group": "004581",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（全線おおむね地下）"
+     },
+     {
+      "vertexId": "s2",
+      "name": "新横浜",
+      "group": "004501",
+      "transfer": true,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（全線おおむね地下）"
+     },
+     {
+      "vertexId": "s3",
+      "name": "新綱島",
+      "group": "010165",
+      "transfer": false,
+      "structureToNext": "underground",
+      "structureNote": "仮置き（全線おおむね地下）"
+     },
+     {
+      "vertexId": "s4",
+      "name": "日吉",
+      "group": "004351",
+      "transfer": true,
+      "structureToNext": null,
+      "structureNote": null
+     }
+    ],
+    "openingYears": {
+     "相模鉄道 羽沢横浜国大": {
+      "firstYear": 2019,
+      "note": "新駅設置"
+     },
+     "相模鉄道 西谷": {
+      "firstYear": 2019,
+      "note": ""
+     },
+     "相模鉄道 新横浜": {
+      "firstYear": 2022,
+      "note": "開業、東急電鉄・東急新横浜線を含む"
+     },
+     "東急電鉄 新綱島": {
+      "firstYear": 2022,
+      "note": "新駅"
+     },
+     "東急電鉄 新横浜": {
+      "firstYear": 2022,
+      "note": "開業"
+     },
+     "東急電鉄 日吉": {
+      "firstYear": 2022,
+      "note": "開業"
+     }
+    },
+    "stageA": {
+     "s3": {
+      "mu": 47487.366205939645,
+      "catchment": 54217.96454587325,
+      "acc": 7656777.10623546
+     }
+    },
+    "baseCatch": {
+     "s0": 38517.5,
+     "s1": 28006.9,
+     "s2": 72932.3,
+     "s3": 54218.0,
+     "s4": 69804.9
+    },
+    "holdout": {
+     "fitted": {
+      "accessDecayPerKm": 2.1958903156224006,
+      "attractivenessExponent": 1.99999999993154,
+      "outsideConst": -3.040015806164903,
+      "outsidePerKm": 0.0,
+      "employeeWeight": 1.0922658939546375,
+      "timeDecayPerMin": 0.02,
+      "intercept": -1.1914840903628132,
+      "catchmentElasticity": 0.9730437508110805,
+      "accessibilityElasticity": 0.6689108987053806,
+      "hubElasticity": 1.530764385697438
+     },
+     "metrics": {
+      "n": 1416,
+      "pseudoR2": 0.8532540172144146,
+      "logR2": 0.8262461021150842,
+      "rmse": 62202.64847178888,
+      "medianRatio": 1.5854667301762853,
+      "within2x": 0.6772598870056498,
+      "totalRatio": 1.0000000000000053
+     },
+     "nEval": 1341,
+     "converged": true,
+     "nHoldoutClusters": 4
+    },
+    "population": {
+     "2020": {}
+    },
+    "speedKmh": 35.0,
+    "fullFitted": {
+     "accessDecayPerKm": 2.2032100324349497,
+     "attractivenessExponent": 1.999999999995394,
+     "outsideConst": -3.3647005672736006,
+     "outsidePerKm": 0.0,
+     "employeeWeight": 1.1079838781543951,
+     "timeDecayPerMin": 0.02,
+     "intercept": -1.207386778577327,
+     "catchmentElasticity": 0.9704467141148144,
+     "accessibilityElasticity": 0.6862830369043024,
+     "hubElasticity": 1.521187525188747
+    },
+    "removedStations": 1,
+    "touchedClusters": 5,
+    "fullMetrics": {
+     "n": 1421,
+     "pseudoR2": 0.8529812812987128,
+     "logR2": 0.8263714310688698,
+     "rmse": 62473.14940068193,
+     "medianRatio": 1.5826216459254163,
+     "within2x": 0.6798029556650246,
+     "totalRatio": 0.9999999999999964
+    }
+   },
+   "actuals": {
+    "s0": {
+     "2011": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2012": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2013": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2014": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2015": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2016": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2017": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2018": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2019": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2020": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2021": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2022": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2023": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2024": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     }
+    },
+    "s1": {
+     "2011": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2012": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2013": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2014": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2015": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2016": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2017": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2018": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2019": {
+      "value": 25422,
+      "status": "ok",
+      "note": "新駅設置"
+     },
+     "2020": {
+      "value": 21309,
+      "status": "includes_other",
+      "note": "東日本旅客鉄道、東海道線を含む"
+     },
+     "2021": {
+      "value": 24655,
+      "status": "includes_other",
+      "note": "東日本旅客鉄道、東海道線を含む"
+     },
+     "2022": {
+      "value": 29336,
+      "status": "includes_other",
+      "note": "東日本旅客鉄道・東海道線を含む"
+     },
+     "2023": {
+      "value": 31622,
+      "status": "includes_other",
+      "note": "東日本旅客鉄道・東海道線を含む"
+     },
+     "2024": {
+      "value": 34672,
+      "status": "includes_other",
+      "note": "東日本旅客鉄道・東海道線を含む"
+     }
+    },
+    "s2": {
+     "2011": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2012": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2013": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2014": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2015": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2016": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2017": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2018": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2019": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2020": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2021": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2022": {
+      "value": 99158,
+      "status": "ok",
+      "note": "開業、開業、東急電鉄・東急新横浜線を含む"
+     },
+     "2023": {
+      "value": 124884,
+      "status": "ok",
+      "note": "東急電鉄・東急新横浜線を含む"
+     },
+     "2024": {
+      "value": 154378,
+      "status": "ok",
+      "note": "東急電鉄・東急新横浜線を含む"
+     }
+    },
+    "s3": {
+     "2011": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2012": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2013": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2014": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2015": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2016": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2017": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2018": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2019": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2020": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2021": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2022": {
+      "value": 13794,
+      "status": "ok",
+      "note": "新駅"
+     },
+     "2023": {
+      "value": 11659,
+      "status": "ok",
+      "note": ""
+     },
+     "2024": {
+      "value": 16473,
+      "status": "ok",
+      "note": ""
+     }
+    },
+    "s4": {
+     "2011": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2012": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2013": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2014": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2015": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2016": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2017": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2018": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2019": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2020": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2021": {
+      "value": null,
+      "status": "not_open",
+      "note": "駅なし（未開業）"
+     },
+     "2022": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない（開業）"
+     },
+     "2023": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     },
+     "2024": {
+      "value": null,
+      "status": "merged",
+      "note": "他路線の駅の行に合算されていて分けられない"
+     }
+    }
+   },
+   "variants": {
+    "full-2020-35kmh": {
+     "metricsWithoutThrough": {
+      "n": 2,
+      "predSum": 73772.83220853159,
+      "actualSum": 170851.0,
+      "totalRatio": 0.43179631496761267,
+      "mape": 1.067867750944363,
+      "meanLogError": -0.31421640179982907,
+      "sdLogError": 1.659664377243442,
+      "medianRatio": 0.7303609596306957,
+      "within2x": 0.0
+     },
+     "params": "full",
+     "population": 2020,
+     "speedKmh": 35.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "西谷",
+       "transfer": true,
+       "pred": 78954.62375450398,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 12682.928235114867,
+       "fromTransfer": 66271.6955193891,
+       "fromThrough": 56123.309651624906,
+       "tripEnds": 29984.312776089202,
+       "catchment": 0,
+       "acc": 6212041.631521568
+      },
+      {
+       "vertexId": "s1",
+       "name": "羽沢横浜国大",
+       "transfer": true,
+       "pred": 24029.428305731468,
+       "actual": 34672,
+       "status": "includes_other",
+       "fromCatchment": 11626.968127012717,
+       "fromTransfer": 12402.460178718751,
+       "fromThrough": 9152.395782830865,
+       "tripEnds": 22232.817488363286,
+       "catchment": 0,
+       "acc": 6496720.9363976065
+      },
+      {
+       "vertexId": "s2",
+       "name": "新横浜",
+       "transfer": true,
+       "pred": 76942.00806910821,
+       "actual": 154378,
+       "status": "ok",
+       "fromCatchment": 19047.592744171758,
+       "fromTransfer": 57894.41532493646,
+       "fromThrough": 42071.9752124229,
+       "tripEnds": 59640.69520563848,
+       "catchment": 0,
+       "acc": 7212288.487253629
+      },
+      {
+       "vertexId": "s3",
+       "name": "新綱島",
+       "transfer": false,
+       "pred": 38902.799351846275,
+       "actual": 16473,
+       "status": "ok",
+       "fromCatchment": 38902.799351846275,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 40254.84414172206,
+       "catchment": 48963.64468368135,
+       "acc": 6951565.251510595
+      },
+      {
+       "vertexId": "s4",
+       "name": "日吉",
+       "transfer": true,
+       "pred": 127637.14288649111,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 4992.505318582835,
+       "fromTransfer": 122644.63756790828,
+       "fromThrough": 67134.74913157818,
+       "tripEnds": 65094.88672782727,
+       "catchment": 0,
+       "acc": 8394175.890890267
+      }
+     ],
+     "metrics": {
+      "n": 2,
+      "predSum": 115844.80742095449,
+      "actualSum": 170851.0,
+      "totalRatio": 0.6780458260177259,
+      "mape": 0.9316048922066449,
+      "meanLogError": 0.08149569479556074,
+      "sdLogError": 1.1000429634431497,
+      "medianRatio": 1.0849085468208535,
+      "within2x": 0.0
+     },
+     "metricsInclNoted": {
+      "n": 3,
+      "predSum": 139874.23572668596,
+      "actualSum": 205523.0,
+      "totalRatio": 0.6805770435751033,
+      "mape": 0.7233866072474053,
+      "meanLogError": -0.06788726553115447,
+      "sdLogError": 0.8197518327020148,
+      "medianRatio": 0.6930499626710737,
+      "within2x": 0.3333333333333333
+     },
+     "metricsFresh": {
+      "n": 1,
+      "predSum": 38902.799351846275,
+      "actualSum": 16473.0,
+      "totalRatio": 2.3616098677743143,
+      "mape": 1.361609867774314,
+      "meanLogError": 0.8593435338427572,
+      "sdLogError": 0.0,
+      "medianRatio": 2.3616098677743143,
+      "within2x": 0.0
+     },
+     "metricsTransfer": {
+      "n": 1,
+      "predSum": 76942.00806910821,
+      "actualSum": 154378.0,
+      "totalRatio": 0.4984000833610243,
+      "mape": 0.5015999166389757,
+      "meanLogError": -0.6963521442516357,
+      "sdLogError": 0.0,
+      "medianRatio": 0.4984000833610243,
+      "within2x": 0.0
+     },
+     "dailyPassengers": 173233.00118383995,
+     "dailyPassengerKm": 1136926.843516463,
+     "tripsByType": {
+      "local": 1261.0074821165954,
+      "toExisting": 84730.77881249513,
+      "through": 87241.21488923034
+     },
+     "totalKm": 12.050234603473456
+    },
+    "full-2020-40kmh": {
+     "metricsWithoutThrough": {
+      "n": 2,
+      "predSum": 78853.33540137252,
+      "actualSum": 170851.0,
+      "totalRatio": 0.4615327706678481,
+      "mape": 1.0737425095442588,
+      "meanLogError": -0.24612735907286987,
+      "sdLogError": 1.5873326373574028,
+      "medianRatio": 0.7818226463771049,
+      "within2x": 0.0
+     },
+     "params": "full",
+     "population": 2020,
+     "speedKmh": 40,
+     "main": false,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "西谷",
+       "transfer": true,
+       "pred": 101883.96531045847,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 14048.36514443844,
+       "fromTransfer": 87835.60016602003,
+       "fromThrough": 76994.22892458519,
+       "tripEnds": 30641.68726730226,
+       "catchment": 0,
+       "acc": 6347260.07691655
+      },
+      {
+       "vertexId": "s1",
+       "name": "羽沢横浜国大",
+       "transfer": true,
+       "pred": 24573.125955293115,
+       "actual": 34672,
+       "status": "includes_other",
+       "fromCatchment": 12560.846015263733,
+       "fromTransfer": 12012.27994002938,
+       "fromThrough": 9056.649952350926,
+       "tripEnds": 22572.98437498846,
+       "catchment": 0,
+       "acc": 6592115.6695626825
+      },
+      {
+       "vertexId": "s2",
+       "name": "新横浜",
+       "transfer": true,
+       "pred": 92710.27690115788,
+       "actual": 154378,
+       "status": "ok",
+       "fromCatchment": 22602.35297471605,
+       "fromTransfer": 70107.92392644183,
+       "fromThrough": 53424.47772546336,
+       "tripEnds": 60289.74844510874,
+       "catchment": 0,
+       "acc": 7283340.978382412
+      },
+      {
+       "vertexId": "s3",
+       "name": "新綱島",
+       "transfer": false,
+       "pred": 39567.536225678006,
+       "actual": 16473,
+       "status": "ok",
+       "fromCatchment": 39567.536225678006,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 41104.466012847646,
+       "catchment": 49596.895991712816,
+       "acc": 7037338.487750407
+      },
+      {
+       "vertexId": "s4",
+       "name": "日吉",
+       "transfer": true,
+       "pred": 163040.88678948648,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 5824.868414192393,
+       "fromTransfer": 157216.01837529408,
+       "fromThrough": 95693.58293621252,
+       "tripEnds": 65277.112964942135,
+       "catchment": 0,
+       "acc": 8419309.084067447
+      }
+     ],
+     "metrics": {
+      "n": 2,
+      "predSum": 132277.81312683588,
+      "actualSum": 170851.0,
+      "totalRatio": 0.7742290833933421,
+      "mape": 0.900711126427936,
+      "meanLogError": 0.18318075038460968,
+      "sdLogError": 0.9801992865258821,
+      "medianRatio": 1.2010314753638427,
+      "within2x": 0.5
+     },
+     "metricsInclNoted": {
+      "n": 3,
+      "predSum": 156850.93908212899,
+      "actualSum": 205523.0,
+      "totalRatio": 0.7631794936923312,
+      "mape": 0.6975637055426634,
+      "meanLogError": 0.007360820307784843,
+      "sdLogError": 0.7570556545522812,
+      "medianRatio": 0.7087311362278818,
+      "within2x": 0.6666666666666666
+     },
+     "metricsFresh": {
+      "n": 1,
+      "predSum": 39567.536225678006,
+      "actualSum": 16473.0,
+      "totalRatio": 2.4019629834078797,
+      "mape": 1.40196298340788,
+      "meanLogError": 0.8762863128012766,
+      "sdLogError": 0.0,
+      "medianRatio": 2.4019629834078797,
+      "within2x": 0.0
+     },
+     "metricsTransfer": {
+      "n": 1,
+      "predSum": 92710.27690115788,
+      "actualSum": 154378.0,
+      "totalRatio": 0.600540730552008,
+      "mape": 0.3994592694479921,
+      "meanLogError": -0.5099248120320572,
+      "sdLogError": 0.0,
+      "medianRatio": 0.600540730552008,
+      "within2x": 1.0
+     },
+     "dailyPassengers": 210887.8955910346,
+     "dailyPassengerKm": 1491119.945212901,
+     "tripsByType": {
+      "local": 1300.5429525599773,
+      "toExisting": 92002.88286916868,
+      "through": 117584.46976930562
+     },
+     "totalKm": 12.050234603473456
+    },
+    "holdout-2020-35kmh": {
+     "metricsWithoutThrough": {
+      "n": 2,
+      "predSum": 73917.1022334709,
+      "actualSum": 170851.0,
+      "totalRatio": 0.4326407351052724,
+      "mape": 1.0703425301751275,
+      "meanLogError": -0.31227982940187077,
+      "sdLogError": 1.6601059284400521,
+      "medianRatio": 0.7317767269311367,
+      "within2x": 0.0
+     },
+     "params": "holdout",
+     "population": 2020,
+     "speedKmh": 35.0,
+     "main": true,
+     "stations": [
+      {
+       "vertexId": "s0",
+       "name": "西谷",
+       "transfer": true,
+       "pred": 79273.81842220025,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 12729.886043386396,
+       "fromTransfer": 66543.93237881386,
+       "fromThrough": 56354.796600960144,
+       "tripEnds": 30156.16273503544,
+       "catchment": 0,
+       "acc": 6211959.830468349
+      },
+      {
+       "vertexId": "s1",
+       "name": "羽沢横浜国大",
+       "transfer": true,
+       "pred": 24106.137078455395,
+       "actual": 34672,
+       "status": "includes_other",
+       "fromCatchment": 11666.110642575131,
+       "fromTransfer": 12440.026435880261,
+       "fromThrough": 9179.779295245173,
+       "tripEnds": 22312.849668258244,
+       "catchment": 0,
+       "acc": 6496625.167449542
+      },
+      {
+       "vertexId": "s2",
+       "name": "新横浜",
+       "transfer": true,
+       "pred": 77129.57152062785,
+       "actual": 154378,
+       "status": "ok",
+       "fromCatchment": 19039.910981266326,
+       "fromTransfer": 58089.660539361525,
+       "fromThrough": 42202.85154919058,
+       "tripEnds": 59601.667965650566,
+       "catchment": 0,
+       "acc": 7212253.766504656
+      },
+      {
+       "vertexId": "s3",
+       "name": "新綱島",
+       "transfer": false,
+       "pred": 38990.38226203362,
+       "actual": 16473,
+       "status": "ok",
+       "fromCatchment": 38990.38226203362,
+       "fromTransfer": 0,
+       "fromThrough": 0,
+       "tripEnds": 40385.49024853454,
+       "catchment": 48611.96137856125,
+       "acc": 6951468.713131458
+      },
+      {
+       "vertexId": "s4",
+       "name": "日吉",
+       "transfer": true,
+       "pred": 127932.94685657496,
+       "actual": null,
+       "status": "merged",
+       "fromCatchment": 5012.39589892438,
+       "fromTransfer": 122920.55095765057,
+       "fromThrough": 67346.05131429447,
+       "tripEnds": 65291.058664110395,
+       "catchment": 0,
+       "acc": 8394052.924542196
+      }
+     ],
+     "metrics": {
+      "n": 2,
+      "predSum": 116119.95378266147,
+      "actualSum": 170851.0,
+      "totalRatio": 0.6796562723230269,
+      "mape": 0.9336557887055186,
+      "meanLogError": 0.08383747216832182,
+      "sdLogError": 1.0999114682688522,
+      "medianRatio": 1.0874521382072864,
+      "within2x": 0.0
+     },
+     "metricsInclNoted": {
+      "n": 3,
+      "predSum": 140226.09086111686,
+      "actualSum": 205523.0,
+      "totalRatio": 0.6822890423997161,
+      "mape": 0.7240164006839341,
+      "meanLogError": -0.06526368060679504,
+      "sdLogError": 0.8195096584490493,
+      "medianRatio": 0.695262375359235,
+      "within2x": 0.3333333333333333
+     },
+     "metricsFresh": {
+      "n": 1,
+      "predSum": 38990.38226203362,
+      "actualSum": 16473.0,
+      "totalRatio": 2.366926623082233,
+      "mape": 1.3669266230822328,
+      "meanLogError": 0.8615923300860794,
+      "sdLogError": 0.0,
+      "medianRatio": 2.366926623082233,
+      "within2x": 0.0
+     },
+     "metricsTransfer": {
+      "n": 1,
+      "predSum": 77129.57152062785,
+      "actualSum": 154378.0,
+      "totalRatio": 0.49961504567119575,
+      "mape": 0.5003849543288043,
+      "meanLogError": -0.6939173857494357,
+      "sdLogError": 0.0,
+      "medianRatio": 0.49961504567119575,
+      "within2x": 0.0
+     },
+     "dailyPassengers": 173716.42806994537,
+     "dailyPassengerKm": 1140490.7212386231,
+     "tripsByType": {
+      "local": 1263.9971380852276,
+      "toExisting": 84910.69155201507,
+      "through": 87541.7393798456
+     },
+     "totalKm": 12.050234603473456
+    }
+   }
+  }
+ }
+}

@@ -59,6 +59,15 @@ py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe scripts\run_pipeline.py   # ダウンロード・前処理・校正を順に実行
 ```
 
+### バックテスト
+
+既存路線（つくばエクスプレス、東急・相鉄新横浜線）を「無かったもの」として推計し、実績と比べる再現検証です。結果は [docs/backtest.md](docs/backtest.md)。
+
+```powershell
+.\.venv\Scripts\python.exe scripts\backtest.py           # 設定は scripts/config/backtest.yaml
+.\.venv\Scripts\python.exe scripts\backtest.py --check   # モデル変更後の回帰確認（前回の結果との差を表示）
+```
+
 ### ディレクトリ
 
 | パス | 内容 |

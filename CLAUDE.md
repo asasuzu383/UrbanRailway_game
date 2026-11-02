@@ -56,7 +56,11 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 .\.venv\Scripts\python.exe scripts\run_pipeline.py        # 前処理を全段実行（DL 済みなら約20秒）
 .\.venv\Scripts\python.exe scripts\run_pipeline.py 03 04  # 指定段のみ
 .\.venv\Scripts\python.exe scripts\calibrate.py           # 需要モデルの校正（約1分）→ docs/calibration.md
+.\.venv\Scripts\python.exe scripts\backtest.py            # バックテスト（約3分）→ docs/backtest_results.md, docs/backtest.results.json
+.\.venv\Scripts\python.exe scripts\backtest.py --check    # 回帰テスト: 前回の結果との差だけ表示（ファイルは更新しない）
 ```
+
+- Python（pandas など）は **PowerShell から実行する**。Git Bash から .venv の Python で pandas を読み込むと、Windows のアプリ制御ポリシーで DLL の読み込みがブロックされる（2026-11-02 確認）。
 
 ## 規約
 
@@ -81,7 +85,15 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 | M3 | 路線エディタ | 完了（2026-11-01） |
 | M4 | 需要推計エンジン＋校正 → 校正結果報告 | 完了（2026-11-01） |
 | M5 | 費用・収支・回収年数と結果 UI | 完了（2026-11-01） |
-| M6 | README、出典表示、Pages デプロイ | 完了（2026-11-01）。リモート未設定のため初回デプロイは未実施 |
+| M6 | README、出典表示、Pages デプロイ | 完了（2026-11-01）。https://asasuzu383.github.io/UrbanRailway_game/ |
+| Phase 1.5 | ロードマップ更新、既存路線のバックテスト（TX、東急・相鉄新横浜線） | 完了（2026-11-02）、報告済み・指示待ち。docs/backtest.md |
+
+### 今後のフェーズ（詳細は design.md §8）
+
+- Phase 2: 交通機関タイプ（鉄道・モノレール・AGT・LRT）、運行体系（本数・種別・停車パターン）、輸送力制約（混雑率）。タイプごとに構造・建設単価・表定速度・輸送力上限・運行経費をパラメータセットで持つ。
+- Phase 3: 既存鉄道ネットワークを含めた経路選択・配分（新線開業による既存路線の乗客数の変化）。
+- Phase 4: 費用便益分析（国交省「鉄道プロジェクトの評価手法マニュアル」準拠の利用者便益・B/C）と事業スキーム（補助制度、上下分離、都市鉄道利便増進事業、モノレール・新交通のインフラ補助など）。
+- 構造別の周辺道路混雑シミュレーションは計画から削除（新線は原則として道路と立体交差のため）。
 
 ## 決定事項ログ
 
@@ -111,6 +123,9 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 費用パラメータは「パラメータ」タブで変更でき、localStorage（urbanrailway.costParams.v1）に保存。需要パラメータは UI からは変えない。
 - 2026-11-01: Pages へは `.github/workflows/deploy.yml`（main への push でテスト→ビルド→デプロイ）。`BASE_PATH` はリポジトリ名から自動設定。
 - 2026-11-01: 地図の attribution に地理院タイルに加え国土数値情報・国勢調査/経済センサス（メッシュ表示時）を表示。全出典は「出典」パネル。
+- 2026-11-02: バックテストは「除外後のネットワーク＋全駅校正／ホールドアウト校正のパラメータ」を Python で用意し、推計はブラウザと同じ TypeScript エンジンを vitest で回す（`scripts/backtest.py`、`tests/backtest/backtest.run.ts`）。作業データは `data/backtest/`（git 管理外）。
+- 2026-11-02: バックテストの結果に合わせたパラメータ調整はしない（過学習防止）。改善は Phase 2/3 の構造変更で行う。
+- 2026-11-02: ロードマップを Phase 2（交通機関タイプ・運行体系・混雑率）／3（ネットワーク配分）／4（B/C・事業スキーム）に更新。道路混雑シミュレーションは削除。
 - 2026-11-01: 分布は全駅間の所要時間行列（`public/data/times.bin`）を使う発生制約型重力モデル＋新線経由の 2 項ロジット（設計の「外部ポータル＋反復比例法」から変更。design.md §4.5）。
 
 ## 未解決・要確認
@@ -120,3 +135,4 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - N02 の路線名は法令上の線名（山手線の一部が「東北線」など）。M4 で同一事業者内の乗換抵抗を下げる設定が必要。
 - 表定速度はすべて仮置き（急行を考慮しないため長距離の所要時間は過大。例: 新宿→横浜 52 分）。時刻表との照合は未実施。
 - 校正で α・a₁・γ が範囲の端に張り付いている。OD データ（大都市交通センサス等）で分布・経路側から推定するのが本筋。
+- バックテスト（docs/backtest.md）: TX は合計で約 2.6 倍の過大。主因は接続駅での経路転換（既存線どうしの短絡利用。2 項ロジット・仮置き）で、これを除くと約 1.3 倍。新駅だけなら 1.33 倍で駅モデルの当てはまりと同程度。新横浜線は比較できる駅が 2 駅しかなく、直通運転の効果は駅の乗降では評価できない。

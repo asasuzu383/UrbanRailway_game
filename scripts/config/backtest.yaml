@@ -1,0 +1,57 @@
+# バックテスト（既存路線の再現検証）の設定。docs/backtest.md。
+# 既存路線を「無かったもの」としてネットワークから除き、同じ路線を新線として推計して実績（S12）と比べる。
+#
+#   .venv\Scripts\python.exe scripts\backtest.py            # 全ケース（準備 → 推計 → 評価）
+#   .venv\Scripts\python.exe scripts\backtest.py tx         # ケースを指定
+#   .venv\Scripts\python.exe scripts\backtest.py --check    # 前回の結果（docs/backtest.results.json）との差だけ表示
+#
+# 注意: 結果に合わせてモデルのパラメータを個別に調整しないこと（過学習の防止）。ここで指定するのは
+# 対象路線・人口時点・構造・運行速度といった「入力」だけで、需要モデルのパラメータは校正で決まる。
+
+# 出力先（git 管理外）。ケースごとに除外後のネットワーク・パラメータ・推計結果を置く
+work_dir: data/backtest
+
+# 実績値（S12）の年度。primary を評価に使い、他は参考として表に並べる
+actual_years: [2024, 2019]
+primary_year: 2024
+
+# 新線の表定速度の扱い
+#   network: 既存ネットワークでその路線に使っている表定速度（scripts/config/pipeline.yaml の rail.speed_kmh）
+#   数値: その値 [km/h]
+# sensitivity_speeds は感度分析として追加で回す速度（ゲームの初期値 40 km/h など）
+speed: network
+sensitivity_speeds: [40]
+
+cases:
+  - id: tx
+    name: つくばエクスプレス
+    # 除外する路線（N02 の「運営会社/路線名」。路線名は法令上の線名）
+    lines: ["首都圏新都市鉄道/常磐新線"]
+    # 起点・終点の駅名（線路形状をこの順にたどって駅を並べる）
+    termini: [秋葉原, つくば]
+    # 人口の時点: 2020 = 令和2年国勢調査（通常のデータ）、2000 = 平成12年国勢調査（開業前）
+    populations: [2020, 2000]
+    color: "#c6302b"
+    # 区間の構造（駅名の範囲で指定。範囲内の各区間に適用）。
+    # 出典: Wikipedia「首都圏新都市鉄道つくばエクスプレス」の線形の記述（2026-11-02 閲覧）。
+    # 1 区間に複数の構造がある場合は延長の長い方を選んだ（note に記載）。構造は建設費だけに効き、需要推計には効かない
+    structures:
+      - { from: 秋葉原, to: 南千住, structure: underground }
+      - { from: 南千住, to: 北千住, structure: atGrade, note: "JR・日比谷線の間の地上区間。北千住駅は高架（3階）" }
+      - { from: 北千住, to: 八潮, structure: underground, note: "荒川橋梁の後、綾瀬川沿いに地下。八潮の手前で地上に出る" }
+      - { from: 八潮, to: 三郷中央, structure: elevated, note: "仮置き（地上区間とだけ記述があり、地上か高架かは不明）" }
+      - { from: 三郷中央, to: 南流山, structure: underground, note: "江戸川を渡った後に地下" }
+      - { from: 南流山, to: 流山セントラルパーク, structure: underground, note: "仮置き（地下から流鉄の下をくぐって高架へ。割合は不明）" }
+      - { from: 流山セントラルパーク, to: 守谷, structure: elevated, note: "利根川橋梁を含む" }
+      - { from: 守谷, to: 研究学園, structure: elevated, note: "仮置き（高架と掘割が混在。割合は不明）" }
+      - { from: 研究学園, to: つくば, structure: underground, note: "仮置き（終点付近がつくばトンネル。割合は不明）" }
+
+  - id: shinyoko
+    name: 東急新横浜線・相鉄新横浜線
+    lines: ["相模鉄道/相鉄新横浜線", "東急電鉄/東急新横浜線"]
+    termini: [西谷, 日吉]
+    populations: [2020]
+    color: "#0071bc"
+    # 仮置き: 全線がおおむね地下（トンネル）区間という一般的な情報による。区間ごとの確認はしていない
+    structures:
+      - { from: 西谷, to: 日吉, structure: underground, note: "仮置き（全線おおむね地下）" }
