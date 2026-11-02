@@ -2,6 +2,7 @@ import { CURRENT_REGION } from '../config/regions';
 import type { FeatureCollection, LineString, MultiLineString, Polygon, MultiPolygon } from 'geojson';
 import type { NetworkFile, RailLineProperties, StationsFile, ZonesFile } from './schema';
 import type { LandPriceFile } from '../finance/landPrice';
+import type { ServicesFile } from './services';
 import { TimeMatrix } from './timeMatrix';
 
 /** アプリ起動時に読み込む加工済みデータ一式。 */
@@ -11,8 +12,10 @@ export interface BaseData {
   readonly network: NetworkFile;
   readonly railLines: FeatureCollection<LineString | MultiLineString, RailLineProperties>;
   readonly region: FeatureCollection<Polygon | MultiPolygon>;
-  /** 既存駅間の所要時間（stations の並び） */
+  /** 既存駅間の一般化費用（stations の並び。Phase 1 は所要時間） */
   readonly times: TimeMatrix;
+  /** 既存ネットワークの運行データ（直通先の選択・既存線のデータ品質の表示に使う。読めなければ null） */
+  readonly services: ServicesFile | null;
   /** 地価公示ポイント（読めなければ null。用地費は 0 になる） */
   readonly landPrice: LandPriceFile | null;
 }
@@ -29,7 +32,7 @@ async function fetchJson<T>(file: string): Promise<T> {
 }
 
 export async function loadBaseData(): Promise<BaseData> {
-  const [zones, stations, network, railLines, region, timesBuf, landPrice] = await Promise.all([
+  const [zones, stations, network, railLines, region, timesBuf, landPrice, services] = await Promise.all([
     fetchJson<ZonesFile>('zones.json'),
     fetchJson<StationsFile>('stations.json'),
     fetchJson<NetworkFile>('network.json'),
@@ -43,7 +46,11 @@ export async function loadBaseData(): Promise<BaseData> {
       console.warn('地価データを読み込めませんでした（用地費は 0 として計算します）', e);
       return null;
     }),
+    fetchJson<ServicesFile>('services.json').catch((e: unknown) => {
+      console.warn('運行データを読み込めませんでした（直通運転は設定できません）', e);
+      return null;
+    }),
   ]);
   const times = new TimeMatrix(stations.stations.length, new Uint8Array(timesBuf));
-  return { zones, stations, network, railLines, region, times, landPrice };
+  return { zones, stations, network, railLines, region, times, landPrice, services };
 }

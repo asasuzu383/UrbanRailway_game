@@ -57,7 +57,7 @@ export function App() {
     loadBaseData()
       .then((data) => {
         setLandPrice(data.landPrice ? new LandPriceIndex(data.landPrice) : null);
-        setDemandContext(createDemandContext(data.zones, data.stations.stations, data.times, defaultDemandParams));
+        setDemandContext(createDemandContext(data.zones, data.stations.stations, data.times, defaultDemandParams), data.services);
         setLoad({ status: 'ready', data });
       })
       .catch((e: unknown) => setLoad({ status: 'error', message: e instanceof Error ? e.message : String(e) }));

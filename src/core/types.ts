@@ -109,31 +109,42 @@ export interface UserLine {
 export interface Scenario {
   readonly schemaVersion: 1;
   readonly lines: readonly UserLine[];
-  /** Phase 1 は未使用（固定デフォルト）。将来の運行体系設定用 */
+  /** 路線ごとの運行計画（Phase 2 M3〜。無い路線は既定の計画 = 各停のみ） */
   readonly servicePlans?: readonly ServicePlan[];
 }
 
 // ---------------------------------------------------------------------------
-// 運行計画（Phase 1 では固定値。型だけ先に定義）
+// 運行計画（Phase 2 M3。docs/design.md §14）
 // ---------------------------------------------------------------------------
+
+/** 運行計画の種別は最大 3 つ（例: 各停・快速・急行） */
+export const MAX_SERVICE_PATTERNS = 3;
+
+export interface ServicePattern {
+  readonly id: string;
+  /** 列車種別名（例: 各停, 快速） */
+  readonly name: string;
+  /** 停車駅（StationVertex.id）。null は全駅停車。起点・終点には必ず停車する */
+  readonly stopStationIds: readonly string[] | null;
+  /** ピーク 1 時間の片道本数 [本/時] */
+  readonly tphPeak: number;
+  /** 日中 1 時間の片道本数 [本/時] */
+  readonly tphOffpeak: number;
+  readonly carsPerTrain: number;
+}
+
+/** 新線の端の接続駅から既存の運行系統へ直通する（乗換抵抗・待ち時間なし） */
+export interface ThroughRunning {
+  /** 新線の起点または終点の接続駅（StationVertex.id） */
+  readonly atStationId: string;
+  /** 直通先の既存の運行系統（services.json の routes[].id） */
+  readonly routeId: string;
+}
 
 export interface ServicePlan {
   readonly lineId: string;
   readonly patterns: readonly ServicePattern[];
-}
-
-export interface ServicePattern {
-  /** 列車種別名（例: 各停, 快速） */
-  readonly name: string;
-  /** 停車駅（StationVertex.id）。各停なら全駅 */
-  readonly stopStationIds: readonly string[];
-  /** 片道の1日運行本数 */
-  readonly trainsPerDayOneWay: number;
-  /** ピーク時 片道運行本数 [本/h] */
-  readonly peakTrainsPerHour: number;
-  readonly carsPerTrain: number;
-  /** 表定速度 [km/h] */
-  readonly scheduledSpeedKmh: number;
+  readonly through: readonly ThroughRunning[];
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +207,8 @@ export interface StructureCost {
 export interface ConstructionCostBreakdown {
   readonly byStructure: Readonly<Record<StructureType, StructureCost>>;
   readonly vehicles: { readonly cars: number; readonly trainsets: number; readonly cost: number };
+  /** 待避設備（通過運転のある種別があるとき。stations は geometry.stations の添字） */
+  readonly passing: { readonly stations: readonly number[]; readonly cost: number };
   /** 地価データが無く用地費を計算できなかった区間がある */
   readonly landPriceMissing: boolean;
   readonly total: number;

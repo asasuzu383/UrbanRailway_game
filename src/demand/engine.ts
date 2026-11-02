@@ -11,6 +11,7 @@ import { assignToLine } from './assignment';
 import { buildZoneLinks, computeCatchment, stopMasses } from './catchment';
 import type { DemandContext } from './context';
 import { computeAccessibility, distributeFlows } from './distribution';
+import type { LineOperation } from './lineOperation';
 import { lineStopsOf, type LineStop } from './lineStops';
 import { NewNetwork } from './newNetwork';
 
@@ -31,10 +32,13 @@ export function tripEnds(ctx: DemandContext, catchment: number, acc: number): nu
   return Math.exp(fp.intercept + fp.catchmentElasticity * Math.log(catchment) + fp.accessibilityElasticity * Math.log(acc / ctx.params.accRef));
 }
 
-export function runDemand(line: UserLine, ctx: DemandContext): DemandResult {
+/**
+ * @param operation 新線の運行（種別・停車駅・本数・直通。lineOperation.ts）。省略すると Phase 1 互換の一律の表定速度・代表本数
+ */
+export function runDemand(line: UserLine, ctx: DemandContext, operation?: LineOperation): DemandResult {
   const stops = lineStopsOf(line, ctx);
   if (stops.length < 2) return EMPTY_DEMAND;
-  return runDemandForStops(stops, ctx);
+  return runDemandForStops(stops, ctx, operation);
 }
 
 /** 推計の途中の値（バックテストの誤差分析用。新線の駅の並び = stops） */
@@ -50,17 +54,25 @@ export interface DemandDiagnostics {
   readonly stopThrough: Float64Array;
 }
 
-export function runDemandDetailed(line: UserLine, ctx: DemandContext): { result: DemandResult; diagnostics: DemandDiagnostics | null } {
+export function runDemandDetailed(
+  line: UserLine,
+  ctx: DemandContext,
+  operation?: LineOperation,
+): { result: DemandResult; diagnostics: DemandDiagnostics | null } {
   const stops = lineStopsOf(line, ctx);
   if (stops.length < 2) return { result: EMPTY_DEMAND, diagnostics: null };
-  return computeDemand(stops, ctx);
+  return computeDemand(stops, ctx, operation);
 }
 
-export function runDemandForStops(stops: readonly LineStop[], ctx: DemandContext): DemandResult {
-  return computeDemand(stops, ctx).result;
+export function runDemandForStops(stops: readonly LineStop[], ctx: DemandContext, operation?: LineOperation): DemandResult {
+  return computeDemand(stops, ctx, operation).result;
 }
 
-function computeDemand(stops: readonly LineStop[], ctx: DemandContext): { result: DemandResult; diagnostics: DemandDiagnostics } {
+function computeDemand(
+  stops: readonly LineStop[],
+  ctx: DemandContext,
+  operation?: LineOperation,
+): { result: DemandResult; diagnostics: DemandDiagnostics } {
   const fp = ctx.params.fitted;
   const st = ctx.stations;
 
@@ -69,7 +81,7 @@ function computeDemand(stops: readonly LineStop[], ctx: DemandContext): { result
   const mass = stopMasses(ctx, stops, links);
 
   // 2. アクセシビリティ（新線あり）
-  const net = new NewNetwork(ctx, stops);
+  const net = new NewNetwork(ctx, stops, operation);
   const acc = computeAccessibility(ctx, net, mass);
   const catchment = computeCatchment(ctx, links, acc.existing, acc.stops);
 

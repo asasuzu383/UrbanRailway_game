@@ -1,6 +1,7 @@
 /**
  * 建設費・収入・運行経費・回収年数（docs/design.md §6）。すべて純粋関数。
  */
+import type { LinePlanOperation } from '../network/servicePlan';
 import type { CostParams } from '../config/cost';
 import { distanceKm } from '../core/geo';
 import type {
@@ -29,15 +30,14 @@ export function stationStructures(geo: LineGeometry): StructureType[] {
   });
 }
 
-/** 往復の所要時間 [分]（走行時間 × 2 + 両端の折返し） */
-export function roundTripMinutes(lengthKm: number, speedKmh: number, p: CostParams): number {
-  return (lengthKm / speedKmh) * 60 * 2 + p.service.turnbackMin * 2;
-}
-
+/**
+ * 建設費。車両費は運行計画の必要編成数（ピーク本数 × 往復時間、種別ごと）に予備を加えた両数、
+ * 待避設備は通過運転のある種別があるときに必要な駅（network/servicePlan.ts）の分を加える。
+ */
 export function estimateConstruction(
   geo: LineGeometry,
   p: CostParams,
-  speedKmh: number,
+  op: LinePlanOperation,
   landPrice: LandPriceIndex | null,
 ): ConstructionCostBreakdown {
   const c = p.construction;
@@ -72,15 +72,15 @@ export function estimateConstruction(
     if (p.land.widthM[s] > 0 && !st.transferTo) b.landCost += priceAt(st.position) * p.land.stationAreaM2;
   });
 
-  const trainsets = geo.segments.length === 0
-    ? 0
-    : Math.ceil((p.service.peakTrainsPerHour * roundTripMinutes(geo.totalKm, speedKmh, p)) / 60);
-  const cars = Math.ceil(trainsets * p.service.carsPerTrain * (1 + c.spareRatio));
-  const vehicles = { cars, trainsets, cost: cars * c.carPrice };
+  const empty = geo.segments.length === 0;
+  const vehicles = { cars: empty ? 0 : op.cars, trainsets: empty ? 0 : op.trainsets, cost: (empty ? 0 : op.cars) * c.carPrice };
+  const structures = stationStructures(geo);
+  const passingStations = empty ? [] : op.passingStations;
+  const passing = { stations: passingStations, cost: passingStations.reduce((a, i) => a + c.passingLoopEach[structures[i]!], 0) };
 
-  let total = vehicles.cost;
+  let total = vehicles.cost + passing.cost;
   for (const s of STRUCTURES) total += by[s].trackCost + by[s].stationCost + by[s].landCost;
-  return { byStructure: by, vehicles, landPriceMissing: landMissing && !!landPrice, total };
+  return { byStructure: by, vehicles, passing, landPriceMissing: landMissing && !!landPrice, total };
 }
 
 /** 折れ線を間隔 stepKm で区切り、各区間の中点と長さを返す */
@@ -123,9 +123,10 @@ export function dailyRevenue(demand: DemandResult, geo: LineGeometry, p: CostPar
   return sum;
 }
 
-export function estimateOperatingCost(geo: LineGeometry, p: CostParams): OperatingCostBreakdown {
+/** 運行経費。車両キロは運行計画の種別ごとの（ピーク本数 × ピーク時間 + 日中本数 × 残りの運行時間）× 両方向 × 営業キロ × 両数 */
+export function estimateOperatingCost(geo: LineGeometry, p: CostParams, op: LinePlanOperation): OperatingCostBreakdown {
   const o = p.operating;
-  const carKm = p.service.trainsPerDayOneWay * 2 * geo.totalKm * p.service.carsPerTrain * 365;
+  const carKm = op.carKmPerYear;
   const train = carKm * o.perCarKm;
   let track = 0;
   for (const seg of geo.segments) track += seg.lengthKm * o.trackMaintenancePerKmYear[seg.structure];
@@ -187,12 +188,12 @@ export function runFinance(
   geo: LineGeometry,
   demand: DemandResult,
   p: CostParams,
-  speedKmh: number,
+  op: LinePlanOperation,
   landPrice: LandPriceIndex | null,
 ): FinanceResult {
-  const construction = estimateConstruction(geo, p, speedKmh, landPrice);
+  const construction = estimateConstruction(geo, p, op, landPrice);
   const steadyRevenue = dailyRevenue(demand, geo, p) * 365;
-  const opex = estimateOperatingCost(geo, p);
+  const opex = estimateOperatingCost(geo, p, op);
   const { timeline, simplePaybackYears, discountedPaybackYears } = buildTimeline(construction.total, steadyRevenue, opex.total, p);
   const wh = weekdayHoliday(demand.dailyPassengers, p);
   const balance = steadyRevenue - opex.total;

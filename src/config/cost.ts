@@ -23,6 +23,8 @@ export interface CostParams {
     stationEach: Record<StructureType, number>;
     /** 既存駅に接続する駅（乗換駅）は既存駅の改良として駅単価にこの係数を掛ける */
     transferStationFactor: number;
+    /** 待避設備（副本線 2 線とホーム）を 1 駅に設ける費用 [円/駅]（通過運転のある種別を設定したとき） */
+    passingLoopEach: Record<StructureType, number>;
     /** 車両 1 両の価格 [円] */
     carPrice: number;
     /** 予備車の割合 */
@@ -46,14 +48,18 @@ export interface CostParams {
     /** 1 回の乗車の最低運賃（定期外、初乗り）[円] */
     minimumFare: number;
   };
+  /** 運行（Phase 2 M3: 種別ごとの本数・両数は路線の運行計画で持つ。ここは既定の計画の値と運行時間帯） */
   service: {
-    /** 片道 1 日の運行本数 */
-    trainsPerDayOneWay: number;
-    /** ピーク 1 時間の片道運行本数 */
+    /** 既定の計画（各停のみ）のピーク 1 時間の片道本数 */
     peakTrainsPerHour: number;
+    /** 既定の計画の日中 1 時間の片道本数 */
+    offpeakTrainsPerHour: number;
+    /** 既定の計画の編成両数 */
     carsPerTrain: number;
-    /** 終端駅での折返し時間 [分] */
-    turnbackMin: number;
+    /** ピーク本数で運行する時間 [時/日]（朝夕の合計） */
+    peakHoursPerDay: number;
+    /** 運行時間 [時/日]（ピーク以外は日中の本数） */
+    operatingHoursPerDay: number;
   };
   operating: {
     /** 運転費＋車両保存費 [円/車両キロ] */
@@ -100,6 +106,8 @@ export const defaultCostParams: CostParams = {
     },
     // 仮置き。既存駅のホーム増設・連絡通路の改良として新設の 7 割
     transferStationFactor: 0.7,
+    // 仮置き: 副本線 2 線・ホーム延伸として駅単価の 0.6 倍程度（地平 15 億円、高架 40 億円、地下 120 億円）。根拠となる事業費は未確認
+    passingLoopEach: { atGrade: 15 * OKU, elevated: 40 * OKU, underground: 120 * OKU },
     // [E235] 1両 約1.5億円
     carPrice: 1.5 * OKU,
     spareRatio: 0.1, // 仮置き
@@ -120,10 +128,12 @@ export const defaultCostParams: CostParams = {
     minimumFare: 150, // 仮置き（大手民鉄の初乗り運賃の水準）
   },
   service: {
-    trainsPerDayOneWay: 120, // 仮置き（Phase 1 は固定）
     peakTrainsPerHour: 12, // 仮置き
+    offpeakTrainsPerHour: 6, // 仮置き
     carsPerTrain: 6, // 仮置き
-    turnbackMin: 10, // 仮置き
+    // 仮置き: 朝 2 時間＋夕 2 時間をピーク、5 時台〜23 時台の 18 時間運行（片道 12×4 + 6×14 = 132 本/日。Phase 1 の 120 本/日と同程度）
+    peakHoursPerDay: 4,
+    operatingHoursPerDay: 18,
   },
   operating: {
     // [MLIT-R5] 関東大手民鉄 8 社の（運転費＋車両保存費）/ 旅客車両キロ ≒ 118〜166 円（中央値 約140円）。東京メトロは 約214円

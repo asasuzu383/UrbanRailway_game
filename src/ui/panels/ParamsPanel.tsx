@@ -88,9 +88,11 @@ export function ParamsPanel() {
 
       <section class="panel-section">
         <h3>運行・経費</h3>
-        {f({ label: '運行本数（片道）', path: ['service', 'trainsPerDayOneWay'], unit: '本/日', step: 10, min: 1 })}
-        {f({ label: 'ピーク時の運行本数（片道）', path: ['service', 'peakTrainsPerHour'], unit: '本/時', min: 1 })}
-        {f({ label: '編成両数', path: ['service', 'carsPerTrain'], unit: '両', min: 1, max: 16 })}
+        {f({ label: 'ピーク時の運行本数（片道、既定の計画）', path: ['service', 'peakTrainsPerHour'], unit: '本/時', min: 1 })}
+        {f({ label: '日中の運行本数（片道、既定の計画）', path: ['service', 'offpeakTrainsPerHour'], unit: '本/時', min: 0 })}
+        {f({ label: '編成両数（既定の計画）', path: ['service', 'carsPerTrain'], unit: '両', min: 1, max: 16 })}
+        {f({ label: 'ピーク本数で走る時間', path: ['service', 'peakHoursPerDay'], unit: '時/日', min: 0, max: 24 })}
+        {f({ label: '運行時間', path: ['service', 'operatingHoursPerDay'], unit: '時/日', min: 1, max: 24 })}
         {f({ label: '運転・車両保守費', path: ['operating', 'perCarKm'], unit: '円/車両キロ', step: 10 })}
         {STRUCTURE_ORDER.map((s) => f({ label: `線路保守費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'trackMaintenancePerKmYear', s], unit: '億円/km・年', scale: OKU, step: 0.1 }))}
         {STRUCTURE_ORDER.map((s) => f({ label: `駅の運営費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'stationPerYear', s], unit: '億円/駅・年', scale: OKU, step: 0.1 }))}

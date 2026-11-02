@@ -1,14 +1,17 @@
 /**
- * 新線を加えたネットワークの一般化費用（docs/design.md §4.3, §4.5, §13）。
- * 既存駅間の値（ctx.times）は運行データから求めた一般化費用（乗車・待ち・乗換・徒歩）。新線は乗るたびに待ち時間を 1 回足す。
+ * 新線を加えたネットワークの一般化費用（docs/design.md §4.3, §4.5, §13, §14）。
+ * 既存駅間の値（ctx.times）は運行データから求めた一般化費用（乗車・待ち・乗換・徒歩）。
+ * 新線上の駅の組の費用 C(k, l) は運行（lineOperation.ts）から: 両方に停まる種別の待ち時間＋乗車時間。
  *
- * 既存駅 o から新線の接続駅 k に乗るコスト board[k][o] = t_old(o, k) + τ（o が k 自身なら τ なし）。
- * これを使うと、新線経由の所要時間は
- *   既存→既存: via(o, d) = min_{k≠l} board[k][o] + T(k, l) + board[l][d]
- *   既存→新駅: min_k board[k][o] + T(k, n)
- * で求まる（T は新線上の乗車時間）。接続駅の数は少ないので、全駅の組でも十分速い。
+ * 既存駅 o から新線の接続駅 k に乗り換えるコスト board[k][o] = t_old(o, k) + τ（o が k 自身なら τ なし）。
+ * 直通運転の接続駅では、直通先の系統の駅 d' まで乗換・待ちなしで行けるので
+ *   board[k][o] = min(t_old(o, k) + τ, min_{d'} ivt(k, d') + (d' = o ? 0 : τ + t_old(d', o)))
+ * これを使うと、新線経由の費用は
+ *   既存→既存: via(o, d) = min_{k≠l} board[k][o] + C(k, l) + board[l][d]
+ *   既存→新駅: min_k board[k][o] + C(k, n)
+ * で求まる。接続駅の数は少ないので、全駅の組でも十分速い。
  */
-import { waitMinutes } from '../core/generalizedCost';
+import { onLineCost, uniformOperation, type LineOperation } from './lineOperation';
 import type { DemandContext } from './context';
 import type { LineStop } from './lineStops';
 
@@ -18,43 +21,51 @@ export class NewNetwork {
   readonly transferStops: readonly number[];
   /** 新駅（接続駅でない駅） */
   readonly freshStops: readonly number[];
-  /** board[t][o]: 既存駅 o から transferStops[t] で新線に乗り換えるまでの一般化費用 [分]（既存線の一般化費用＋乗換抵抗。新線の待ち時間は含まない） */
+  /** board[t][o]: 既存駅 o と transferStops[t] の間の一般化費用 [分]（既存線の一般化費用＋乗換抵抗。直通は乗換なし） */
   readonly board: readonly Float64Array[];
-  /** 既存駅 o から最も早く新線に乗れる時間 */
+  /** 既存駅 o から最も早く新線に乗れる費用 */
   readonly minBoard: Float64Array;
-  /** 新線に乗るときの待ち時間の一般化費用 [分]（待ち時間の重み × 待ち時間。新線の代表本数から） */
-  readonly boardingWait: number;
-  private readonly minutesPerKm: number;
+  /** 新線上の駅の組の一般化費用 [分]（ns × ns） */
+  private readonly cost: Float64Array;
 
-  constructor(ctx: DemandContext, stops: readonly LineStop[]) {
+  constructor(ctx: DemandContext, stops: readonly LineStop[], operation?: LineOperation) {
     this.stops = stops;
     this.transferStops = stops.flatMap((s, i) => (s.existing !== null ? [i] : []));
     this.freshStops = stops.flatMap((s, i) => (s.existing === null ? [i] : []));
-    this.minutesPerKm = 60 / ctx.params.service.scheduledSpeedKmh;
-    const w = ctx.params.generalizedCost;
-    this.boardingWait = w.waitWeight * waitMinutes(ctx.params.service.representativeTph, w);
+    const op = operation ?? uniformOperation(stops, ctx.params.service.scheduledSpeedKmh, ctx.params.service.representativeTph);
+    this.cost = onLineCost(op, stops.length, ctx.params.generalizedCost);
     const tau = ctx.params.network.transferOtherOperatorMin;
     const n = ctx.stations.n;
     this.minBoard = new Float64Array(n).fill(Infinity);
     this.board = this.transferStops.map((k) => {
       const e = stops[k]!.existing!;
       const row = ctx.times.row(e);
-      for (let o = 0; o < n; o++) {
-        if (o !== e) row[o] = row[o]! + tau;
-        if (row[o]! < this.minBoard[o]!) this.minBoard[o] = row[o]!;
+      for (let o = 0; o < n; o++) if (o !== e) row[o] = row[o]! + tau;
+      for (const t of op.through) {
+        if (t.stop !== k) continue;
+        // 直通: 直通先の系統の駅 d' まで乗換・待ちなし。その先は乗換（τ）して既存線
+        for (const [dp, ivt] of t.ivtTo) {
+          if (ivt < row[dp]!) row[dp] = ivt;
+          for (let o = 0; o < n; o++) {
+            if (o === dp) continue;
+            const c = ivt + tau + ctx.times.get(dp, o);
+            if (c < row[o]!) row[o] = c;
+          }
+        }
       }
+      for (let o = 0; o < n; o++) if (row[o]! < this.minBoard[o]!) this.minBoard[o] = row[o]!;
       return row;
     });
   }
 
-  /** 新線の駅どうしの一般化費用 [分]（新線の待ち時間＋乗車時間） */
-  freshToFresh(a: number, b: number): number {
-    return this.boardingWait + this.lineTime(a, b);
+  /** 新線上の駅 a と b の一般化費用 [分]（待ち時間＋乗車時間。両方に停まる種別がなければ Infinity） */
+  lineCost(a: number, b: number): number {
+    return this.cost[a * this.stops.length + b]!;
   }
 
-  /** 新線上の乗車時間 [分]（停車時間込みの表定速度） */
-  lineTime(a: number, b: number): number {
-    return Math.abs(this.stops[a]!.chainageKm - this.stops[b]!.chainageKm) * this.minutesPerKm;
+  /** 新線の駅どうしの一般化費用 [分] */
+  freshToFresh(a: number, b: number): number {
+    return this.lineCost(a, b);
   }
 
   /**
@@ -68,7 +79,7 @@ export class NewNetwork {
       let arg = -1;
       for (let ki = 0; ki < nt; ki++) {
         if (ki === li) continue;
-        const t = this.board[ki]![o]! + this.boardingWait + this.lineTime(this.transferStops[ki]!, this.transferStops[li]!);
+        const t = this.board[ki]![o]! + this.lineCost(this.transferStops[ki]!, this.transferStops[li]!);
         if (t < best) {
           best = t;
           arg = ki;
@@ -84,7 +95,7 @@ export class NewNetwork {
     let best = Infinity;
     let arg = -1;
     this.transferStops.forEach((k, ki) => {
-      const t = this.board[ki]![o]! + this.boardingWait + this.lineTime(k, n);
+      const t = this.board[ki]![o]! + this.lineCost(k, n);
       if (t < best) {
         best = t;
         arg = ki;

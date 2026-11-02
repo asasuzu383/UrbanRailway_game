@@ -136,7 +136,8 @@ export function ResultsPanel() {
           </tbody>
         </table>
         <p class="hint">
-          運行: 片道 {params.service.trainsPerDayOneWay} 本/日・{params.service.carsPerTrain} 両編成（年間 {int(o.carKm / 1e4)} 万車両キロ）。運行本数は Phase 1 では固定。
+          運行: {compute.plan?.patterns.map((p) => `${p.name} ピーク ${p.tphPeak} 本/時・日中 ${p.tphOffpeak} 本/時・${p.carsPerTrain} 両`).join('、')}
+          （年間 {int(o.carKm / 1e4)} 万車両キロ）。
         </p>
       </section>
 
