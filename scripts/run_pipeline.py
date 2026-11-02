@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-STEPS = ["00_download", "01_region", "02_zones", "03_rail", "04_ridership", "05_landprice", "calibrate"]
+STEPS = ["00_download", "odpt_download", "01_region", "02_zones", "03_rail", "04_ridership", "05_landprice", "06_services", "calibrate"]
 
 
 def main(argv: list[str]) -> int:

@@ -21,3 +21,6 @@ Thumbs.db
 
 # バックテストの作業データ（scripts/backtest.py が生成）
 data/backtest/
+
+# API キー（ODPT_ACCESS_TOKEN など）
+.env

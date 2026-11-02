@@ -108,6 +108,8 @@ npx vite preview --base /UrbanRailway_game/   # http://localhost:4173/UrbanRailw
 - 駅別乗降客数: 「[国土数値情報（駅別乗降客数データ）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-S12-2024.html)」（国土交通省）を加工して作成
 - 行政区域: 「[国土数値情報（行政区域データ）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html)」（国土交通省）を加工して作成
 - 地価: 「[国土数値情報（地価公示データ）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-L01-2026.html)」（国土交通省）を加工して作成
+- 運行データ（都営）: このアプリは、以下の著作物を改変して利用しています。東京都交通局、東京都交通局 列車時刻表（[公共交通オープンデータセンター](https://ckan.odpt.org/dataset/r_train_timetable-toei)）、[クリエイティブ・コモンズ・ライセンス 表示4.0国際](https://creativecommons.org/licenses/by/4.0/deed.ja)
+- 運行本数・編成: 国土交通省「[最混雑区間における混雑率（令和6年度）](https://www.mlit.go.jp/report/press/tetsudo04_hh_000138.html)」を加工して作成
 - 費用・運賃の単価: 国土交通省「[基準単価・基準コスト算定データ](https://www.mlit.go.jp/tetudo/content/001977442.pdf)」ほか（[src/config/cost.ts](src/config/cost.ts) に一覧）
 
 本アプリの推計値は上記データをもとに独自のモデルで算出したものであり、各提供機関および鉄道事業者の見解ではありません。
