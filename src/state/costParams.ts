@@ -1,10 +1,13 @@
 /**
  * 費用パラメータ（パネルで調整できる）。ブラウザに保存し、読み込み時は既定値と同じ形の数値だけを採用する。
  */
-import { defaultCostParams, type CostParams } from '../config/cost';
+import type { CostParams } from '../config/cost';
+import { CURRENT_REGION } from '../config/regions';
 import { createStore } from './store';
 
-const STORAGE_KEY = 'urbanrailway.costParams.v1';
+const STORAGE_KEY = CURRENT_REGION.storageKeys.costParams;
+/** 地域の単価の初期値 */
+const defaultCostParams: CostParams = CURRENT_REGION.costParams;
 
 /** stored のうち、defaults と同じ形（数値・数値配列・入れ子オブジェクト）の値だけを上書きする */
 export function mergeParams<T>(defaults: T, stored: unknown): T {

@@ -1,4 +1,4 @@
-"""S12 駅別乗降客数を駅グループに集計し、public/data/stations.json を作る。
+"""S12 駅別乗降客数を駅グループに集計し、public/data/<地域>/stations.json を作る。
 
 S12 の扱い（docs/data-sources.md, docs/design.md §5.1）:
 - 各年度の値は「重複コード=1（当該路線駅に記載）かつ データ有無=1」の行のみ合計する（二重計上の回避）。

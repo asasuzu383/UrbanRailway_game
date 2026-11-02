@@ -55,12 +55,12 @@ UserLine 編集 ──▶ state（debounce 300ms）──▶ runDemand(scenario,
 | スクリプト | 内容 | 出力 |
 |---|---|---|
 | `00_download.py` | 国土数値情報・e-Stat 統計GIS の DL（すべて自動）。取得不可なら手動 DL 一覧を表示して終了 | `data/raw/...`, `data/raw/manifest.json` |
-| `01_region.py` | 対象地域ポリゴン作成（N03 から 1都3県＋茨城県南部 26 市町村を dissolve。島しょ部除外） | `data/interim/region.gpkg`, `public/data/region.geojson` |
-| `02_zones.py` | 500m メッシュ人口・従業者数を結合。対象地域＋外周 3km バッファ内のメッシュを抽出（境界付近の駅勢圏の欠けを防ぐ） | `public/data/zones.json` |
-| `03_rail.py` | N02 路線・駅を抽出、簡略化。駅グループ化（N02 グループコード）、路線ごとの線路グラフから隣接駅と駅間距離を求める | `public/data/rail_lines.geojson`, `public/data/network.json`, `data/interim/stations.csv` |
-| `04_ridership.py` | S12 乗降客数を駅グループ・乗降集計クラスタに集計（重複コード処理） | `public/data/stations.json` |
-| `05_landprice.py` | （任意）L01 地価公示ポイント抽出 | `public/data/landprice.json` |
-| `calibrate.py`（M4） | §5 の校正。パラメータと ACC を出力し、docs/calibration.md を生成 | `src/config/demand.calibrated.json`, `public/data/stations.json`（ACC 追記）, `docs/calibration.md` |
+| `01_region.py` | 対象地域ポリゴン作成（N03 から 1都3県＋茨城県南部 26 市町村を dissolve。島しょ部除外） | `data/interim/region.gpkg`, `public/data/<地域>/region.geojson` |
+| `02_zones.py` | 500m メッシュ人口・従業者数を結合。対象地域＋外周 3km バッファ内のメッシュを抽出（境界付近の駅勢圏の欠けを防ぐ） | `public/data/<地域>/zones.json` |
+| `03_rail.py` | N02 路線・駅を抽出、簡略化。駅グループ化（N02 グループコード）、路線ごとの線路グラフから隣接駅と駅間距離を求める | `public/data/<地域>/rail_lines.geojson`, `public/data/<地域>/network.json`, `data/interim/<地域>/stations.csv` |
+| `04_ridership.py` | S12 乗降客数を駅グループ・乗降集計クラスタに集計（重複コード処理） | `public/data/<地域>/stations.json` |
+| `05_landprice.py` | （任意）L01 地価公示ポイント抽出 | `public/data/<地域>/landprice.json` |
+| `calibrate.py`（M4） | §5 の校正。パラメータと ACC を出力し、docs/calibration.md を生成 | `src/config/regions/<地域>/demand.calibrated.json`, `public/data/<地域>/stations.json`（ACC 追記）, `docs/calibration.md` |
 
 全段の実行: `.venv\Scripts\python.exe scripts\run_pipeline.py`（約 20 秒、DL 済みの場合）。設定は `scripts/config/pipeline.yaml`。
 
@@ -135,7 +135,7 @@ $$\pi_{is} = \frac{A_s f(d_{is})}{V_{0,i} + \sum_{k} A_k f(d_{ik})}$$
 $$\mathrm{ACC}_s = \sum_{m \ne s} M_m \exp(-\gamma\, t_{sm})$$
 
 - $t_{sm}$: 既存ネットワーク上の最短所要時間 [分]（乗車時間＋乗換抵抗。急行は考慮しない）。`calibrate.py` が全駅間（1,619×1,619）を Dijkstra で求め、
-  整数分に丸めて `public/data/times.bin`（上三角の uint8、約 1.25MB）に書き出す。校正もブラウザも同じ丸めた値を使う。
+  整数分に丸めて `public/data/<地域>/times.bin`（上三角の uint8、約 1.25MB）に書き出す。校正もブラウザも同じ丸めた値を使う。
 - 乗換抵抗: 同一事業者の路線間 3 分、他事業者間・新線との乗換 8 分（**仮置き**）。名前の異なる近接駅は徒歩で結ぶ。
 - $M_m$: 駅 $m$ の集中量。循環を避けるため、駅の魅力度を使わない幾何的な按分で求める:
   $M_m = \sum_i (E_i + \psi P_i) \cdot \frac{f(d_{im})}{\sum_k f(d_{ik})}$（$\psi = 0.3$、**仮置き**）
@@ -352,7 +352,7 @@ $$T_{o \to d} = \frac{\mu_o}{2} \cdot \frac{M_d\, e^{-\gamma t_{od}}}{\mathrm{AC
 ## 11. 既存ネットワークの運行データ（Phase 2 M1）
 
 バックテスト（§10）で最大の誤差源だった「既存線の速度・頻度が仮置き」を直すための土台。生成は `scripts/06_services.py`、
-設定は `scripts/config/services.yaml`、出力は `public/data/services.json`、カバー状況は [services_coverage.md](services_coverage.md)。
+設定は `scripts/config/regions/<地域>/services.yaml`、出力は `public/data/<地域>/services.json`、カバー状況は [services_coverage.md](services_coverage.md)。
 M1 の時点ではまだ需要推計には使っていない（M2 の一般化費用モジュールから使う）。
 
 ### 11.1 データ構造
@@ -393,3 +393,51 @@ services.json
 $d \ge v^2/2a + v^2/2b$ なら $t = v/a + v/b + (d - v^2/2a - v^2/2b)/v$、届かなければ最高到達速度 $v' = \sqrt{2dab/(a+b)}$ の三角形で $t = v'/a + v'/b$。
 所要時間 = (走行時間 + 停車時間) × 余裕係数。初期値は加速度 3.0 km/h/s・減速度 3.5 km/h/s・停車 30 秒（乗換駅 50 秒）。いずれも仮置き。
 余裕係数 1.15 は、都営地下鉄 4 線の時刻表の駅間所要時間との比較（最高速度 70〜100 km/h で係数なしの計算に対し 1.10〜1.30 倍、中央値 約1.17）から決めた。
+
+## 12. 地域単位の構成（全国展開に向けた設計方針）
+
+今回の実装は首都圏のみ。ただし、首都圏を前提にした値をコードに直接書かず、地域ごとの設定・データに分けておく（2026-11-02）。
+
+### 12.1 構成
+
+| 種類 | 置き場所 | 内容 |
+|---|---|---|
+| 地域の設定（前処理） | `scripts/config/regions/<id>/region.yaml` | 地域名・タイトル、平面座標系、都心の基準点、地図の初期範囲、対象地域（全域の都府県・除外する市区町村コード・一部の市町村）、1次メッシュ、N03/L01 の都府県、需要モデルの設定の上書き（校正から除く駅など） |
+| 地域ごとの設定ファイル | `scripts/config/regions/<id>/services.yaml`、`backtest.yaml` | 運行データ（ODPT の事業者、国交省の路線別ピーク本数）、バックテストのケース |
+| 全国共通の設定 | `scripts/config/pipeline.yaml`、`demand.yaml` | データの版・取得先、鉄道ネットワークの作り方、需要モデルの固定パラメータ（地域の設定が上書きできる） |
+| 加工済みデータ | `public/data/<id>/` | zones / stations / network / rail_lines / region / landprice / services / times.bin |
+| 中間データ | `data/interim/<id>/`、`data/backtest/<id>/` | git 管理外 |
+| 生データ | `data/raw/` | 全国共通（N02・S12 は全国版。メッシュ・都府県別のファイルは地域の設定に応じて取得） |
+| 需要モデルの校正値 | `src/config/regions/<id>/demand.calibrated.json` | 校正値と固定値、`region`、`corePoint` |
+| 地域の設定（ブラウザ） | `src/config/regions.ts` | `RegionConfig`: データの置き場所、初期範囲、タイトル、需要パラメータ、費用・運賃の単価、localStorage のキー。`CURRENT_REGION` が現在の地域 |
+| 生成ドキュメント | 首都圏は `docs/` 直下、他の地域は `docs/regions/<id>/` | calibration.md、services_coverage.md、backtest_results.md など |
+
+前処理・校正・バックテストは対象地域を引数で指定する（`--region <id>`、環境変数 `URBANRAIL_REGION`、既定 `shutoken`）。
+`scripts/common.py` が地域に応じたパス（`PUBLIC_DATA`・`INTERIM`・`CALIBRATED_PATH`）と設定（`load_config()`・`load_demand_config()`）を返す。
+ブラウザ側は `CURRENT_REGION.dataDir` の下のデータを読む。地域の選択 UI は全国展開のときに追加する。
+
+鉄道分担率は、需要モデルでは外部選択肢（鉄道を使わない）の定数 a₀ と都心距離係数 a₁ に表れる。これらは地域ごとの校正で決まるので、
+地域ごとの `demand.calibrated.json` を切り替えれば地域の分担率の違いに対応する。単価・賃率は `RegionConfig.costParams` で切り替える。
+
+### 12.2 首都圏を前提にしていた箇所の一覧
+
+| # | 箇所 | 内容 | 対応 |
+|---|---|---|---|
+| 1 | `scripts/config/pipeline.yaml` の `region`、`scripts/01_region.py` | 対象の都県、東京都の島しょ部の除外（コード 13361 以上）、茨城県南部の市町村一覧（県コード 08 を直接指定） | 対応済み: region.yaml に移し、01_region.py を「全域の都府県・除外するコード・一部の市町村」の一般形にした |
+| 2 | `pipeline.yaml` の `primary_meshes`、`sources.N03_L01_prefectures` | 1次メッシュ、N03・L01 を取る都府県 | 対応済み: region.yaml |
+| 3 | `scripts/common.py` の `CRS_METRIC = EPSG:6691` | UTM 54 帯（首都圏で歪みが小さい） | 対応済み: region.yaml の `crs_metric` |
+| 4 | `scripts/calibrate.py` の `CORE`、`src/demand/context.ts` の `CORE_POINT` | 都心の基準点＝東京駅（2 か所に同じ値を直書き） | 対応済み: region.yaml の `core_point` → `demand.calibrated.json` の `corePoint` → `DemandParams.corePoint` |
+| 5 | `src/config/demand.calibrated.json` | 首都圏の駅で校正した値（1 つだけ） | 対応済み: `src/config/regions/<id>/` |
+| 6 | `demand.yaml` の `calibration.exclude_station_names` | 羽田空港・成田空港の駅名 | 対応済み: region.yaml の `demand` で上書き |
+| 7 | `public/data/`、`data/interim/`、`data/backtest/` | 地域が 1 つの前提の出力先 | 対応済み: `<id>/` の下 |
+| 8 | `src/config/display.ts` の `INITIAL_BOUNDS`、`index.html`・`App.tsx` のタイトル | 首都圏の範囲、「首都圏 鉄道新線計画シミュレーター」 | 対応済み: `RegionConfig.initialBounds`・`title` |
+| 9 | `src/config/cost.ts`、`src/state/costParams.ts` | 建設単価（東京メトロの延伸）、運賃・運行経費（関東大手民鉄・東京メトロの実績） | 構造のみ対応: `RegionConfig.costParams` で切り替える。値は首都圏のみ（他地域は国交省の基準単価データの地域の事業者から設定する） |
+| 10 | `src/config/editor.ts`、`src/state/costParams.ts` の localStorage のキー | 1 地域の前提 | 対応済み: `RegionConfig.storageKeys`（首都圏は既存のキーのまま） |
+| 11 | `scripts/config/services.yaml` | ODPT の対象事業者、国交省の首都圏の路線別ピーク本数 | 対応済み: `regions/shutoken/services.yaml` |
+| 12 | `scripts/config/backtest.yaml` | TX・新横浜線のケース | 対応済み: `regions/shutoken/backtest.yaml` |
+| 13 | 生成ドキュメント（calibration.md など） | 出力先が 1 つ | 対応済み: 首都圏以外は `docs/regions/<id>/` |
+| 14 | `pipeline.yaml` の `rail.speed_kmh.operator_overrides` | 東京メトロ 30 km/h、TX 55 km/h | 未対応（不要）: 事業者名は全国で一意なので共通設定のままでよい。Phase 2 で運行データ（services.json）に置き換わる |
+| 15 | `src/config/display.ts` の `OPERATOR_COLORS`・表示名 | 関東の 12 事業者の色、「つくばエクスプレス」 | 未対応: 地域を追加するときにその地域の事業者の色を追加する（事業者名で引くので地域が混ざっても問題ない） |
+| 16 | `src/ui/panels/ParamsPanel.tsx` の説明文 | 「関東大手民鉄の実績 約 10〜13.5 円」 | 未対応: 他地域の単価を入れるときに説明文も地域の設定に移す |
+| 17 | `src/core/geo.ts`、`src/data/spatialIndex.ts` | 緯度経度のまま距離・格子を扱う（「首都圏スケールで十分」） | 未対応（不要）: 地域ごとに範囲が限られるので精度は足りる。全国を 1 つで扱う場合に見直す |
+| 18 | `tests/helpers/realData.ts` | 実データのテストは首都圏のデータ | 未対応（不要）: テストは首都圏で行う |

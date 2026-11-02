@@ -1,6 +1,7 @@
 /**
  * 地図表示の設定（色・凡例の階級・初期表示）。需要や費用のパラメータとは分けて置く。
  */
+import { CURRENT_REGION } from './regions';
 
 /**
  * 既存路線の事業者別の色。路線延長の大きい主要事業者だけに固有色を割り当て、
@@ -70,4 +71,4 @@ export const MESH_SCHEMES: Readonly<Record<'pop' | 'emp', MeshClassScheme>> = {
 export const MESH_OPACITY = 0.6;
 
 /** 初期表示範囲 [西, 南, 東, 北] */
-export const INITIAL_BOUNDS: [number, number, number, number] = [139.0, 35.1, 140.6, 36.2];
+export const INITIAL_BOUNDS: [number, number, number, number] = [...CURRENT_REGION.initialBounds];

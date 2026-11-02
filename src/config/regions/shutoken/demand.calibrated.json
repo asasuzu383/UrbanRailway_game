@@ -1,5 +1,10 @@
 {
   "version": 1,
+  "region": "shutoken",
+  "corePoint": [
+    139.7671,
+    35.6812
+  ],
   "calibratedAt": "2026-11-01",
   "year": 2024,
   "accRef": 1000000.0,

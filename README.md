@@ -47,7 +47,9 @@ npm run typecheck  # 型チェック
 npm run build      # 本番ビルド（dist/）
 ```
 
-ブラウザが読む加工済みデータ（`public/data/`、約 3MB）はリポジトリに含まれているので、アプリを動かすだけなら Python は不要です。
+ブラウザが読む加工済みデータ（`public/data/<地域>/`、約 3MB）はリポジトリに含まれているので、アプリを動かすだけなら Python は不要です。
+
+地域ごとの設定は `scripts/config/regions/<地域>/`（前処理）と `src/config/regions.ts`（ブラウザ）にあります。現在は首都圏（`shutoken`）のみです（[docs/design.md §12](docs/design.md)）。
 
 ### データの作り直し
 
@@ -56,7 +58,21 @@ npm run build      # 本番ビルド（dist/）
 ```powershell
 py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
-.\.venv\Scripts\python.exe scripts\run_pipeline.py   # ダウンロード・前処理・校正を順に実行
+.\.venv\Scripts\python.exe scripts\run_pipeline.py   # ダウンロード・前処理・校正を順に実行（--region shutoken で地域を指定。既定は首都圏）
+```
+
+### 運行データの更新（ダイヤ改正のとき）
+
+既存線の運行データの一部は[公共交通オープンデータセンター（ODPT）](https://www.odpt.org/)の時刻表から、ローカルの前処理で種別ごとの所要時間・1 時間あたり本数に集計しています。
+ブラウザ（GitHub Pages）から ODPT の API は呼びません。時刻表の生データは `data/raw/odpt/`（git 管理外）に置き、リポジトリには集計値（`public/data/<地域>/services.json`）だけを含めます。
+
+1. 東京メトロ・TX など「公共交通オープンデータ基本ライセンス」の事業者を使う場合は、[開発者サイト](https://developer.odpt.org/)でユーザ登録してアクセストークンを取得し、`.env.example` を `.env` にコピーして `ODPT_ACCESS_TOKEN=` に書く（`.env` はコミットしない）。都営（CC BY 4.0）はトークン不要。
+2. 取得と集計をやり直す（取得日は `data/raw/odpt/manifest.json`、ダイヤの発行日と取得日は `services.json` の `dataIssued` / `odptRetrieved` に記録される）。
+
+```powershell
+.\.venv\Scripts\python.exe scripts\odpt_download.py
+.\.venv\Scripts\python.exe scripts\06_services.py     # → public/data/<地域>/services.json, docs/services_coverage.md
+.\.venv\Scripts\python.exe scripts\calibrate.py       # 運行データを需要モデルで使うようになったら（Phase 2 M2 以降）校正もやり直す
 ```
 
 ### バックテスト
@@ -64,7 +80,7 @@ py -3.14 -m venv .venv
 既存路線（つくばエクスプレス、東急・相鉄新横浜線）を「無かったもの」として推計し、実績と比べる再現検証です。結果は [docs/backtest.md](docs/backtest.md)。
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\backtest.py           # 設定は scripts/config/backtest.yaml
+.\.venv\Scripts\python.exe scripts\backtest.py           # 設定は scripts/config/regions/shutoken/backtest.yaml
 .\.venv\Scripts\python.exe scripts\backtest.py --check   # モデル変更後の回帰確認（前回の結果との差を表示）
 ```
 
@@ -113,6 +129,8 @@ npx vite preview --base /UrbanRailway_game/   # http://localhost:4173/UrbanRailw
 - 費用・運賃の単価: 国土交通省「[基準単価・基準コスト算定データ](https://www.mlit.go.jp/tetudo/content/001977442.pdf)」ほか（[src/config/cost.ts](src/config/cost.ts) に一覧）
 
 本アプリの推計値は上記データをもとに独自のモデルで算出したものであり、各提供機関および鉄道事業者の見解ではありません。
+
+既存線の運行データの一部に、公共交通オープンデータセンターのデータを利用しています。公共交通オープンデータセンター、公共交通オープンデータ協議会およびデータ提供者は、本アプリで使う運行データの正確性・完全性について責任を負いません。本アプリに関するお問い合わせは、鉄道事業者ではなく [GitHub の Issues](https://github.com/asasuzu383/UrbanRailway_game/issues) へお寄せください。
 
 ## 免責事項
 

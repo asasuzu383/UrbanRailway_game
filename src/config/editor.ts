@@ -25,4 +25,3 @@ export const UNDO_LIMIT = 100;
 export const AUTOSAVE_DEBOUNCE_MS = 500;
 /** 編集後に再計算を走らせるまでの待ち時間 [ms] */
 export const RECOMPUTE_DEBOUNCE_MS = 300;
-export const STORAGE_KEY = 'urbanrailway.scenario.v1';

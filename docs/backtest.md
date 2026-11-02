@@ -3,7 +3,7 @@
 作成: 2026-11-02。既存路線を「存在しなかったもの」として新線扱いで推計し、実績と比べた。
 詳細な表は自動生成の [backtest_results.md](backtest_results.md)（数値は `docs/backtest.results.json`）、手順は [design.md §10](design.md)。
 
-再実行: `.venv\Scripts\python.exe scripts\backtest.py`（設定 `scripts/config/backtest.yaml`）。
+再実行: `.venv\Scripts\python.exe scripts\backtest.py`（設定 `scripts/config/regions/<地域>/backtest.yaml`）。
 モデルを変えたあとに `--check` を付けて実行すると、前回の結果との差だけを表示する（回帰テスト）。
 
 **本報告の結果を見てパラメータを個別に調整してはいない。** 改善案は §5 の提案にとどめる。

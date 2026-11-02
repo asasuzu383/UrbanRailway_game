@@ -1,5 +1,5 @@
 # 需要モデルの固定パラメータ（校正しない値）。docs/design.md §4。
-# calibrate.py が読み、校正値とあわせて src/config/demand.calibrated.json に書き出す。
+# calibrate.py が読み、校正値とあわせて src/config/regions/<地域>/demand.calibrated.json に書き出す。
 # ブラウザ側はその JSON だけを読むので、ここが唯一の定義元になる。
 
 access:
@@ -26,8 +26,8 @@ calibration:
   # 主に使う年度と比較用の年度（S12）
   year: 2024
   compare_year: 2019
-  # 需要構造が駅勢圏で説明できない駅（空港アクセス）を校正から除外
-  exclude_station_names: ["羽田空港第1・第2ターミナル", "羽田空港第3ターミナル", "成田空港", "空港第2ビル", "羽田空港第１・第２ターミナル", "羽田空港第３ターミナル"]
+  # 校正から除外する駅（空港アクセスなど）は地域の設定（regions/<id>/region.yaml の demand.calibration）
+  exclude_station_names: []
   # 乗換客の多い大ターミナルを除いた推定（感度分析）の路線数の閾値
   hub_lines_threshold: 5
   # 空間交差検証の分割数（2次メッシュ単位でまとめて分割）

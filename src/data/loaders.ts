@@ -1,3 +1,4 @@
+import { CURRENT_REGION } from '../config/regions';
 import type { FeatureCollection, LineString, MultiLineString, Polygon, MultiPolygon } from 'geojson';
 import type { NetworkFile, RailLineProperties, StationsFile, ZonesFile } from './schema';
 import type { LandPriceFile } from '../finance/landPrice';
@@ -16,9 +17,9 @@ export interface BaseData {
   readonly landPrice: LandPriceFile | null;
 }
 
-/** GitHub Pages のサブパス配信に対応するため、BASE_URL を前置して public/data を参照する。 */
+/** GitHub Pages のサブパス配信に対応するため、BASE_URL を前置して public/data/<地域>/ を参照する。 */
 export function dataUrl(file: string): string {
-  return `${import.meta.env.BASE_URL}data/${file}`;
+  return `${import.meta.env.BASE_URL}data/${CURRENT_REGION.dataDir}/${file}`;
 }
 
 async function fetchJson<T>(file: string): Promise<T> {

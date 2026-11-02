@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadBaseData, type BaseData } from '../data/loaders';
 import { defaultDemandParams } from '../config/demand';
+import { CURRENT_REGION } from '../config/regions';
 import { createDemandContext } from '../demand/context';
 import { LandPriceIndex } from '../finance/landPrice';
 import { scenarioStore, setDemandContext, setLandPrice } from '../state/appState';
@@ -90,7 +91,7 @@ export function App() {
   return (
     <div class="app">
       <header class="app-header">
-        <h1>首都圏 鉄道新線計画シミュレーター</h1>
+        <h1>{CURRENT_REGION.title}</h1>
         <span class="badge">開発中</span>
       </header>
       <main class="app-main">

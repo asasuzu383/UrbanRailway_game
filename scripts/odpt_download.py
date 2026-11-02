@@ -1,13 +1,13 @@
 """公共交通オープンデータセンター（ODPT）の時刻表データの取得（Phase 2 M1）。
 
 - キー不要のダンプ（api-public.odpt.org。CC BY 4.0 等のデータ）は常に取得する。
-- 公共交通オープンデータ基本ライセンスの事業者（scripts/config/services.yaml の odpt.operators で access: key）は、
+- 公共交通オープンデータ基本ライセンスの事業者（scripts/config/regions/<地域>/services.yaml の odpt.operators で access: key）は、
   .env の ODPT_ACCESS_TOKEN があるときだけ取得する。トークンは開発者サイト（https://developer.odpt.org/）で
   ユーザ登録して発行を受ける。.env は git 管理外（.gitignore）。
 
 取得したデータは data/raw/odpt/（git 管理外）に置く。基本ライセンスのデータは、元の時刻表を復元できる形では
 公開できない（同ライセンス第8条4項）ので、06_services.py で種別ごとの駅間所要時間の中央値・時間あたり本数に集計した値だけを
-public/data/services.json に書き出す。
+public/data/<地域>/services.json に書き出す。
 
     .venv\\Scripts\\python.exe scripts\\odpt_download.py
 """
@@ -24,7 +24,7 @@ from pathlib import Path
 import requests
 import yaml
 
-from common import RAW, ROOT, sha256_of
+from common import RAW, ROOT, region_config_path, sha256_of
 
 PUBLIC_BASE = "https://api-public.odpt.org/api/v4"
 KEY_BASE = "https://api.odpt.org/api/v4"
@@ -65,7 +65,7 @@ def fetch(url: str, dest: Path, manifest: dict, label: str) -> None:
 
 def main() -> int:
     load_env()
-    with (Path(__file__).resolve().parent / "config" / "services.yaml").open(encoding="utf-8") as f:
+    with region_config_path("services.yaml").open(encoding="utf-8") as f:
         ocfg = yaml.safe_load(f)["odpt"]
     OUT.mkdir(parents=True, exist_ok=True)
     manifest_path = OUT / "manifest.json"

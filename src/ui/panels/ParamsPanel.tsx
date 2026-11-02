@@ -1,4 +1,5 @@
-import { defaultCostParams, type CostParams } from '../../config/cost';
+import type { CostParams } from '../../config/cost';
+import { CURRENT_REGION } from '../../config/regions';
 import { STRUCTURE_LABELS, STRUCTURE_ORDER } from '../../config/editor';
 import { costParamsStore, resetCostParams, setCostParam } from '../../state/costParams';
 import { useStore } from '../hooks';
@@ -23,7 +24,7 @@ interface FieldProps {
 
 function NumberField({ label, path, unit, scale = 1, step = 1, min = 0, max, params }: FieldProps) {
   const value = getIn(params, path) / scale;
-  const def = getIn(defaultCostParams, path) / scale;
+  const def = getIn(CURRENT_REGION.costParams, path) / scale;
   const changed = Math.abs(value - def) > 1e-9;
   const id = `param-${path.join('-')}`;
   return (

@@ -1,11 +1,15 @@
 /**
  * 需要モデルのパラメータ。
- * 値は scripts/calibrate.py が書き出す demand.calibrated.json から読む（固定値の定義元は
+ * 値は scripts/calibrate.py が地域ごとに書き出す regions/<地域>/demand.calibrated.json から読む（固定値の定義元は
  * scripts/config/demand.yaml、校正値は S12 に対する推定結果）。根拠は docs/design.md §4 と docs/calibration.md。
  */
-import calibrated from './demand.calibrated.json';
+import { CURRENT_REGION } from './regions';
 
 export interface DemandParams {
+  /** 地域 ID（src/config/regions.ts） */
+  readonly region: string;
+  /** 都心の基準点 [経度, 緯度]（外部選択肢の「都心からの距離」の基準。地域の設定 region.yaml の core_point） */
+  readonly corePoint: readonly number[];
   /** 魅力度 A = (ACC / accRef)^α の基準化定数 */
   readonly accRef: number;
   readonly access: {
@@ -56,4 +60,5 @@ export interface DemandParams {
   };
 }
 
-export const defaultDemandParams: DemandParams = calibrated;
+/** 現在の地域の需要モデルのパラメータ */
+export const defaultDemandParams: DemandParams = CURRENT_REGION.demandParams;

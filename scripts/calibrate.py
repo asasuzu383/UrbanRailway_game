@@ -8,10 +8,10 @@ S12 の乗降客数に対してポアソン疑似最尤法（PPML）でパラメ
     GLM の逸脱度を目的関数として Nelder–Mead で外側から最適化（profile likelihood）
 
 出力:
-  src/config/demand.calibrated.json   ブラウザの需要エンジンが読むパラメータ（固定値＋校正値）
-  public/data/stations.json           各駅に acc（ACC）・mass（集中量 M）・muCatch（駅勢圏由来の乗降推計）を追記
+  src/config/regions/<地域>/demand.calibrated.json   ブラウザの需要エンジンが読むパラメータ（固定値＋校正値）
+  public/data/<地域>/stations.json           各駅に acc（ACC）・mass（集中量 M）・muCatch（駅勢圏由来の乗降推計）を追記
   docs/calibration.md                 校正結果の報告
-  data/interim/calibration_stations.csv  駅別の観測値・推計値（検証用）
+  data/interim/<地域>/calibration_stations.csv  駅別の観測値・推計値（検証用）
 
     .venv\\Scripts\\python.exe scripts\\calibrate.py
 """
@@ -33,11 +33,11 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import dijkstra
 from scipy.spatial import cKDTree
 
-from common import CRS_METRIC, INTERIM, PUBLIC_DATA, ROOT, half_mesh_centroid, load_config, load_demand_config
+from common import CALIBRATED_PATH, CRS_METRIC, INTERIM, PUBLIC_DATA, REGION, docs_path, half_mesh_centroid, load_config, load_demand_config
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 ACC_REF = 1e6  # ACC の基準化定数（魅力度 A = (ACC/ACC_REF)^α）
-CORE = (139.7671, 35.6812)
+CORE = tuple(load_config()["core_point"])  # 都心の基準点（地域の設定 region.yaml の core_point）
 
 
 def haversine_km(lng1, lat1, lng2, lat2):
@@ -158,7 +158,7 @@ def travel_times(st: list, net: dict, ncfg: dict, verbose: bool = True) -> np.nd
 
 
 def pack_times(times: np.ndarray) -> bytes:
-    """駅間所要時間を public/data/times.bin の形式にする: 上三角（i<j）を行優先で uint8（分）。255 = 到達不能"""
+    """駅間所要時間を public/data/<地域>/times.bin の形式にする: 上三角（i<j）を行優先で uint8（分）。255 = 到達不能"""
     iu = np.triu_indices(len(times), 1)
     tri = times[iu]
     return np.where(np.isfinite(tri), np.minimum(tri, 254), 255).astype(np.uint8).tobytes()
@@ -442,6 +442,8 @@ def main() -> None:
     }
     out = {
         "version": 1,
+        "region": REGION,
+        "corePoint": list(CORE),
         "calibratedAt": dt.date.today().isoformat(),
         "year": ccfg["year"],
         "accRef": ACC_REF,
@@ -449,7 +451,8 @@ def main() -> None:
         "fitted": {**p, **{k: float(v) for k, v in coef.items()}},
         "metrics": m_all,
     }
-    cfg_path = ROOT / "src" / "config" / "demand.calibrated.json"
+    cfg_path = CALIBRATED_PATH
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
     cfg_path.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     stations_path = PUBLIC_DATA / "stations.json"
@@ -622,7 +625,9 @@ def write_report(p, coef, se, m_all, m_cv, m_nohub, n_nohub, glm_nohub, m_cmp, g
     w(f"- 新線の表定速度 {dcfg['service']['scheduled_speed_kmh']} km/h")
     w(f"- 短絡利用: 接続駅から {dcfg['shortcut']['neighborhood_min']} 分以内の駅を対象、経路選択ロジット {dcfg['shortcut']['route_logit_per_min']} /分")
     w("")
-    (ROOT / "docs" / "calibration.md").write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    out_md = docs_path("calibration.md")
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_md.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

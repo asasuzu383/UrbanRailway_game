@@ -29,22 +29,23 @@ def main() -> None:
 
     for pref in rcfg["full_prefectures"]:
         gdf = read_n03(cfg, pref)
-        if pref == "13" and rcfg["exclude_tokyo_islands"]:
-            # 島しょ部の町村コードは 13361（大島町）〜 13421（小笠原村）
-            islands = gdf["N03_007"].astype(int) >= 13361
-            print(f"東京都 島しょ部を除外: {islands.sum()} ポリゴン")
-            gdf = gdf[~islands]
+        cut = rcfg.get("exclude_codes_from", {}).get(pref)
+        if cut is not None:
+            # 例: 東京都の島しょ部（13361 大島町〜13421 小笠原村）
+            drop = gdf["N03_007"].astype(int) >= int(cut)
+            print(f"{pref}: 市区町村コード {cut} 以上を除外 {drop.sum()} ポリゴン")
+            gdf = gdf[~drop]
         parts.append(gdf)
 
-    ibaraki = read_n03(cfg, "08")
-    wanted = set(rcfg["ibaraki_municipalities"])
-    found = set(ibaraki["N03_004"].dropna())
-    missing = wanted - found
-    if missing:
-        raise SystemExit(f"N03 に見つからない茨城県の市町村: {sorted(missing)}")
-    ib = ibaraki[ibaraki["N03_004"].isin(wanted)]
-    print(f"茨城県南部: {ib['N03_004'].nunique()} 市町村 / {ib['N03_007'].nunique()} コード")
-    parts.append(ib)
+    for pref, names in (rcfg.get("partial_prefectures") or {}).items():
+        gdf = read_n03(cfg, pref)
+        wanted = set(names)
+        missing = wanted - set(gdf["N03_004"].dropna())
+        if missing:
+            raise SystemExit(f"N03 に見つからない市町村（{pref}）: {sorted(missing)}")
+        sel = gdf[gdf["N03_004"].isin(wanted)]
+        print(f"{pref}: {sel['N03_004'].nunique()} 市町村 / {sel['N03_007'].nunique()} コード")
+        parts.append(sel)
 
     muni = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs=parts[0].crs).to_crs(CRS_METRIC)
     # N03 は頂点数が多く（約60万）そのままの union は非常に遅い。10m 簡略化してから結合し、

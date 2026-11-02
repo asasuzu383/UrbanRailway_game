@@ -31,13 +31,14 @@ src/
   network/   路線モデル（エディタの状態）、スナップ、区間長、ネットワークグラフ
   demand/    需要推計エンジン（四段階推定の各段をインターフェースで分離）
   finance/   建設費・収入・経費・キャッシュフロー
-  config/    パラメータ（*.ts はデフォルト値と出典コメント、*.calibrated.json は校正スクリプトの出力）
+  config/    パラメータ（*.ts はデフォルト値と出典コメント）。regions.ts = 地域の設定、regions/<地域>/demand.calibrated.json = 校正の出力
   state/     アプリ状態・localStorage 保存・JSON 入出力
   ui/        地図レイヤー、エディタ操作、結果パネル、グラフ
-scripts/     Python 前処理・校正（番号順に実行。再実行可能・冪等）
+scripts/     Python 前処理・校正（番号順に実行。再実行可能・冪等。--region <地域> で対象地域を指定、既定 shutoken）
+scripts/config/regions/<地域>/  地域の設定（region.yaml・services.yaml・backtest.yaml）。全国共通は scripts/config/*.yaml
 data/raw/    生データ（git 管理外。手動 DL 物もここ）
 data/interim/ 中間生成物（git 管理外）
-public/data/ ブラウザが読む加工済みデータ（git 管理。1ファイル < 10MB を目安）
+public/data/<地域>/ ブラウザが読む加工済みデータ（git 管理。1ファイル < 10MB を目安）
 docs/        設計・出典・校正結果
 tests/       vitest
 ```
@@ -118,7 +119,7 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 編集操作は `src/network/lineModel.ts` の純粋関数。区間は起点駅 id をキーに持ち、途中挿入は元の区間の構造を継承、末尾延伸は「延伸する区間の構造」、駅削除は前側の区間の構造でつなぐ。先頭駅より前・最終駅より後の中間点は未完成部分として計算から除外。
 - 2026-11-01: 編集履歴（undo/redo）は `ScenarioStore`。ドラッグ中は transient 更新で、確定時に 1 回分だけ履歴に積む。localStorage へ 500ms デバウンスで自動保存、再計算は 300ms デバウンス（`src/state/appState.ts` の `computeStore`。M4 で需要推計をここに追加）。
 - 2026-11-01: スナップ半径は画面上 14px を 100〜400m に制限（`src/config/editor.ts`、仮置き）。
-- 2026-11-01: 需要モデルの固定パラメータは `scripts/config/demand.yaml` が唯一の定義元。`calibrate.py` が校正値とあわせて `src/config/demand.calibrated.json` に書き出し、ブラウザはそれだけを読む。
+- 2026-11-01: 需要モデルの固定パラメータは `scripts/config/demand.yaml` が唯一の定義元。`calibrate.py` が校正値とあわせて `src/config/regions/<地域>/demand.calibrated.json` に書き出し、ブラウザはそれだけを読む。
 - 2026-11-01: 校正は非線形パラメータに範囲制約を付けて推定（制約なしだと α≈25・a₁<0・γ≈0.009 と不自然）。結果は docs/calibration.md。
 - 2026-11-01: 費用単価は国交省「基準単価・基準コスト算定データ」（関東大手民鉄・東京メトロ）と東京メトロ延伸事業費から設定（src/config/cost.ts に出典）。地平・高架の建設単価、用地幅、運行本数などは仮置き。
 - 2026-11-01: 用地費の地価は L01 の住宅地の地点を優先（商業地を含めると約 2 倍に過大）。
@@ -126,14 +127,16 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 費用パラメータは「パラメータ」タブで変更でき、localStorage（urbanrailway.costParams.v1）に保存。需要パラメータは UI からは変えない。
 - 2026-11-01: Pages へは `.github/workflows/deploy.yml`（main への push でテスト→ビルド→デプロイ）。`BASE_PATH` はリポジトリ名から自動設定。
 - 2026-11-01: 地図の attribution に地理院タイルに加え国土数値情報・国勢調査/経済センサス（メッシュ表示時）を表示。全出典は「出典」パネル。
-- 2026-11-02: 既存線の運行データは「運行系統（駅の並び）× 種別（停車駅・駅間所要時間・ピーク/日中本数）＋直通」で持つ（design.md §11、`public/data/services.json`）。品質フラグは timetable / published / provisional。
+- 2026-11-02: 全国展開に向けて地域単位の構成にした（design.md §12）。首都圏前提の値はコードに書かず、`scripts/config/regions/<地域>/region.yaml` と `src/config/regions.ts` に置く。データは `public/data/<地域>/`、校正値は `src/config/regions/<地域>/`。前処理は `--region` で地域を指定。首都圏前提の箇所の一覧は design.md §12.2。
+- 2026-11-02: ODPT の利用ルール: CC0・CC BY 優先、チャレンジ限定は使わない、基本ライセンスは集計値だけ公開、ブラウザから ODPT API を呼ばない（トークンは .env、前処理のみ）、アプリ・README に ODPT 利用の旨・免責・問い合わせ先を表示、取得日を記録（docs/data-sources.md）。
+- 2026-11-02: 既存線の運行データは「運行系統（駅の並び）× 種別（停車駅・駅間所要時間・ピーク/日中本数）＋直通」で持つ（design.md §11、`public/data/<地域>/services.json`）。品質フラグは timetable / published / provisional。
 - 2026-11-02: 時刻表は ODPT のオープンデータだけを使う。都営（CC BY 4.0、トークン不要）は取得済み。東京メトロ・TX など基本ライセンスの事業者はユーザがトークンを取得して `.env` の ODPT_ACCESS_TOKEN に置く（git 管理外）。基本ライセンスのデータは集計値だけ公開する。
 - 2026-11-02: JR東日本・大手私鉄の時刻表は使わない（ODPT はチャレンジ限定ライセンス、JR の時刻表サイトは加工禁止）。ピーク本数・編成は国交省「最混雑区間における混雑率（令和6年度）」、停車駅・最高速度は各社公式、所要時間は運転曲線の簡易計算。
 - 2026-11-02: 運転曲線の余裕係数 1.15 は都営の時刻表との比較で決めた（バックテストに合わせた調整ではない）。
 - 2026-11-02: バックテストは「除外後のネットワーク＋全駅校正／ホールドアウト校正のパラメータ」を Python で用意し、推計はブラウザと同じ TypeScript エンジンを vitest で回す（`scripts/backtest.py`、`tests/backtest/backtest.run.ts`）。作業データは `data/backtest/`（git 管理外）。
 - 2026-11-02: バックテストの結果に合わせたパラメータ調整はしない（過学習防止）。改善は Phase 2/3 の構造変更で行う。
 - 2026-11-02: ロードマップを Phase 2（交通機関タイプ・運行体系・混雑率）／3（ネットワーク配分）／4（B/C・事業スキーム）に更新。道路混雑シミュレーションは削除。
-- 2026-11-01: 分布は全駅間の所要時間行列（`public/data/times.bin`）を使う発生制約型重力モデル＋新線経由の 2 項ロジット（設計の「外部ポータル＋反復比例法」から変更。design.md §4.5）。
+- 2026-11-01: 分布は全駅間の所要時間行列（`public/data/<地域>/times.bin`）を使う発生制約型重力モデル＋新線経由の 2 項ロジット（設計の「外部ポータル＋反復比例法」から変更。design.md §4.5）。
 
 ## 未解決・要確認
 

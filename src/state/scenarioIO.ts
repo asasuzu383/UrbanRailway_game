@@ -1,7 +1,9 @@
 /**
  * シナリオの保存（localStorage）と JSON 入出力。読み込み時は必ず validateScenario で検証する。
  */
-import { STORAGE_KEY } from '../config/editor';
+import { CURRENT_REGION } from '../config/regions';
+
+const STORAGE_KEY = CURRENT_REGION.storageKeys.scenario;
 import type { LineVertex, Scenario, SegmentAttributes, StructureType, UserLine } from '../core/types';
 
 const STRUCTURES: readonly StructureType[] = ['atGrade', 'elevated', 'underground'];

@@ -1,7 +1,7 @@
 """500m メッシュの人口・従業者数を結合してゾーンデータを作る。
 
 入力: e-Stat 統計GIS の 1次メッシュ単位 ZIP（国勢調査 2020 / 経済センサス‐活動調査 2021、JGD2011）
-出力: public/data/zones.json（列指向）、data/interim/zones.csv（検証用）
+出力: public/data/<地域>/zones.json（列指向）、data/interim/<地域>/zones.csv（検証用）
 
 秘匿処理: 国勢調査の HTKSYORI=2（秘匿地域）は詳細項目が合算先（HTKSYORI=1）に合算されるが、
 人口総数は各メッシュの値がそのまま公表されている。全メッシュの単純合計が都県の公表人口と

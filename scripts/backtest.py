@@ -1,11 +1,11 @@
-"""バックテスト（既存路線の再現検証）。docs/backtest.md、設定は scripts/config/backtest.yaml。
+"""バックテスト（既存路線の再現検証）。docs/backtest.md、設定は scripts/config/regions/<地域>/backtest.yaml。
 
 既存路線を「存在しなかったもの」としてネットワークから除き、同じ路線を新線として需要エンジンで推計して
 S12 の乗降客数と比べる。手順:
 
   1. 除外: 対象路線の区間と、対象路線だけの駅を既存ネットワークから消す。他路線と共有する駅は他路線の駅として残す
   2. 新線の生成: N02 の線路形状・駅位置から、エディタで描く新線と同じ UserLine を作る（構造は設定ファイル）
-  3. パラメータ: (a) 全駅で校正した値（src/config/demand.calibrated.json）、
+  3. パラメータ: (a) 全駅で校正した値（src/config/regions/<地域>/demand.calibrated.json）、
                  (b) ホールドアウト = 除外後のネットワークで、対象路線の駅（共有駅を含む）を除いて校正し直した値
   4. 人口時点: 2020 年（通常）と、設定があれば 2000 年（開業前）
   5. 推計: tests/backtest/backtest.run.ts（ブラウザと同じ TypeScript のエンジン）を vitest で実行
@@ -38,11 +38,12 @@ from shapely.geometry import LineString, Point
 from shapely.ops import substring
 
 import calibrate as cal
-from common import CRS_GEO, CRS_METRIC, INTERIM, PUBLIC_DATA, ROOT, ksj_zip, load_config, load_demand_config, vsizip
+from common import (CALIBRATED_PATH, CRS_GEO, CRS_METRIC, INTERIM, PUBLIC_DATA, ROOT, docs_path, ksj_zip, load_config,
+                    load_demand_config, region_config_path, vsizip)
 
 HERE = Path(__file__).resolve().parent
-RESULTS_JSON = ROOT / "docs" / "backtest.results.json"
-RESULTS_MD = ROOT / "docs" / "backtest_results.md"
+RESULTS_JSON = docs_path("backtest.results.json")
+RESULTS_MD = docs_path("backtest_results.md")
 STRUCTURE_LABEL = {"atGrade": "地平", "elevated": "高架", "underground": "地下"}
 
 
@@ -55,7 +56,7 @@ def import_script(name: str):
 
 
 def load_backtest_config() -> dict:
-    with (HERE / "config" / "backtest.yaml").open(encoding="utf-8") as f:
+    with region_config_path("backtest.yaml").open(encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -381,7 +382,7 @@ def prepare(cases: list, bcfg: dict) -> dict:
     base_zones = json.loads((PUBLIC_DATA / "zones.json").read_text(encoding="utf-8"))
     stations = json.loads((PUBLIC_DATA / "stations.json").read_text(encoding="utf-8"))["stations"]
     net = json.loads((PUBLIC_DATA / "network.json").read_text(encoding="utf-8"))
-    calibrated = json.loads((ROOT / "src" / "config" / "demand.calibrated.json").read_text(encoding="utf-8"))
+    calibrated = json.loads(CALIBRATED_PATH.read_text(encoding="utf-8"))
     members = pd.read_csv(INTERIM / "station_members.csv", dtype={"code": str, "group": str})
     code_to_group = dict(zip(members["code"], members["group"]))
     rail = import_script("03_rail")

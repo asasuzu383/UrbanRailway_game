@@ -7,7 +7,7 @@ import type { StationsFile, ZonesFile } from '../../src/data/schema';
 import { TimeMatrix } from '../../src/data/timeMatrix';
 import { createDemandContext, type DemandContext } from '../../src/demand/context';
 
-const DATA = resolve(__dirname, '../../public/data');
+const DATA = resolve(__dirname, '../../public/data/shutoken');
 let cached: { ctx: DemandContext; stations: StationsFile } | null = null;
 
 export function realContext(): { ctx: DemandContext; stations: StationsFile } {

@@ -6,10 +6,10 @@
 - 徒歩乗換: 名前の異なる近接駅グループ（例: 浜松町と大門）を徒歩エッジで結ぶ。
 
 出力:
-  public/data/rail_lines.geojson   路線形状（対象地域＋バッファで切り出し、簡略化）
-  public/data/network.json         路線一覧・隣接駅エッジ・徒歩乗換エッジ（駅は stations.json の添字）
-  data/interim/stations.csv        駅グループ（04_ridership.py が乗降客数を付けて stations.json にする）
-  data/interim/station_members.csv N02 の駅コード → 駅グループ
+  public/data/<地域>/rail_lines.geojson   路線形状（対象地域＋バッファで切り出し、簡略化）
+  public/data/<地域>/network.json         路線一覧・隣接駅エッジ・徒歩乗換エッジ（駅は stations.json の添字）
+  data/interim/<地域>/stations.csv        駅グループ（04_ridership.py が乗降客数を付けて stations.json にする）
+  data/interim/<地域>/station_members.csv N02 の駅コード → 駅グループ
 """
 
 from __future__ import annotations

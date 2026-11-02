@@ -77,13 +77,13 @@
 ### 9. 東京都交通局 列車時刻表（ODPT）
 - データセット: https://ckan.odpt.org/dataset/r_train_timetable-toei （ライセンス CC BY 4.0）
 - 取得: `scripts/odpt_download.py` が `https://api-public.odpt.org/api/v4/odpt:TrainTimetable.json` ほか（アクセストークン不要）を取得。配置先 `data/raw/odpt/`
-- 加工: `scripts/06_services.py` で平日ダイヤの種別ごとの停車駅、駅間所要時間の中央値、ピーク・日中の 1 時間あたり本数、直通先に集計（`public/data/services.json`）。
+- 加工: `scripts/06_services.py` で平日ダイヤの種別ごとの停車駅、駅間所要時間の中央値、ピーク・日中の 1 時間あたり本数、直通先に集計（`public/data/<地域>/services.json`）。
 - クレジット（ODPT の FAQ https://developer.odpt.org/ja/faq-info#cc-by-credit の「改変して利用する場合」の例に従う）:
   > このアプリは、以下の著作物を改変して利用しています。東京都交通局、東京都交通局 列車時刻表、クリエイティブ・コモンズ・ライセンス 表示4.0国際（https://creativecommons.org/licenses/by/4.0/deed.ja）
 
 ### 10. 国土交通省 都市鉄道の混雑率（令和6年度）
 - 報道発表: https://www.mlit.go.jp/report/press/tetsudo04_hh_000138.html の「資料３：最混雑区間における混雑率（2024）」（PDF）
-- 東京圏の各線について、最混雑区間のピーク 1 時間の編成両数・本数・輸送力・輸送人員・混雑率。値は `scripts/config/services.yaml` の `mlit_peak` / `mlit_peak_jr` に転記した（PDF は `data/raw/mlit/`、git 管理外）。
+- 東京圏の各線について、最混雑区間のピーク 1 時間の編成両数・本数・輸送力・輸送人員・混雑率。値は `scripts/config/regions/<地域>/services.yaml` の `mlit_peak` / `mlit_peak_jr` に転記した（PDF は `data/raw/mlit/`、git 管理外）。
 - 出典表示: 国土交通省「最混雑区間における混雑率（令和6年度）」を加工して作成
 
 ### 運行データ（時刻表）の利用可否の確認（2026-11-02）
@@ -95,6 +95,22 @@ ODPT（公共交通オープンデータセンター）のデータカタログ 
 | 東京都交通局 | CC BY 4.0（トークン不要） | 使用（時刻表ベース） |
 | 東京メトロ、首都圏新都市鉄道（TX）、横浜市交通局、東京臨海高速鉄道、ゆりかもめ、多摩都市モノレール | 公共交通オープンデータ基本ライセンス（開発者サイトのユーザ登録・アクセストークンが必要） | トークン取得後に使用予定。成果物（アプリ）の公開は可。ただし元データや、元データの全部・大部分を復元できる派生データを第三者が再利用できる形で公開することは禁止（第8条4項）なので、種別ごとの集計値（所要時間の中央値・1 時間あたり本数）だけを公開する。正確性を保証しない旨と問い合わせ先の表示が必要（第10条3項） |
 | JR東日本、東武、西武、小田急、京急、京王、東急、相鉄 | 公共交通オープンデータチャレンジ限定ライセンス | 使わない（チャレンジ期間中の作品応募に限られ、常設の公開アプリには使えない） |
+
+使用中・使用予定の ODPT データセット（ライセンスはデータカタログの各データセットのページで確認）:
+
+| データセット | 取得元 | ライセンス | 用途 | 公開する形 |
+|---|---|---|---|---|
+| 東京都交通局 列車時刻表（r_train_timetable-toei） | api-public `odpt:TrainTimetable.json` | CC BY 4.0 | 種別・停車駅・所要時間・本数・直通 | 集計値（services.json） |
+| 東京都交通局 駅情報（r_station-toei） | api-public `odpt:Station.json` | CC BY 4.0 | ODPT の駅と N02 の駅グループの対応付け | 公開しない（対応付けにのみ使用） |
+| 路線・列車種別（`odpt:Railway.json`、`odpt:TrainType.json`） | api-public | api-public はトークン不要のライセンス（CC0 / CC BY 4.0 / ODC BY 1.0 / ODbL 1.0）のデータだけを提供（開発者サイトの規約・ガイドライン）。現在の中身は都営のみ | 駅の並び・種別名 | 種別名だけ |
+| 東京メトロ・TX・横浜市営・りんかい線・ゆりかもめ・多摩モノレールの列車時刻表 | api `odpt:TrainTimetable`（要トークン） | 公共交通オープンデータ基本ライセンス | 同上（トークン取得後） | 集計値だけ。生データ・復元できる粒度のデータは公開しない |
+
+ODPT の利用ルール（本プロジェクト）:
+- CC0・CC BY 4.0 のデータを優先する。チャレンジ限定ライセンスのデータは使わない。
+- 基本ライセンスのデータは、ローカルの前処理で集計値（種別ごとの停車駅間所要時間の中央値・1 時間あたり本数・直通の割合）に変換する用途に限る。時刻表の生データは `data/raw/odpt/`（git 管理外）に置き、リポジトリにも GitHub Pages にも含めない。
+- ブラウザ側のコードから ODPT の API を呼ばない（GitHub Pages ではトークンが見えてしまうため）。API はローカルの前処理（`scripts/odpt_download.py`）だけで使い、トークンは `.env`（git 管理外）に置く。
+- アプリの「出典」パネルと README に、ODPT のデータを利用していること、正確性を ODPT・協議会・データ提供者が保証しないこと、問い合わせ先（GitHub Issues）を表示する。
+- ダイヤ改正などでデータが更新されたら `odpt_download.py` → `06_services.py` を再実行する。取得日は `data/raw/odpt/manifest.json`、ダイヤの発行日は services.json の `dataIssued` に記録される。
 
 - JR東日本の時刻表サイト（https://timetables.jreast.co.jp/）は「時刻データを無断で転載・複写し、又は…いかなる媒体に加工することも禁じます」と明記しているため、時刻表からは値を取らない。
 - JR東日本の東京近郊路線図（PDF、https://www.jreast.co.jp/map/pdf/map_tokyo.pdf）は自動取得がアクセス拒否された（回避はしない）。停車駅の確認に使う場合は手動で取得する。

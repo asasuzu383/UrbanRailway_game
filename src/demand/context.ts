@@ -8,9 +8,6 @@ import { meshCentroid } from '../data/meshCode';
 import { GridIndex } from '../data/spatialIndex';
 import type { TimeMatrix } from '../data/timeMatrix';
 
-/** 東京駅（都心距離の基準点。scripts/calibrate.py と同じ） */
-export const CORE_POINT = [139.7671, 35.6812] as const;
-
 export interface DemandZonesInput {
   readonly code: readonly number[];
   readonly pop: readonly number[];
@@ -68,6 +65,8 @@ export function createDemandContext(
   params: DemandParams,
 ): DemandContext {
   const fp = params.fitted;
+  // 都心の基準点（地域の設定。scripts/calibrate.py と同じ値が params.corePoint に入っている）
+  const core: [number, number] = [params.corePoint[0]!, params.corePoint[1]!];
   const nz = zonesIn.code.length;
   const zlng = new Float64Array(nz);
   const zlat = new Float64Array(nz);
@@ -76,7 +75,7 @@ export function createDemandContext(
     const [lng, lat] = meshCentroid(String(zonesIn.code[i]));
     zlng[i] = lng;
     zlat[i] = lat;
-    outside[i] = Math.exp(fp.outsideConst + fp.outsidePerKm * distanceKm(CORE_POINT, [lng, lat]));
+    outside[i] = Math.exp(fp.outsideConst + fp.outsidePerKm * distanceKm(core, [lng, lat]));
   }
 
   const ns = stationsIn.length;

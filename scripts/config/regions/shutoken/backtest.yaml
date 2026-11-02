@@ -9,7 +9,7 @@
 # 対象路線・人口時点・構造・運行速度といった「入力」だけで、需要モデルのパラメータは校正で決まる。
 
 # 出力先（git 管理外）。ケースごとに除外後のネットワーク・パラメータ・推計結果を置く
-work_dir: data/backtest
+work_dir: data/backtest/shutoken
 
 # 実績値（S12）の年度。primary を評価に使い、他は参考として表に並べる
 actual_years: [2024, 2019]

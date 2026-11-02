@@ -1,11 +1,11 @@
 """既存ネットワークの運行データ（運行系統・種別・停車駅・駅間所要時間・時間帯別本数・直通）を作る（Phase 2 M1）。
 
 入力:
-  scripts/config/services.yaml   公表資料ベースの系統、ODPT・計算・仮置きの設定
+  scripts/config/regions/<地域>/services.yaml   公表資料ベースの系統、ODPT・計算・仮置きの設定
   data/raw/odpt/                 ODPT の時刻表（scripts/odpt_download.py）
-  public/data/stations.json, network.json
+  public/data/<地域>/stations.json, network.json
 出力:
-  public/data/services.json      運行系統（docs/design.md §11）
+  public/data/<地域>/services.json      運行系統（docs/design.md §11）
   docs/services_coverage.md      路線ごとのデータ品質（時刻表／公表資料／仮置き）の内訳
 
 時刻表ベースの系統は、種別ごとの駅間所要時間の中央値と時間あたり本数に集計した値だけを書き出す
@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from common import PUBLIC_DATA, RAW, ROOT, load_config, write_json
+from common import PUBLIC_DATA, RAW, docs_path, region_config_path, write_json
 
 HERE = Path(__file__).resolve().parent
 ODPT_DIR = RAW / "odpt"
@@ -33,7 +33,7 @@ QUALITY_LABEL = {"timetable": "時刻表", "published": "公表資料", "provisi
 
 
 def load_services_config() -> dict:
-    with (HERE / "config" / "services.yaml").open(encoding="utf-8") as f:
+    with region_config_path("services.yaml").open(encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -174,6 +174,10 @@ def odpt_routes(scfg: dict, nw: Network) -> tuple[list, dict]:
     by_rail = defaultdict(list)
     for t in trains:
         by_rail[t["odpt:railway"]].append(t)
+    # ダイヤの版（時刻表データの発行日 dct:issued の最大）
+    issued = defaultdict(str)
+    for t in trains:
+        issued[t["odpt:railway"]] = max(issued[t["odpt:railway"]], t.get("dct:issued", ""))
     routes, report = [], {}
     for rw in railways:
         rid = rw["owl:sameAs"]
@@ -248,7 +252,8 @@ def odpt_routes(scfg: dict, nw: Network) -> tuple[list, dict]:
         n_tr = len(by_rail[rid])
         routes.append({
             "id": f"odpt:{rid.split(':')[1]}", "name": rw.get("dc:title", rid), "operator": operator, "quality": "timetable",
-            "source": f"ODPT {ocfg['operators'][op]['license']}（{rid}、平日）",
+            "source": f"ODPT {ocfg['operators'][op]['license']}（{rid}、平日、{issued[rid] or '発行日不明'} 発行のダイヤ）",
+            "dataIssued": issued[rid] or None,
             "stations": idx, "cars": None, "peakTotalTph": int(peak_total),
             "throughRaw": [{"operator": o, "at": idx[k], "share": round(c / n_tr / 2, 3)} for (o, k), c in throughs.most_common()],
             "services": services,
@@ -459,6 +464,10 @@ def main() -> None:
         "lineQuality": line_quality,
         "lineKm": line_km,
     }
+    manifest_path = ODPT_DIR / "manifest.json"
+    if manifest_path.exists():
+        man = json.loads(manifest_path.read_text(encoding="utf-8"))
+        out["odptRetrieved"] = {k: v["retrieved"] for k, v in man.items() if "TrainTimetable" in k}
     size = write_json(PUBLIC_DATA / "services.json", out)
     write_coverage(routes, nw, line_quality, line_km, odpt_report, scfg)
     n = Counter(r["quality"] for r in routes)
@@ -478,7 +487,7 @@ def write_coverage(routes, nw, line_quality, line_km, odpt_report, scfg) -> None
     w = L.append
     w("# 既存ネットワークの運行データ: カバー状況（自動生成）")
     w("")
-    w(f"生成: `scripts/06_services.py`（{dt.date.today().isoformat()}）。データ構造は design.md §11、設定は `scripts/config/services.yaml`。")
+    w(f"生成: `scripts/06_services.py`（{dt.date.today().isoformat()}）。データ構造は design.md §11、設定は `scripts/config/regions/<地域>/services.yaml`。")
     w("対象地域に駅を持つ N02 の線について集計した。品質は線ごとに延長の最も長いもの。")
     w("")
     w("| 品質 | 線の数 | 延長 [km] | 割合（延長） |")
@@ -523,7 +532,9 @@ def write_coverage(routes, nw, line_quality, line_km, odpt_report, scfg) -> None
             um = f"、対応付けできなかった駅 {len(rep['unmatched'])}: {', '.join(x.split('.')[-1] for x in rep['unmatched'])}" if rep["unmatched"] else ""
             w(f"- {rid}: 駅 {rep['stations']}、平日の列車 {rep['trains']}{um}")
         w("")
-    (ROOT / "docs" / "services_coverage.md").write_text("\n".join(L), encoding="utf-8", newline="\n")
+    out_md = docs_path("services_coverage.md")
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_md.write_text("\n".join(L), encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

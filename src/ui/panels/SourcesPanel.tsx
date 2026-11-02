@@ -30,6 +30,13 @@ export function SourcesPanel() {
         本アプリの推計値は上記データをもとに独自のモデルで算出したものであり、各提供機関および鉄道事業者の見解ではありません。
       </p>
       <p class="note">
+        既存線の運行データの一部に、<a href="https://www.odpt.org/" target="_blank" rel="noopener">公共交通オープンデータセンター</a>のデータを利用しています。
+        公共交通オープンデータセンター、公共交通オープンデータ協議会およびデータ提供者は、本アプリで使う運行データの正確性・完全性について責任を負いません。
+        本アプリに関するお問い合わせは、鉄道事業者ではなく
+        <a href="https://github.com/asasuzu383/UrbanRailway_game/issues" target="_blank" rel="noopener">GitHub の Issues</a>
+        へお寄せください。
+      </p>
+      <p class="note">
         推計は簡略化したモデルによる目安で、正確性を保証するものではありません。本アプリの利用により生じたいかなる損害についても、作者は責任を負いません。
       </p>
       <p class="note">
