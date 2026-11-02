@@ -1,6 +1,7 @@
 /**
  * 建設費・収入・運行経費・回収年数（docs/design.md §6）。すべて純粋関数。
  */
+import type { TransitTypeParams } from '../config/transitTypes';
 import type { LinePlanOperation } from '../network/servicePlan';
 import type { CostParams } from '../config/cost';
 import { distanceKm } from '../core/geo';
@@ -18,7 +19,7 @@ import type { LineGeometry } from '../network/lineGeometry';
 import type { LandPriceIndex } from './landPrice';
 
 const STRUCTURES: readonly StructureType[] = ['atGrade', 'elevated', 'underground'];
-const RANK: Record<StructureType, number> = { atGrade: 0, elevated: 1, underground: 2 };
+const RANK: Record<StructureType, number> = { street: 0, atGrade: 1, elevated: 2, underground: 3 };
 /** 用地費を求めるときの区間の標本間隔 [km] */
 const LAND_SAMPLE_KM = 0.1;
 
@@ -28,6 +29,33 @@ export function stationStructures(geo: LineGeometry): StructureType[] {
     const adj = [geo.segments[i - 1]?.structure, geo.segments[i]?.structure].filter((x): x is StructureType => !!x);
     return adj.reduce<StructureType>((a, b) => (RANK[b] > RANK[a] ? b : a), adj[0] ?? 'atGrade');
   });
+}
+
+/**
+ * 交通機関タイプの費用・運賃を反映した費用パラメータ（docs/design.md §15）。普通鉄道は p のまま（パラメータ画面の値）。
+ * 他のタイプは建設・車両・運行経費の単価と賃率・最低運賃をタイプの値で上書きする（用地の地価補正・管理費率・定期の割合などは共通）。
+ */
+export function effectiveCostParams(p: CostParams, t: TransitTypeParams): CostParams {
+  const o = t.costs;
+  if (!o) return p;
+  return {
+    ...p,
+    construction: {
+      ...p.construction,
+      trackPerKm: { ...p.construction.trackPerKm, ...o.trackPerKm },
+      stationEach: { ...p.construction.stationEach, ...o.stationEach },
+      passingLoopEach: { ...p.construction.passingLoopEach, ...o.passingLoopEach },
+      carPrice: o.carPrice,
+    },
+    land: { ...p.land, widthM: { ...p.land.widthM, ...o.landWidthM } },
+    operating: {
+      ...p.operating,
+      perCarKm: o.perCarKm,
+      trackMaintenancePerKmYear: { ...p.operating.trackMaintenancePerKmYear, ...o.trackMaintenancePerKmYear },
+      stationPerYear: { ...p.operating.stationPerYear, ...o.stationPerYear },
+    },
+    fare: { ...p.fare, nonCommuterRatePerKm: o.fareBaseRatePerKm, minimumFare: o.fareMinimum },
+  };
 }
 
 /**

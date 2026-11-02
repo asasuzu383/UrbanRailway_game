@@ -89,12 +89,12 @@ export class EditorLayer {
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': '#ffffff', 'line-width': casingWidth },
     });
-    // 地平: 実線、高架: 実線＋中央の白線、地下: 破線
+    // 地平: 実線、高架: 実線＋中央の白線、地下: 破線、併用軌道: 実線＋中央の白い点線
     m.addLayer({
       id: 'user-line',
       type: 'line',
       source: 'user-pieces',
-      filter: ['in', ['get', 'structure'], ['literal', ['atGrade', 'elevated']]],
+      filter: ['in', ['get', 'structure'], ['literal', ['street', 'atGrade', 'elevated']]],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': color, 'line-width': width },
     });
@@ -105,6 +105,13 @@ export class EditorLayer {
       filter: isStructure('elevated'),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 13, 1.5, 16, 2] },
+    });
+    m.addLayer({
+      id: 'user-line-street',
+      type: 'line',
+      source: 'user-pieces',
+      filter: isStructure('street'),
+      paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 13, 1.5, 16, 2], 'line-dasharray': [1, 2] },
     });
     m.addLayer({
       id: 'user-line-underground',

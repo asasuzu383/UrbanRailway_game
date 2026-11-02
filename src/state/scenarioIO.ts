@@ -1,12 +1,13 @@
 /**
  * シナリオの保存（localStorage）と JSON 入出力。読み込み時は必ず validateScenario で検証する。
  */
+import { TRANSIT_TYPE_ORDER, type TransitTypeId } from '../config/transitTypes';
 import { CURRENT_REGION } from '../config/regions';
 
 const STORAGE_KEY = CURRENT_REGION.storageKeys.scenario;
 import type { LineVertex, Scenario, SegmentAttributes, StructureType, UserLine } from '../core/types';
 
-const STRUCTURES: readonly StructureType[] = ['atGrade', 'elevated', 'underground'];
+const STRUCTURES: readonly StructureType[] = ['street', 'atGrade', 'elevated', 'underground'];
 
 export class ScenarioFormatError extends Error {}
 
@@ -55,7 +56,11 @@ function parseLine(l: unknown, path: string): UserLine {
   if (expected.length !== actual.length || expected.some((id, i) => id !== actual[i])) {
     fail(path, '区間の並びが駅の並びと一致しません');
   }
-  return { id: l.id, name: l.name, color: l.color, vertices, segments };
+  if (l.transitType !== undefined && !TRANSIT_TYPE_ORDER.includes(l.transitType as TransitTypeId)) {
+    fail(path, `transitType は ${TRANSIT_TYPE_ORDER.join(' / ')} のいずれかです`);
+  }
+  const base = { id: l.id, name: l.name, color: l.color, vertices, segments };
+  return l.transitType === undefined ? base : { ...base, transitType: l.transitType as TransitTypeId };
 }
 
 export function validateScenario(data: unknown): Scenario {

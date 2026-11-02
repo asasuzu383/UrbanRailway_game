@@ -2,14 +2,14 @@
  * アプリ全体の状態の組み立て: シナリオの読込・自動保存・編集後の再計算（デバウンス）。
  */
 import { AUTOSAVE_DEBOUNCE_MS, RECOMPUTE_DEBOUNCE_MS } from '../config/editor';
-import { DEFAULT_TRANSIT_TYPE, TRANSIT_TYPES } from '../config/transitTypes';
+import { DEFAULT_TRANSIT_TYPE, TRANSIT_TYPES, type TransitTypeParams } from '../config/transitTypes';
 import type { DemandResult, FinanceResult, Scenario, ServicePlan, UserLine } from '../core/types';
 import { rideTimesFrom, type ServicesFile } from '../data/services';
 import type { DemandContext } from '../demand/context';
 import { runDemand } from '../demand/engine';
 import { operationFromPlan, type DemandThrough } from '../demand/lineOperation';
 import { computeLinePlanOperation, normalizePlan, type LinePlanOperation } from '../network/servicePlan';
-import { runFinance } from '../finance/finance';
+import { effectiveCostParams, runFinance } from '../finance/finance';
 import type { LandPriceIndex } from '../finance/landPrice';
 import { costParamsStore } from './costParams';
 import { computeLineGeometry, type LineGeometry } from '../network/lineGeometry';
@@ -58,6 +58,11 @@ export function setDemandContext(ctx: DemandContext, services: ServicesFile | nu
   compute(scenarioStore.scenario);
 }
 
+/** 路線の交通機関タイプ（省略時は普通鉄道） */
+export function transitTypeOf(line: UserLine | undefined): TransitTypeParams {
+  return TRANSIT_TYPES[line?.transitType ?? DEFAULT_TRANSIT_TYPE];
+}
+
 /** 路線の運行計画と運行の計算（費用パラメータの既定の計画・運行時間帯を使う） */
 function planFor(s: Scenario, line: UserLine, geometry: LineGeometry): { plan: ServicePlan; operation: LinePlanOperation } {
   const cp = costParamsStore.get().params;
@@ -66,7 +71,7 @@ function planFor(s: Scenario, line: UserLine, geometry: LineGeometry): { plan: S
     tphOffpeak: cp.service.offpeakTrainsPerHour,
     carsPerTrain: cp.service.carsPerTrain,
   });
-  const operation = computeLinePlanOperation(geometry, plan, TRANSIT_TYPES[DEFAULT_TRANSIT_TYPE], cp.service, cp.construction.spareRatio);
+  const operation = computeLinePlanOperation(geometry, plan, transitTypeOf(line), cp.service, cp.construction.spareRatio);
   return { plan, operation };
 }
 
@@ -139,7 +144,8 @@ function computeFinance(): void {
     return;
   }
   try {
-    const finance = runFinance(geometry, demand, costParamsStore.get().params, operation, landPrice);
+    const line = computeStore.get().computedFor?.lines[0];
+    const finance = runFinance(geometry, demand, effectiveCostParams(costParamsStore.get().params, transitTypeOf(line)), operation, landPrice);
     financeStore.set({ finance, error: null });
   } catch (e) {
     console.error(e);

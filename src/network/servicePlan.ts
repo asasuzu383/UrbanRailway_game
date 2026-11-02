@@ -83,6 +83,22 @@ export function patternStops(p: ServicePattern, geo: LineGeometry): boolean[] {
   return geo.stations.map((s, i) => set.has(s.id) || i === 0 || i === geo.stations.length - 1);
 }
 
+/**
+ * 停車駅間の所要時間 [分]。併用軌道を含む区間は、最高速度を併用軌道の制限にし、信号待ちなどの遅れを足し、
+ * 平均速度が制限（軌道運転規則 第53条: 30 km/h）を超えないようにする（docs/design.md §15.2）。
+ * @param from, to geo.stations の添字（from < to）
+ */
+export function stopToStopMinutes(geo: LineGeometry, from: number, to: number, t: TransitTypeParams): number {
+  const dist = geo.chainageKm[to]! - geo.chainageKm[from]!;
+  const arrivalTransfer = geo.stations[to]!.transferTo !== null;
+  let streetKm = 0;
+  for (let k = from; k < to; k++) if (geo.segments[k]?.structure === 'street') streetKm += geo.segments[k]!.lengthKm;
+  if (!t.street || streetKm <= 0) return legMinutes(dist, t, arrivalTransfer);
+  const run = legMinutes(dist, { ...t, maxSpeedKmh: t.street.maxSpeedKmh }, arrivalTransfer) + streetKm * t.street.signalDelayMinPerKm;
+  // 併用軌道の部分の平均速度の上限（その部分にかかる時間が streetKm / 上限 を下回らない）
+  return Math.max(run, (streetKm / t.street.maxAverageKmh) * 60);
+}
+
 /** 種別の停車駅ごとの所要時間（起点から）。駅間距離はキロ程の差 */
 export function patternTimes(stops: readonly boolean[], geo: LineGeometry, t: TransitTypeParams): number[] {
   const cum = geo.stations.map(() => NaN);
@@ -90,11 +106,27 @@ export function patternTimes(stops: readonly boolean[], geo: LineGeometry, t: Tr
   let acc = 0;
   stops.forEach((s, i) => {
     if (!s) return;
-    if (prev >= 0) acc += legMinutes(geo.chainageKm[i]! - geo.chainageKm[prev]!, t, geo.stations[i]!.transferTo !== null);
+    if (prev >= 0) acc += stopToStopMinutes(geo, prev, i, t);
     cum[i] = acc;
     prev = i;
   });
   return cum;
+}
+
+/** 選んだ交通機関タイプで選べない構造の区間（区間の起点駅 id） */
+export function invalidStructureSegments(geo: LineGeometry, t: TransitTypeParams): string[] {
+  return geo.segments.filter((s) => !t.structures.includes(s.structure)).map((s) => s.fromStationId);
+}
+
+/** 運行計画の警告: 最小運転間隔より短い（合計ピーク本数が多すぎる）、編成両数が上限を超える */
+export function planWarnings(plan: ServicePlan, t: TransitTypeParams): string[] {
+  const out: string[] = [];
+  const total = plan.patterns.reduce((a, p) => a + p.tphPeak, 0);
+  if (total > 60 / t.minHeadwayMin) out.push(`ピーク本数の合計 ${total} 本/時は、${t.name}の最小運転間隔 ${t.minHeadwayMin} 分（${Math.floor(60 / t.minHeadwayMin)} 本/時）を超えています`);
+  for (const p of plan.patterns) {
+    if (p.carsPerTrain > t.maxCarsPerTrain) out.push(`${p.name}の編成両数 ${p.carsPerTrain} 両は、${t.name}の上限 ${t.maxCarsPerTrain} 両を超えています`);
+  }
+  return out;
 }
 
 /**

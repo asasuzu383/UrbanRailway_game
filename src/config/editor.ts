@@ -15,11 +15,12 @@ export const DEFAULT_LINE_COLOR = '#222222';
 export const DEFAULT_STRUCTURE: StructureType = 'atGrade';
 
 export const STRUCTURE_LABELS: Readonly<Record<StructureType, string>> = {
+  street: '併用軌道',
   atGrade: '地平',
   elevated: '高架',
   underground: '地下',
 };
-export const STRUCTURE_ORDER: readonly StructureType[] = ['atGrade', 'elevated', 'underground'];
+export const STRUCTURE_ORDER: readonly StructureType[] = ['street', 'atGrade', 'elevated', 'underground'];
 
 export const UNDO_LIMIT = 100;
 export const AUTOSAVE_DEBOUNCE_MS = 500;

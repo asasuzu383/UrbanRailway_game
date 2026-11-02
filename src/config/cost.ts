@@ -93,6 +93,7 @@ export const defaultCostParams: CostParams = {
   construction: {
     trackPerKm: {
       // 仮置き。宇都宮LRT 約47億円/km [CAO] を参考に、普通鉄道の地平区間（踏切・立体交差を含む）として設定
+      street: 40 * OKU, // 普通鉄道は併用軌道を選べない（型のために地平と同じ値）
       atGrade: 40 * OKU,
       // 仮置き。つくばエクスプレス（高架主体、一部地下）約9,400億円/58.3km ≒ 161億円/km（駅込み）より低めに設定
       elevated: 100 * OKU,
@@ -100,6 +101,7 @@ export const defaultCostParams: CostParams = {
       underground: 300 * OKU,
     },
     stationEach: {
+      street: 10 * OKU, // 普通鉄道は併用軌道を選べない（型のために地平と同じ値）
       atGrade: 10 * OKU, // 仮置き
       elevated: 40 * OKU, // 仮置き
       underground: 200 * OKU, // [METRO] から逆算（下の検算参照）
@@ -107,14 +109,14 @@ export const defaultCostParams: CostParams = {
     // 仮置き。既存駅のホーム増設・連絡通路の改良として新設の 7 割
     transferStationFactor: 0.7,
     // 仮置き: 副本線 2 線・ホーム延伸として駅単価の 0.6 倍程度（地平 15 億円、高架 40 億円、地下 120 億円）。根拠となる事業費は未確認
-    passingLoopEach: { atGrade: 15 * OKU, elevated: 40 * OKU, underground: 120 * OKU },
+    passingLoopEach: { street: 15 * OKU, atGrade: 15 * OKU, elevated: 40 * OKU, underground: 120 * OKU },
     // [E235] 1両 約1.5億円
     carPrice: 1.5 * OKU,
     spareRatio: 0.1, // 仮置き
   },
   land: {
     // 仮置き。複線の線路敷として地平 12m、高架 10m
-    widthM: { atGrade: 12, elevated: 10, underground: 0 },
+    widthM: { street: 0, atGrade: 12, elevated: 10, underground: 0 },
     stationAreaM2: 3000, // 仮置き（ホーム 150m × 20m）
     priceFactor: 1.0, // 仮置き
   },
@@ -139,9 +141,9 @@ export const defaultCostParams: CostParams = {
     // [MLIT-R5] 関東大手民鉄 8 社の（運転費＋車両保存費）/ 旅客車両キロ ≒ 118〜166 円（中央値 約140円）。東京メトロは 約214円
     perCarKm: 140,
     // [MLIT-R5]（線路保存費＋電路保存費）/ 営業キロ: 関東大手民鉄 中央値 約0.7億円、東京メトロ 約2.1億円
-    trackMaintenancePerKmYear: { atGrade: 0.6 * OKU, elevated: 0.8 * OKU, underground: 2.0 * OKU },
+    trackMaintenancePerKmYear: { street: 0.6 * OKU, atGrade: 0.6 * OKU, elevated: 0.8 * OKU, underground: 2.0 * OKU },
     // [MLIT-R5] 運輸費 / 駅数: 関東大手民鉄 中央値 約1.5億円、東京メトロ 約3.7億円
-    stationPerYear: { atGrade: 1.5 * OKU, elevated: 1.5 * OKU, underground: 3.5 * OKU },
+    stationPerYear: { street: 1.5 * OKU, atGrade: 1.5 * OKU, elevated: 1.5 * OKU, underground: 3.5 * OKU },
     // [MLIT-R5] 管理費等 / それ以外の営業費（減価償却費・諸税を除く）: 京王 33%、西武 36%、小田急 41%、京急 41%、東急 43%
     overheadRatio: 0.35,
   },

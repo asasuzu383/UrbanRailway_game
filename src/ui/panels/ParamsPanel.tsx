@@ -1,6 +1,10 @@
 import type { CostParams } from '../../config/cost';
 import { CURRENT_REGION } from '../../config/regions';
-import { STRUCTURE_LABELS, STRUCTURE_ORDER } from '../../config/editor';
+import { STRUCTURE_LABELS } from '../../config/editor';
+import { TRANSIT_TYPES } from '../../config/transitTypes';
+
+/** パラメータ画面で変えるのは普通鉄道の単価（他のタイプは src/config/transitTypes.ts の値） */
+const HEAVY_RAIL_STRUCTURES = TRANSIT_TYPES.heavyRail.structures;
 import { costParamsStore, resetCostParams, setCostParam } from '../../state/costParams';
 import { useStore } from '../hooks';
 
@@ -79,8 +83,8 @@ export function ParamsPanel() {
 
       <section class="panel-section">
         <h3>建設費</h3>
-        {STRUCTURE_ORDER.map((s) => f({ label: `線路 km 単価（${STRUCTURE_LABELS[s]}）`, path: ['construction', 'trackPerKm', s], unit: '億円/km', scale: OKU }))}
-        {STRUCTURE_ORDER.map((s) => f({ label: `駅単価（${STRUCTURE_LABELS[s]}）`, path: ['construction', 'stationEach', s], unit: '億円/駅', scale: OKU }))}
+        {HEAVY_RAIL_STRUCTURES.map((s) => f({ label: `線路 km 単価（${STRUCTURE_LABELS[s]}）`, path: ['construction', 'trackPerKm', s], unit: '億円/km', scale: OKU }))}
+        {HEAVY_RAIL_STRUCTURES.map((s) => f({ label: `駅単価（${STRUCTURE_LABELS[s]}）`, path: ['construction', 'stationEach', s], unit: '億円/駅', scale: OKU }))}
         {f({ label: '接続駅の単価係数', path: ['construction', 'transferStationFactor'], unit: '倍', step: 0.05 })}
         {f({ label: '車両単価', path: ['construction', 'carPrice'], unit: '億円/両', scale: OKU, step: 0.1 })}
         {f({ label: '用地費の補正係数（対 公示価格）', path: ['land', 'priceFactor'], unit: '倍', step: 0.1 })}
@@ -94,8 +98,8 @@ export function ParamsPanel() {
         {f({ label: 'ピーク本数で走る時間', path: ['service', 'peakHoursPerDay'], unit: '時/日', min: 0, max: 24 })}
         {f({ label: '運行時間', path: ['service', 'operatingHoursPerDay'], unit: '時/日', min: 1, max: 24 })}
         {f({ label: '運転・車両保守費', path: ['operating', 'perCarKm'], unit: '円/車両キロ', step: 10 })}
-        {STRUCTURE_ORDER.map((s) => f({ label: `線路保守費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'trackMaintenancePerKmYear', s], unit: '億円/km・年', scale: OKU, step: 0.1 }))}
-        {STRUCTURE_ORDER.map((s) => f({ label: `駅の運営費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'stationPerYear', s], unit: '億円/駅・年', scale: OKU, step: 0.1 }))}
+        {HEAVY_RAIL_STRUCTURES.map((s) => f({ label: `線路保守費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'trackMaintenancePerKmYear', s], unit: '億円/km・年', scale: OKU, step: 0.1 }))}
+        {HEAVY_RAIL_STRUCTURES.map((s) => f({ label: `駅の運営費（${STRUCTURE_LABELS[s]}）`, path: ['operating', 'stationPerYear', s], unit: '億円/駅・年', scale: OKU, step: 0.1 }))}
         {f({ label: '管理費などの比率', path: ['operating', 'overheadRatio'], unit: '%', scale: 0.01 })}
       </section>
 

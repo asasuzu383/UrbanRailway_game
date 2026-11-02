@@ -66,7 +66,11 @@ export interface ExistingLine {
 // ユーザーが作る路線（エディタのモデル）
 // ---------------------------------------------------------------------------
 
-export type StructureType = 'atGrade' | 'elevated' | 'underground';
+/** 交通機関タイプ（パラメータは src/config/transitTypes.ts） */
+export type TransitTypeId = 'heavyRail' | 'monorail' | 'agt' | 'lrt';
+
+/** 区間の構造。street = 併用軌道（道路上。LRT のみ）、atGrade = 地平（LRT では専用軌道） */
+export type StructureType = 'street' | 'atGrade' | 'elevated' | 'underground';
 
 /** 路線上の頂点。駅または中間点（曲線形状用）。 */
 export type LineVertex = StationVertex | ShapeVertex;
@@ -100,6 +104,8 @@ export interface UserLine {
   readonly id: string;
   readonly name: string;
   readonly color: string;
+  /** 交通機関タイプ（src/config/transitTypes.ts）。省略時は普通鉄道 */
+  readonly transitType?: TransitTypeId;
   /** 配置順。先頭と末尾は必ず駅 */
   readonly vertices: readonly LineVertex[];
   readonly segments: readonly SegmentAttributes[];

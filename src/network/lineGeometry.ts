@@ -50,7 +50,7 @@ export function computeLineGeometry(line: UserLine): LineGeometry {
     current = [v.position];
   }
 
-  const kmByStructure: Record<StructureType, number> = { atGrade: 0, elevated: 0, underground: 0 };
+  const kmByStructure: Record<StructureType, number> = { street: 0, atGrade: 0, elevated: 0, underground: 0 };
   const chainageKm = [0];
   let total = 0;
   for (const s of segments) {
