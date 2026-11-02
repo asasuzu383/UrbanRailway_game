@@ -1,5 +1,6 @@
 /**
- * 新線を加えたネットワークの所要時間（docs/design.md §4.3, §4.5）。
+ * 新線を加えたネットワークの一般化費用（docs/design.md §4.3, §4.5, §13）。
+ * 既存駅間の値（ctx.times）は運行データから求めた一般化費用（乗車・待ち・乗換・徒歩）。新線は乗るたびに待ち時間を 1 回足す。
  *
  * 既存駅 o から新線の接続駅 k に乗るコスト board[k][o] = t_old(o, k) + τ（o が k 自身なら τ なし）。
  * これを使うと、新線経由の所要時間は
@@ -7,6 +8,7 @@
  *   既存→新駅: min_k board[k][o] + T(k, n)
  * で求まる（T は新線上の乗車時間）。接続駅の数は少ないので、全駅の組でも十分速い。
  */
+import { waitMinutes } from '../core/generalizedCost';
 import type { DemandContext } from './context';
 import type { LineStop } from './lineStops';
 
@@ -16,10 +18,12 @@ export class NewNetwork {
   readonly transferStops: readonly number[];
   /** 新駅（接続駅でない駅） */
   readonly freshStops: readonly number[];
-  /** board[t][o]: 既存駅 o から transferStops[t] で新線に乗るまでの時間 [分] */
+  /** board[t][o]: 既存駅 o から transferStops[t] で新線に乗り換えるまでの一般化費用 [分]（既存線の一般化費用＋乗換抵抗。新線の待ち時間は含まない） */
   readonly board: readonly Float64Array[];
   /** 既存駅 o から最も早く新線に乗れる時間 */
   readonly minBoard: Float64Array;
+  /** 新線に乗るときの待ち時間の一般化費用 [分]（待ち時間の重み × 待ち時間。新線の代表本数から） */
+  readonly boardingWait: number;
   private readonly minutesPerKm: number;
 
   constructor(ctx: DemandContext, stops: readonly LineStop[]) {
@@ -27,6 +31,8 @@ export class NewNetwork {
     this.transferStops = stops.flatMap((s, i) => (s.existing !== null ? [i] : []));
     this.freshStops = stops.flatMap((s, i) => (s.existing === null ? [i] : []));
     this.minutesPerKm = 60 / ctx.params.service.scheduledSpeedKmh;
+    const w = ctx.params.generalizedCost;
+    this.boardingWait = w.waitWeight * waitMinutes(ctx.params.service.representativeTph, w);
     const tau = ctx.params.network.transferOtherOperatorMin;
     const n = ctx.stations.n;
     this.minBoard = new Float64Array(n).fill(Infinity);
@@ -39,6 +45,11 @@ export class NewNetwork {
       }
       return row;
     });
+  }
+
+  /** 新線の駅どうしの一般化費用 [分]（新線の待ち時間＋乗車時間） */
+  freshToFresh(a: number, b: number): number {
+    return this.boardingWait + this.lineTime(a, b);
   }
 
   /** 新線上の乗車時間 [分]（停車時間込みの表定速度） */
@@ -57,7 +68,7 @@ export class NewNetwork {
       let arg = -1;
       for (let ki = 0; ki < nt; ki++) {
         if (ki === li) continue;
-        const t = this.board[ki]![o]! + this.lineTime(this.transferStops[ki]!, this.transferStops[li]!);
+        const t = this.board[ki]![o]! + this.boardingWait + this.lineTime(this.transferStops[ki]!, this.transferStops[li]!);
         if (t < best) {
           best = t;
           arg = ki;
@@ -73,7 +84,7 @@ export class NewNetwork {
     let best = Infinity;
     let arg = -1;
     this.transferStops.forEach((k, ki) => {
-      const t = this.board[ki]![o]! + this.lineTime(k, n);
+      const t = this.board[ki]![o]! + this.boardingWait + this.lineTime(k, n);
       if (t < best) {
         best = t;
         arg = ki;

@@ -102,6 +102,32 @@ def counterfactual(stations: list, net: dict, targets: set[int]) -> tuple[list, 
     return keep, {**net, "edges": edges, "walk": walk}, removed, touched
 
 
+def counterfactual_services(services: dict, stations: list, net: dict, targets: set[int], st_cf: list) -> dict:
+    """運行データ（services.json）から対象路線を走る系統を除き、駅の添字を除外後の駅一覧に付け替える。
+    系統の駅間のうち、対象路線のエッジでしか結ばれていない区間を含む系統を「対象路線を走る系統」とみなす。"""
+    pair_lines: dict[frozenset, set] = {}
+    for a, b, li, _ in net["edges"]:
+        pair_lines.setdefault(frozenset((a, b)), set()).add(li)
+    new_index = {s["id"]: i for i, s in enumerate(st_cf)}
+    old_id = [s["id"] for s in stations]
+    keep, dropped = [], set()
+    for r in services["routes"]:
+        seq = r["stations"]
+        on_target = any((pl := pair_lines.get(frozenset((a, b)))) and pl <= targets for a, b in zip(seq[:-1], seq[1:]))
+        if on_target or any(old_id[k] not in new_index for k in seq):
+            dropped.add(r["id"])
+            continue
+        keep.append(r)
+    routes = []
+    for r in keep:
+        remap = lambda k: new_index[old_id[k]]  # noqa: E731
+        through = [{**t, "at": [remap(k) for k in t["at"] if old_id[k] in new_index]}
+                   for t in r.get("through", []) if t.get("route") not in dropped]
+        routes.append({**r, "stations": [remap(k) for k in r["stations"]], "through": [t for t in through if t["at"]]})
+    print(f"運行データ: 対象路線を走る系統 {len(dropped)} を除外（{', '.join(sorted(dropped))}）")
+    return {**services, "routes": routes}
+
+
 # ---------------------------------------------------------------------------
 # 人口
 # ---------------------------------------------------------------------------
@@ -328,9 +354,9 @@ def fitted_from_calibration(res_x, glm) -> dict:
     return {**p, **{k: float(v) for k, v in coef.items()}}
 
 
-def holdout_calibration(dcfg: dict, zones: dict, st_cf: list, net_cf: dict, touched: set) -> dict:
+def holdout_calibration(dcfg: dict, zones: dict, st_cf: list, net_cf: dict, touched: set, sv_cf: dict) -> dict:
     psi = dcfg["mass"]["population_weight"]
-    inp = cal.load_inputs(dcfg, zones, st_cf, net_cf, verbose=False)
+    inp = cal.load_inputs(dcfg, zones, st_cf, net_cf, verbose=False, services=sv_cf)
     excluded: list = []
     obs = cal.build_obs(inp, dcfg["calibration"]["year"], dcfg, excluded, holdout_clusters=touched)
     n_holdout = sum(1 for _, r in excluded if r == "バックテスト対象路線の駅")
@@ -392,7 +418,8 @@ def prepare(cases: list, bcfg: dict) -> dict:
     years = s12_years(s12)
     base_by_id = {s["id"]: s for s in stations}
     print("全駅のネットワークで校正値の当てはまりを計算（段階 A）")
-    base_inp = cal.load_inputs(dcfg, base_zones, stations, net, verbose=False)
+    services = json.loads((PUBLIC_DATA / "services.json").read_text(encoding="utf-8"))
+    base_inp = cal.load_inputs(dcfg, base_zones, stations, net, verbose=False, services=services)
 
     manifest = {"createdAt": dt.datetime.now().isoformat(timespec="seconds"), "cases": []}
     meta_all = {}
@@ -401,6 +428,7 @@ def prepare(cases: list, bcfg: dict) -> dict:
         cdir = work / case["id"]
         targets = target_line_ids(net, case["lines"])
         st_cf, net_cf, removed, touched = counterfactual(stations, net, targets)
+        sv_cf = counterfactual_services(services, stations, net, targets, st_cf)
         cf_ids = {s["id"] for s in st_cf}
         print(f"\n=== {case['id']}: {case['name']} ===")
         print(f"除外: 路線 {len(targets)}、単独駅 {len(removed)}、対象路線が乗り入れる乗降集計クラスタ {len(touched)}")
@@ -415,10 +443,11 @@ def prepare(cases: list, bcfg: dict) -> dict:
             zones_by_year[y], pop_info[str(y)] = zones_for(y, base_zones, cfg)
             dump(cdir / f"zones_{y}.json", zones_by_year[y])
 
-        inp_by_year = {y: cal.load_inputs(dcfg, zones_by_year[y], st_cf, net_cf, verbose=False) for y in case["populations"]}
+        inp_by_year = {y: cal.load_inputs(dcfg, zones_by_year[y], st_cf, net_cf, verbose=False, services=sv_cf)
+                       for y in case["populations"]}
         (cdir / "times.bin").write_bytes(cal.pack_times(inp_by_year[case["populations"][0]].times))
 
-        holdout = holdout_calibration(dcfg, zones_by_year[2020], st_cf, net_cf, touched)
+        holdout = holdout_calibration(dcfg, zones_by_year[2020], st_cf, net_cf, touched, sv_cf)
         param_sets = {"full": calibrated["fitted"], "holdout": holdout["fitted"]}
 
         speed = bcfg["speed"]

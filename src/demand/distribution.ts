@@ -49,7 +49,7 @@ export function computeAccessibility(ctx: DemandContext, net: NewNetwork, stopMa
 
   for (const f of net.freshStops) {
     let acc = 0;
-    for (const g of net.freshStops) if (g !== f) acc += stopMass[g]! * Math.exp(-gamma * net.lineTime(f, g));
+    for (const g of net.freshStops) if (g !== f) acc += stopMass[g]! * Math.exp(-gamma * net.freshToFresh(f, g));
     if (nt > 0) for (let d = 0; d < n; d++) acc += st.mass[d]! * Math.exp(-gamma * net.toFresh(d, f).time);
     stops[f] = acc;
   }
@@ -149,7 +149,7 @@ export function distributeFlows(
     if (!(acc.stops[f]! > 0)) continue;
     const prod = muStops[f]! / 2 / acc.stops[f]!;
     for (const g of net.freshStops) {
-      if (g !== f) add(f, g, prod * stopMass[g]! * Math.exp(-gamma * net.lineTime(f, g)), true, true);
+      if (g !== f) add(f, g, prod * stopMass[g]! * Math.exp(-gamma * net.freshToFresh(f, g)), true, true);
     }
     if (nt === 0) continue;
     for (let d = 0; d < n; d++) {

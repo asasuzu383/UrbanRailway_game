@@ -58,6 +58,7 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 .\.venv\Scripts\python.exe scripts\run_pipeline.py 03 04  # 指定段のみ
 .\.venv\Scripts\python.exe scripts\calibrate.py           # 需要モデルの校正（約1分）→ docs/calibration.md
 .\.venv\Scripts\python.exe scripts\backtest.py            # バックテスト（約3分）→ docs/backtest_results.md, docs/backtest.results.json
+.\.venv\Scripts\python.exe scripts\tests\test_gencost.py # 一般化費用（前処理側）の単体テスト
 .\.venv\Scripts\python.exe scripts\backtest.py --check    # 回帰テスト: 前回の結果との差だけ表示（ファイルは更新しない）
 ```
 
@@ -89,8 +90,9 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 | M6 | README、出典表示、Pages デプロイ | 完了（2026-11-01）。https://asasuzu383.github.io/UrbanRailway_game/ |
 | Phase 1.5 | ロードマップ更新、既存路線のバックテスト（TX、東急・相鉄新横浜線） | 完了（2026-11-02）、報告済み・指示待ち。docs/backtest.md |
 
-| Phase 2 M1 | 既存線の運行データ整備（データ構造・都営の時刻表・国交省のピーク本数） | 報告済み・指示待ち（2026-11-02）。ODPT トークン待ち、JR・私鉄の停車駅は未入力 |
-| Phase 2 M2〜M7 | 一般化費用、新線の運行体系、交通機関タイプ、輸送力制約、UI・シナリオ移行、バックテスト再実行 | 未着手 |
+| Phase 2 M1 | 既存線の運行データ整備（データ構造・都営の時刻表・国交省のピーク本数・JR 主要 18 系統） | 完了（2026-11-02）。ODPT トークン待ち（東京メトロ・TX など）、大手私鉄の停車駅は未入力 |
+| Phase 2 M2 | 一般化費用モジュール | 完了（2026-11-02） |
+| Phase 2 M3〜M7 | 新線の運行体系、交通機関タイプ、輸送力制約、UI・シナリオ移行、バックテスト再実行 | 未着手 |
 
 ### 今後のフェーズ（詳細は design.md §8）
 
@@ -127,6 +129,8 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-01: 費用パラメータは「パラメータ」タブで変更でき、localStorage（urbanrailway.costParams.v1）に保存。需要パラメータは UI からは変えない。
 - 2026-11-01: Pages へは `.github/workflows/deploy.yml`（main への push でテスト→ビルド→デプロイ）。`BASE_PATH` はリポジトリ名から自動設定。
 - 2026-11-01: 地図の attribution に地理院タイルに加え国土数値情報・国勢調査/経済センサス（メッシュ表示時）を表示。全出典は「出典」パネル。
+- 2026-11-02: 一般化費用（design.md §13）= 乗車＋1.5×待ち（運行間隔/2、上限15分）＋乗換抵抗＋徒歩。直通は乗換・待ちなし。既存駅間は運行データのグラフから前処理で求めて times.bin に入れる（Phase 1 の所要時間と置き換え）。内訳は data/interim/<地域>/gc_breakdown.npz。新線は乗るたびに待ち時間を足す。
+- 2026-11-02: JR の停車駅は JR東日本「路線ネットワーク」（ユーザが手動取得）で確認。路線図にない種別（中央特快など）は扱わない。
 - 2026-11-02: 全国展開に向けて地域単位の構成にした（design.md §12）。首都圏前提の値はコードに書かず、`scripts/config/regions/<地域>/region.yaml` と `src/config/regions.ts` に置く。データは `public/data/<地域>/`、校正値は `src/config/regions/<地域>/`。前処理は `--region` で地域を指定。首都圏前提の箇所の一覧は design.md §12.2。
 - 2026-11-02: ODPT の利用ルール: CC0・CC BY 優先、チャレンジ限定は使わない、基本ライセンスは集計値だけ公開、ブラウザから ODPT API を呼ばない（トークンは .env、前処理のみ）、アプリ・README に ODPT 利用の旨・免責・問い合わせ先を表示、取得日を記録（docs/data-sources.md）。
 - 2026-11-02: 既存線の運行データは「運行系統（駅の並び）× 種別（停車駅・駅間所要時間・ピーク/日中本数）＋直通」で持つ（design.md §11、`public/data/<地域>/services.json`）。品質フラグは timetable / published / provisional。
@@ -145,4 +149,6 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - N02 の路線名は法令上の線名（山手線の一部が「東北線」など）。M4 で同一事業者内の乗換抵抗を下げる設定が必要。
 - 表定速度はすべて仮置き（急行を考慮しないため長距離の所要時間は過大。例: 新宿→横浜 52 分）。時刻表との照合は未実施。
 - 校正で α・a₁・γ が範囲の端に張り付いている。OD データ（大都市交通センサス等）で分布・経路側から推定するのが本筋。
+- M2 で校正の a₀ が範囲の下限（−6）に張り付いた（design.md §13.3）。
+- docs/backtest.md・backtest_results.md は Phase 1.5 の結果のまま（M7 で再実行して更新）。M2 時点の `--check` では TX 1.43、新横浜線 0.42。
 - バックテスト（docs/backtest.md）: TX は合計で約 2.6 倍の過大。主因は接続駅での経路転換（既存線どうしの短絡利用。2 項ロジット・仮置き）で、これを除くと約 1.3 倍。新駅だけなら 1.33 倍で駅モデルの当てはまりと同程度。新横浜線は比較できる駅が 2 駅しかなく、直通運転の効果は駅の乗降では評価できない。

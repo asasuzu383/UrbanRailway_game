@@ -3,6 +3,7 @@
  * 値は scripts/calibrate.py が地域ごとに書き出す regions/<地域>/demand.calibrated.json から読む（固定値の定義元は
  * scripts/config/demand.yaml、校正値は S12 に対する推定結果）。根拠は docs/design.md §4 と docs/calibration.md。
  */
+import type { GeneralizedCostWeights } from '../core/generalizedCost';
 import { CURRENT_REGION } from './regions';
 
 export interface DemandParams {
@@ -32,7 +33,11 @@ export interface DemandParams {
   readonly service: {
     /** 新線の表定速度 [km/h]（Phase 1 は固定、仮置き） */
     readonly scheduledSpeedKmh: number;
+    /** 新線の代表本数 [本/時]（待ち時間の計算用。Phase 2 M3 で運行計画の本数に置き換える。仮置き） */
+    readonly representativeTph: number;
   };
+  /** 一般化費用の重み（src/core/generalizedCost.ts、docs/design.md §13） */
+  readonly generalizedCost: GeneralizedCostWeights;
   readonly shortcut: {
     readonly neighborhoodMin: number;
     /** 既存経路と新線経由の経路選択ロジットの時間感度 [1/分]（仮置き） */

@@ -29,10 +29,9 @@ import pandas as pd
 import statsmodels.api as sm
 from pyproj import Transformer
 from scipy.optimize import minimize
-from scipy.sparse import coo_matrix
-from scipy.sparse.csgraph import dijkstra
 from scipy.spatial import cKDTree
 
+import gencost
 from common import CALIBRATED_PATH, CRS_METRIC, INTERIM, PUBLIC_DATA, REGION, docs_path, half_mesh_centroid, load_config, load_demand_config
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -68,7 +67,7 @@ class Inputs:
 
 
 def load_inputs(dcfg: dict, zones: dict | None = None, st: list | None = None, net: dict | None = None,
-                verbose: bool = True) -> Inputs:
+                verbose: bool = True, services: dict | None = None) -> Inputs:
     """校正の入力。引数を省略すると public/data から読む（バックテストでは除外後のデータを渡す）。"""
     if zones is None:
         zones = json.loads((PUBLIC_DATA / "zones.json").read_text(encoding="utf-8"))
@@ -96,7 +95,7 @@ def load_inputs(dcfg: dict, zones: dict | None = None, st: list | None = None, n
     ps = np.concatenate([np.asarray(n, dtype=int) for n in neigh]) if len(pz) else np.array([], int)
     pdist = np.hypot(zx[pz] - sx[ps], zy[pz] - sy[ps]) / 1000 * detour
 
-    times = travel_times(st, net, dcfg["network"], verbose)
+    times = travel_times(st, net, dcfg, verbose, services)
     n_lines = np.array([max(1, len(s["lines"])) for s in st])
     tram_only = np.array([all(net["lines"][li]["railType"] == 21 for li in s["lines"]) for s in st])
     if verbose:
@@ -104,57 +103,26 @@ def load_inputs(dcfg: dict, zones: dict | None = None, st: list | None = None, n
     return Inputs(pop, emp, dist_core, pz, ps, pdist, times, st, n_lines, tram_only)
 
 
-def travel_times(st: list, net: dict, ncfg: dict, verbose: bool = True) -> np.ndarray:
-    """駅間の最短所要時間 [分]。
+def travel_times(st: list, net: dict, dcfg: dict, verbose: bool = True, services: dict | None = None,
+                 breakdown: bool = False):
+    """駅間の一般化費用 [分]（Phase 2 M2。scripts/gencost.py、docs/design.md §13）。
 
-    ノード: 駅 S、（駅, 事業者）、（駅, 路線）。乗換抵抗は
-      同一事業者の路線間 = τ_same（(駅,路線)↔(駅,事業者) を τ_same/2 ずつ）
-      他事業者間 = τ_other（さらに (駅,事業者)↔S を (τ_other−τ_same)/2 ずつ）
-    で表す。駅 S から乗って駅 S で降りると両端で τ_other が加わるので最後に差し引く。
+    既存ネットワークの運行データ（services.json: 系統・種別・停車駅・駅間所要時間・本数・直通）から求める。
+    乗車時間・待ち時間・乗換抵抗・徒歩を合成した値で、変数名は Phase 1 からの times のまま。
+    breakdown=True なら (費用, 内訳 dict) を返す。
     """
-    lines = net["lines"]
-    t_same = ncfg["transfer_same_operator_min"]
-    t_other = ncfg["transfer_other_operator_min"]
-    n = len(st)
-    ids: dict[tuple, int] = {}
-
-    def node(key: tuple) -> int:
-        if key not in ids:
-            ids[key] = n + len(ids)
-        return ids[key]
-
-    rows, cols, w = [], [], []
-
-    def edge(a: int, b: int, cost: float) -> None:
-        rows.append(a)
-        cols.append(b)
-        w.append(max(cost, 1e-6))
-
-    for si, s in enumerate(st):
-        for li in s["lines"]:
-            op = lines[li]["operator"]
-            edge(node(("L", si, li)), node(("O", si, op)), t_same / 2)
-        for op in {lines[li]["operator"] for li in s["lines"]}:
-            edge(node(("O", si, op)), si, (t_other - t_same) / 2)
-    for a, b, li, length_m in net["edges"]:
-        minutes = length_m / 1000 / lines[li]["speedKmh"] * 60
-        edge(node(("L", a, li)), node(("L", b, li)), minutes)
-    for a, b, d_m in net["walk"]:
-        edge(a, b, d_m * ncfg["walk_detour_factor"] / 1000 / ncfg["walk_speed_kmh"] * 60)
-
-    size = n + len(ids)
-    g = coo_matrix((w, (rows, cols)), shape=(size, size)).tocsr()
+    if services is None:
+        services = json.loads((PUBLIC_DATA / "services.json").read_text(encoding="utf-8"))
     t0 = time.time()
-    dist = dijkstra(g, directed=False, indices=np.arange(n))[:, :n]
-    times = np.maximum(dist - t_other, 0)
-    np.fill_diagonal(times, 0)
+    g = gencost.build_graph(services, st, net, dcfg)
+    total, comps = gencost.generalized_cost_matrix(g, breakdown=breakdown)
     # ブラウザへは整数分（uint8）で渡すので、校正も同じ丸めた値で行う。255 分以上は到達不能扱い
-    times = np.round(times)
+    times = np.round(total)
     times[times >= 255] = np.inf
     if verbose:
         reach = np.isfinite(times).mean()
-        print(f"所要時間行列 {n}×{n}（{time.time() - t0:.1f}s）、到達可能な組 {reach:.1%}")
-    return times
+        print(f"一般化費用の行列 {len(st)}×{len(st)}（{time.time() - t0:.1f}s、グラフ {g.n_nodes:,} ノード）、到達可能な組 {reach:.1%}")
+    return (times, comps) if breakdown else times
 
 
 def pack_times(times: np.ndarray) -> bytes:
@@ -437,7 +405,14 @@ def main() -> None:
             "walkSpeedKmh": dcfg["network"]["walk_speed_kmh"],
             "walkDetourFactor": dcfg["network"]["walk_detour_factor"],
         },
-        "service": {"scheduledSpeedKmh": dcfg["service"]["scheduled_speed_kmh"]},
+        "service": {"scheduledSpeedKmh": dcfg["service"]["scheduled_speed_kmh"],
+                    "representativeTph": dcfg["service"]["representative_tph"]},
+        "generalizedCost": {
+            "waitWeight": dcfg["generalized_cost"]["wait_weight"],
+            "maxWaitMin": dcfg["generalized_cost"]["max_wait_min"],
+            "peakShare": dcfg["generalized_cost"]["peak_share"],
+            "walkWeight": dcfg["generalized_cost"]["walk_weight"],
+        },
         "shortcut": {"neighborhoodMin": dcfg["shortcut"]["neighborhood_min"], "routeLogitPerMin": dcfg["shortcut"]["route_logit_per_min"]},
     }
     out = {
@@ -465,6 +440,13 @@ def main() -> None:
     sdata["note"] = sdata["note"].split("accessibility は")[0].split("acc/mass")[0] + "acc/mass/catch/muCatch は calibrate.py の出力。"
     stations_path.write_text(json.dumps(sdata, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
+    # 一般化費用の内訳（乗車・待ち・乗換・徒歩）を中間データに保存する（Phase 4 の便益計算で with/without を比べる）
+    _, comps = travel_times(inp.stations, json.loads((PUBLIC_DATA / "network.json").read_text(encoding="utf-8")), dcfg,
+                            verbose=False, breakdown=True)
+    INTERIM.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(INTERIM / "gc_breakdown.npz", **{k: np.where(np.isfinite(v), v, -1).astype(np.float32) for k, v in comps.items()})
+    gc_summary = {k: float(np.nanmean(np.where(np.isfinite(inp.times) & np.isfinite(v), v, np.nan))) for k, v in comps.items()}
+    print("一般化費用の内訳（全駅間の平均 [分]、重み前）:", {k: round(v, 1) for k, v in gc_summary.items()})
     packed = pack_times(inp.times)
     (PUBLIC_DATA / "times.bin").write_bytes(packed)
     print(f"times.bin: {len(packed) / 1024 / 1024:.2f} MB")
@@ -622,7 +604,11 @@ def write_report(p, coef, se, m_all, m_cv, m_nohub, n_nohub, glm_nohub, m_cmp, g
     w(f"- 集中量に加える人口の重み ψ = {dcfg['mass']['population_weight']}")
     w(f"- 乗換抵抗: 同一事業者 {dcfg['network']['transfer_same_operator_min']} 分、他事業者・新線 {dcfg['network']['transfer_other_operator_min']} 分")
     w(f"- 既存線の表定速度: `scripts/config/pipeline.yaml` の `rail.speed_kmh`")
-    w(f"- 新線の表定速度 {dcfg['service']['scheduled_speed_kmh']} km/h")
+    w(f"- 新線の表定速度 {dcfg['service']['scheduled_speed_kmh']} km/h、代表本数 {dcfg['service']['representative_tph']} 本/時")
+    gc = dcfg["generalized_cost"]
+    w(f"- 一般化費用（design.md §13）: 待ち時間の重み {gc['wait_weight']}、待ち時間の上限 {gc['max_wait_min']} 分、"
+      f"代表本数 = ピーク × {gc['peak_share']} + 日中 × {1 - gc['peak_share']:.1f}、徒歩の重み {gc['walk_weight']}。"
+      "駅間の値は既存線の運行データ（services.json）から求めた一般化費用（Phase 1 は路線ごとの表定速度による所要時間）")
     w(f"- 短絡利用: 接続駅から {dcfg['shortcut']['neighborhood_min']} 分以内の駅を対象、経路選択ロジット {dcfg['shortcut']['route_logit_per_min']} /分")
     w("")
     out_md = docs_path("calibration.md")

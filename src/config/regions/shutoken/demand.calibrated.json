@@ -5,7 +5,7 @@
     139.7671,
     35.6812
   ],
-  "calibratedAt": "2026-11-01",
+  "calibratedAt": "2026-11-02",
   "year": 2024,
   "accRef": 1000000.0,
   "access": {
@@ -22,31 +22,38 @@
     "walkDetourFactor": 1.3
   },
   "service": {
-    "scheduledSpeedKmh": 40
+    "scheduledSpeedKmh": 40,
+    "representativeTph": 8
+  },
+  "generalizedCost": {
+    "waitWeight": 1.5,
+    "maxWaitMin": 15,
+    "peakShare": 0.5,
+    "walkWeight": 1.0
   },
   "shortcut": {
     "neighborhoodMin": 20,
     "routeLogitPerMin": 0.3
   },
   "fitted": {
-    "accessDecayPerKm": 2.2032100324349497,
-    "attractivenessExponent": 1.999999999995394,
-    "outsideConst": -3.3647005672736006,
+    "accessDecayPerKm": 2.038473317837691,
+    "attractivenessExponent": 1.9999999353211297,
+    "outsideConst": -5.9999300520190095,
     "outsidePerKm": 0.0,
-    "employeeWeight": 1.1079838781543951,
+    "employeeWeight": 0.941113302226146,
     "timeDecayPerMin": 0.02,
-    "intercept": -1.207386778577327,
-    "catchmentElasticity": 0.9704467141148144,
-    "accessibilityElasticity": 0.6862830369043024,
-    "hubElasticity": 1.521187525188747
+    "intercept": -1.4889673658705305,
+    "catchmentElasticity": 0.9594621735625358,
+    "accessibilityElasticity": 0.941607882244333,
+    "hubElasticity": 1.4795008094264261
   },
   "metrics": {
     "n": 1421,
-    "pseudoR2": 0.8529812812987128,
-    "logR2": 0.8263714310688698,
-    "rmse": 62473.14940068193,
-    "medianRatio": 1.5826216459254163,
-    "within2x": 0.6798029556650246,
-    "totalRatio": 0.9999999999999964
+    "pseudoR2": 0.860576870894249,
+    "logR2": 0.8342212350130246,
+    "rmse": 58662.82676736555,
+    "medianRatio": 1.5567436911239696,
+    "within2x": 0.6959887403237157,
+    "totalRatio": 0.9999999999999851
   }
 }
