@@ -67,6 +67,8 @@ export interface PatternOperation {
 
 export interface LinePlanOperation {
   readonly patterns: readonly PatternOperation[];
+  /** geo.stations ごとの起点からのキロ程 [km] */
+  readonly chainageKm: readonly number[];
   /** 待避設備が必要な駅（geo.stations の添字） */
   readonly passingStations: readonly number[];
   /** 必要編成数の合計（予備を除く） */
@@ -187,6 +189,7 @@ export function computeLinePlanOperation(
   }
   return {
     patterns,
+    chainageKm: geo.chainageKm,
     passingStations: patterns.length >= 2 ? passingStations(patterns) : [],
     trainsets,
     cars: Math.ceil(carsExact * (1 + spareRatio)),

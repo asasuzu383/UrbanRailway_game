@@ -8,7 +8,10 @@ import { rideTimesFrom, type ServicesFile } from '../data/services';
 import type { DemandContext } from '../demand/context';
 import { runDemand } from '../demand/engine';
 import { operationFromPlan, type DemandThrough } from '../demand/lineOperation';
-import { computeLinePlanOperation, normalizePlan, type LinePlanOperation } from '../network/servicePlan';
+import { computeLinePlanOperation, invalidStructureSegments, normalizePlan, planWarnings, type LinePlanOperation } from '../network/servicePlan';
+import { defaultCapacityParams } from '../config/capacity';
+import { runDemandWithCapacity, segmentCapacity, type CapacityResult } from '../demand/capacity';
+import { STRUCTURE_LABELS } from '../config/editor';
 import { effectiveCostParams, runFinance } from '../finance/finance';
 import type { LandPriceIndex } from '../finance/landPrice';
 import { costParamsStore } from './costParams';
@@ -30,6 +33,10 @@ export interface ComputeState {
   /** 運行計画（シナリオに無ければ既定の計画）と、それから求めた所要時間・必要編成数など */
   readonly plan: ServicePlan | null;
   readonly operation: LinePlanOperation | null;
+  /** 輸送力制約（混雑率・均衡計算の結果）。需要推計の前は null */
+  readonly capacity: CapacityResult | null;
+  /** 計画・構造・混雑の警告（UI に表示） */
+  readonly warnings: readonly string[];
   /** 基礎データの読込前は null */
   readonly demand: DemandResult | null;
   readonly demandMs: number | null;
@@ -42,6 +49,8 @@ export const computeStore = createStore<ComputeState>({
   geometry: null,
   plan: null,
   operation: null,
+  capacity: null,
+  warnings: [],
   demand: null,
   demandMs: null,
   error: null,
@@ -90,26 +99,58 @@ function throughFor(plan: ServicePlan, geometry: LineGeometry, ctx: DemandContex
   return out;
 }
 
+/** 警告: 交通機関タイプで選べない構造、運行計画（最小運転間隔・編成両数）、混雑率（国交省の目標の水準を超える区間） */
+function collectWarnings(line: UserLine, geometry: LineGeometry, plan: ServicePlan, cap: CapacityResult | null): string[] {
+  const t = transitTypeOf(line);
+  const out: string[] = [];
+  const bad = invalidStructureSegments(geometry, t);
+  if (bad.length > 0) {
+    const kinds = [...new Set(geometry.segments.filter((g) => bad.includes(g.fromStationId)).map((g) => STRUCTURE_LABELS[g.structure]))];
+    out.push(`${t.name}では ${kinds.join('・')} の区間を選べません（${bad.length} 区間）。構造を ${t.structures.map((x) => STRUCTURE_LABELS[x]).join('・')} に変えてください`);
+  }
+  out.push(...planWarnings(plan, t));
+  if (cap) {
+    const w = defaultCapacityParams.warn;
+    const name = (k: number) => `${geometry.stations[k]?.name}〜${geometry.stations[k + 1]?.name}`;
+    const over = cap.congestion.map((r, k) => [r, k] as const).filter(([r]) => r > w.limit);
+    if (over.length > 0) {
+      const [r, k] = over.reduce((a, b) => (b[0] > a[0] ? b : a));
+      out.push(`混雑率が ${Math.round(w.limit * 100)}% を超える区間が ${over.length} あります（最大 ${name(k)} ${Math.round(r * 100)}%）。${t.name}の輸送力では捌けない需要があります。本数・編成両数を増やすか、輸送力の大きい交通機関を検討してください`);
+    } else if (cap.congestion.some((r) => r > w.target)) {
+      out.push(`混雑率が ${Math.round(w.target * 100)}% を超える区間があります（国交省の目標の水準）`);
+    }
+  }
+  return out;
+}
+
 function compute(s: Scenario): void {
   const line = s.lines[0];
   const geometry = line ? computeLineGeometry(line) : null;
   const planned = line && geometry ? planFor(s, line, geometry) : null;
   let demand: DemandResult | null = null;
+  let capacity: CapacityResult | null = null;
   let demandMs: number | null = null;
   let error: string | null = null;
   if (line && demandContext) {
     const t0 = performance.now();
     try {
       const ctx = demandContext;
-      const op = planned && geometry ? operationFromPlan(planned.operation, ctx.params.generalizedCost, throughFor(planned.plan, geometry, ctx)) : undefined;
-      demand = runDemand(line, ctx, op);
+      if (planned && geometry) {
+        const op = operationFromPlan(planned.operation, ctx.params.generalizedCost, throughFor(planned.plan, geometry, ctx));
+        const cap = segmentCapacity(geometry.segments.length, planned.plan.patterns, transitTypeOf(line).capacityPerCar);
+        capacity = runDemandWithCapacity(line, ctx, op, cap, defaultCapacityParams);
+        demand = capacity.demand;
+      } else {
+        demand = runDemand(line, ctx);
+      }
     } catch (e) {
       console.error(e);
       error = e instanceof Error ? e.message : String(e);
     }
     demandMs = performance.now() - t0;
   }
-  computeStore.set({ status: 'idle', geometry, plan: planned?.plan ?? null, operation: planned?.operation ?? null, demand, demandMs, error, computedFor: s });
+  const warnings = line && geometry && planned ? collectWarnings(line, geometry, planned.plan, capacity) : [];
+  computeStore.set({ status: 'idle', geometry, plan: planned?.plan ?? null, operation: planned?.operation ?? null, capacity, warnings, demand, demandMs, error, computedFor: s });
 }
 
 const recompute = debounce(compute, RECOMPUTE_DEBOUNCE_MS);

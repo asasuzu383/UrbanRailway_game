@@ -26,6 +26,10 @@ export interface DemandThrough {
 export interface LineOperation {
   readonly patterns: readonly DemandPattern[];
   readonly through: readonly DemandThrough[];
+  /** LineStop ごとの起点からのキロ程 [km]（区間の係数を距離で重み付けするため） */
+  readonly chainageKm: readonly number[];
+  /** 区間（駅 k → k+1）ごとの乗車時間の係数（混雑の不効用。capacity.ts）。省略時は 1 */
+  readonly segmentIvtMultiplier?: readonly number[];
 }
 
 /** Phase 1 互換: 全駅停車・一律の表定速度・代表本数（運行計画を渡さないとき。バックテストの比較用） */
@@ -33,6 +37,7 @@ export function uniformOperation(stops: readonly LineStop[], speedKmh: number, t
   return {
     patterns: [{ stops: stops.map(() => true), cumMin: stops.map((s) => (s.chainageKm * 60) / speedKmh), tph }],
     through: [],
+    chainageKm: stops.map((s) => s.chainageKm),
   };
 }
 
@@ -45,6 +50,7 @@ export function operationFromPlan(op: LinePlanOperation, w: GeneralizedCostWeigh
       tph: representativeTph({ peak: p.pattern.tphPeak, offpeak: p.pattern.tphOffpeak }, w),
     })),
     through,
+    chainageKm: op.chainageKm,
   };
 }
 
@@ -54,6 +60,10 @@ export function operationFromPlan(op: LinePlanOperation, w: GeneralizedCostWeigh
  */
 export function onLineCost(op: LineOperation, ns: number, w: GeneralizedCostWeights): Float64Array {
   const out = new Float64Array(ns * ns).fill(Infinity);
+  // 区間の係数の累積（距離 × 係数）: 駅 a〜b の平均係数 = (cm[b] − cm[a]) / (km[b] − km[a])
+  const mult = op.segmentIvtMultiplier;
+  const cm = new Float64Array(ns);
+  for (let k = 1; k < ns; k++) cm[k] = cm[k - 1]! + (op.chainageKm[k]! - op.chainageKm[k - 1]!) * (mult?.[k - 1] ?? 1);
   for (let a = 0; a < ns; a++) {
     out[a * ns + a] = 0;
     for (let b = a + 1; b < ns; b++) {
@@ -65,7 +75,9 @@ export function onLineCost(op: LineOperation, ns: number, w: GeneralizedCostWeig
         ivt += p.tph * Math.abs(p.cumMin[b]! - p.cumMin[a]!);
       }
       if (tph > 0) {
-        const c = w.waitWeight * waitMinutes(tph, w) + ivt / tph;
+        const dk = op.chainageKm[b]! - op.chainageKm[a]!;
+        const m = mult && dk > 0 ? (cm[b]! - cm[a]!) / dk : 1;
+        const c = w.waitWeight * waitMinutes(tph, w) + (ivt / tph) * m;
         out[a * ns + b] = c;
         out[b * ns + a] = c;
       }
