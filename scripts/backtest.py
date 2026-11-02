@@ -270,6 +270,37 @@ def build_line(case: dict, sec, st_n02, base_st: dict, cf_ids: set) -> tuple[dic
     return line, meta
 
 
+def plan_json(case: dict, name: str, spec: dict, meta: list, line: dict, sv_cf: dict, st_cf: list) -> dict:
+    """設定の運行計画を、ブラウザと同じ ServicePlan（停車駅は新線の頂点 id、直通先は除外後の運行データの系統 id）にする。"""
+    by_name = {m["name"]: m["vertexId"] for m in meta}
+    patterns = []
+    for k, pt in enumerate(spec["patterns"]):
+        if pt["stops"] == "all":
+            stops = None
+        else:
+            missing = [x for x in pt["stops"] if x not in by_name]
+            if missing:
+                raise SystemExit(f"{case['id']}/{name}: 新線にない停車駅 {missing}")
+            stops = [by_name[x] for x in pt["stops"]]
+        patterns.append({"id": f"p{k}", "name": pt["name"], "stopStationIds": stops,
+                         "tphPeak": pt["tph_peak"], "tphOffpeak": pt["tph_offpeak"], "carsPerTrain": pt["cars"]})
+    through = []
+    st_index = {s["id"]: i for i, s in enumerate(st_cf)}
+    for t in spec.get("through", []):
+        m = next((m for m in meta if m["name"] == t["at"] and m["transfer"]), None)
+        if m is None:
+            raise SystemExit(f"{case['id']}/{name}: 直通の接続駅 {t['at']} が新線の接続駅にありません")
+        idx = st_index[m["group"]]
+        op, ln = t["line"].split("/", 1)
+        cands = [r for r in sv_cf["routes"] if idx in r["stations"] and r["operator"] == op]
+        exact = [r for r in cands if r["name"] == ln]
+        route = (exact or cands or [None])[0]
+        if route is None:
+            raise SystemExit(f"{case['id']}/{name}: {t['at']} を通る {t['line']} の系統が運行データにありません")
+        through.append({"atStationId": m["vertexId"], "routeId": route["id"]})
+    return {"lineId": line["id"], "patterns": patterns, "through": through}
+
+
 # ---------------------------------------------------------------------------
 # 実績値（S12）
 # ---------------------------------------------------------------------------
@@ -455,6 +486,11 @@ def prepare(cases: list, bcfg: dict) -> dict:
             speed = float(np.mean([net["lines"][i]["speedKmh"] for i in targets]))
         speeds = [speed] + [s for s in bcfg.get("sensitivity_speeds", []) if s != speed]
 
+        dump(cdir / "services.json", sv_cf)
+        plans = {name: plan_json(case, name, spec, meta, line, sv_cf, st_cf) for name, spec in (case.get("plans") or {}).items()}
+        for name, pj in plans.items():
+            dump(cdir / f"plan_{name}.json", pj)
+
         variants = []
         for ps_name, fitted in param_sets.items():
             for y in case["populations"]:
@@ -473,6 +509,13 @@ def prepare(cases: list, bcfg: dict) -> dict:
                                      "stations": rel(sfile), "zones": rel(cdir / f"zones_{y}.json"),
                                      "params": rel(pfile), "paramSet": ps_name,
                                      "out": rel(cdir / "results" / f"{vid}.json")})
+                # 運行計画のケース（Phase 2）: 種別ごとの停車駅・本数・直通、輸送力制約あり
+                for name in plans:
+                    vid = f"{ps_name}-{y}-plan-{name}"
+                    variants.append({"id": vid, "population": y, "speedKmh": None, "main": False, "plan": rel(cdir / f"plan_{name}.json"),
+                                     "planName": name, "stations": rel(sfile), "zones": rel(cdir / f"zones_{y}.json"),
+                                     "params": rel(cdir / f"params_{ps_name}_{speed:g}.json"), "paramSet": ps_name,
+                                     "out": rel(cdir / "results" / f"{vid}.json")})
         act = actuals(case, meta, s12, code_to_group, years)
         stage_a = in_sample_fit(dcfg, base_inp, calibrated["fitted"], meta)
         base_catch = {m["vertexId"]: base_by_id[m["group"]].get("catch") for m in meta}
@@ -483,7 +526,7 @@ def prepare(cases: list, bcfg: dict) -> dict:
         dump(cdir / "info.json", info)
         meta_all[case["id"]] = info
         manifest["cases"].append({"id": case["id"], "line": rel(cdir / "line.json"), "times": rel(cdir / "times.bin"),
-                                  "info": rel(cdir / "info.json"), "variants": variants})
+                                  "services": rel(cdir / "services.json"), "info": rel(cdir / "info.json"), "variants": variants})
         print(f"{case['id']}: 準備 {time.time() - t0:.0f}s、推計ケース {len(variants)}")
     dump(work / "manifest.json", manifest)
     return manifest
@@ -559,6 +602,7 @@ def evaluate(manifest: dict, bcfg: dict) -> dict:
             res[v["id"]] = {
                 "metricsWithoutThrough": m_nt,
                 "params": v["paramSet"], "population": v["population"], "speedKmh": v["speedKmh"], "main": v["main"],
+                "planName": v.get("planName"), "plan": r.get("plan"),
                 "stations": rows,
                 "metrics": pick(ok),
                 "metricsInclNoted": pick(okx),
@@ -645,10 +689,29 @@ def write_results_md(res: dict, bcfg: dict) -> None:
         w("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
         for vid, v in c["variants"].items():
             m, mf, mt = v["metrics"], v["metricsFresh"], v["metricsTransfer"]
-            w(f"| `{vid}` | {PARAM_LABEL[v['params']]} | {v['population']} | {v['speedKmh']:g} | {m['n']} | {fmt(m['predSum'])} | {fmt(m['actualSum'])} | "
+            spd = f"{v['speedKmh']:g}" if v.get("speedKmh") is not None else f"計画 {v.get('planName')}"
+            w(f"| `{vid}` | {PARAM_LABEL[v['params']]} | {v['population']} | {spd} | {m['n']} | {fmt(m['predSum'])} | {fmt(m['actualSum'])} | "
               f"{m['totalRatio']:.2f} | {m['mape']:.0%} | {m['meanLogError']:+.2f} | {m['sdLogError']:.2f} | {m['within2x']:.0%} | "
               f"{fmt(mf.get('totalRatio'), 2)} | {fmt(mt.get('totalRatio'), 2)} | {v['metricsWithoutThrough']['totalRatio']:.2f} |")
         w("")
+        plan_ids = [vid for vid, v in c["variants"].items() if v.get("plan")]
+        if plan_ids:
+            w("### 運行計画のケース（Phase 2）")
+            w("")
+            w("運転曲線の所要時間・直通・輸送力制約（混雑の不効用の均衡計算）を含む。")
+            w("")
+            for name, spec in (info["case"].get("plans") or {}).items():
+                w(f"- `{name}`: {spec.get('note', '')}")
+            w("")
+            w("| ケース | 種別ごとの所要時間（停車駅数） | 待避設備 | 最大混雑率 | 均衡計算 | 合計比 |")
+            w("|---|---|---|---|---|---|")
+            for vid in plan_ids:
+                v = c["variants"][vid]
+                pl = v["plan"] or {}
+                pats = "、".join(f"{x['name']} {x['oneWayMin']:.0f}分（{x['stops']}駅）" for x in pl.get("patterns", []))
+                w(f"| `{vid}` | {pats} | {'、'.join(pl.get('passingStations', [])) or 'なし'} | {pl.get('maxCongestion', 0):.0%} | "
+                  f"{pl.get('iterations', 1)} 回 | {v['metrics']['totalRatio']:.2f} |")
+            w("")
         # 駅別
         vids = list(c["variants"])
         main_ids = [vid for vid in vids if c["variants"][vid]["main"]]

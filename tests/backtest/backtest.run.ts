@@ -13,6 +13,14 @@ import type { UserLine } from '../../src/core/types';
 import { TimeMatrix } from '../../src/data/timeMatrix';
 import { createDemandContext, type DemandStationInput, type DemandZonesInput } from '../../src/demand/context';
 import { runDemandDetailed } from '../../src/demand/engine';
+import { defaultCapacityParams } from '../../src/config/capacity';
+import { defaultCostParams } from '../../src/config/cost';
+import { DEFAULT_TRANSIT_TYPE, TRANSIT_TYPES } from '../../src/config/transitTypes';
+import type { ServicePlan } from '../../src/core/types';
+import { rideTimesFrom, type ServicesFile } from '../../src/data/services';
+import { runDemandWithCapacity, segmentCapacity } from '../../src/demand/capacity';
+import { operationFromPlan, type DemandThrough, type LineOperation } from '../../src/demand/lineOperation';
+import { computeLinePlanOperation, type LinePlanOperation } from '../../src/network/servicePlan';
 import { computeLineGeometry } from '../../src/network/lineGeometry';
 import { validateScenario } from '../../src/state/scenarioIO';
 
@@ -25,10 +33,12 @@ interface Variant {
   readonly zones: string;
   readonly params: string;
   readonly out: string;
+  /** 運行計画のケース（ServicePlan の JSON）。無ければ一律の表定速度 */
+  readonly plan?: string;
 }
 
 interface Manifest {
-  readonly cases: readonly { readonly id: string; readonly line: string; readonly times: string; readonly variants: readonly Variant[] }[];
+  readonly cases: readonly { readonly id: string; readonly line: string; readonly times: string; readonly services?: string; readonly variants: readonly Variant[] }[];
 }
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(resolve(ROOT, path), 'utf-8')) as T;
@@ -47,7 +57,30 @@ test.skipIf(!existsSync(MANIFEST))('バックテストの推計', () => {
       const params = readJson<DemandParams>(v.params);
       const ctx = createDemandContext(zones, stations, new TimeMatrix(stations.length, timesBuf), params);
       const t0 = performance.now();
-      const { result, diagnostics } = runDemandDetailed(line, ctx);
+      // 運行計画のケース: アプリと同じ手順（運転曲線の所要時間 → 直通 → 輸送力制約の均衡計算）
+      let op: LineOperation | undefined;
+      let planOp: LinePlanOperation | undefined;
+      let congestion: readonly number[] = [];
+      let iterations = 1;
+      if (v.plan) {
+        const plan = readJson<ServicePlan>(v.plan);
+        const type = TRANSIT_TYPES[line.transitType ?? DEFAULT_TRANSIT_TYPE];
+        planOp = computeLinePlanOperation(geo, plan, type, defaultCostParams.service, defaultCostParams.construction.spareRatio);
+        const services = c.services ? readJson<ServicesFile>(c.services) : null;
+        const through: DemandThrough[] = [];
+        for (const t of plan.through) {
+          const stop = geo.stations.findIndex((s) => s.id === t.atStationId);
+          const existing = ctx.stations.byId.get(geo.stations[stop]?.transferTo ?? '');
+          const route = services?.routes.find((r) => r.id === t.routeId);
+          if (stop >= 0 && existing !== undefined && route) through.push({ stop, ivtTo: rideTimesFrom(route, existing) });
+        }
+        op = operationFromPlan(planOp, params.generalizedCost, through);
+        const cap = runDemandWithCapacity(line, ctx, op, segmentCapacity(geo.segments.length, plan.patterns, type.capacityPerCar), defaultCapacityParams);
+        congestion = cap.congestion;
+        iterations = cap.iterations;
+        op = { ...op, segmentIvtMultiplier: cap.multipliers };
+      }
+      const { result, diagnostics } = runDemandDetailed(line, ctx, op);
       if (!diagnostics) throw new Error(`${c.id}/${v.id}: 駅が 2 つ未満です`);
       const out = {
         case: c.id,
@@ -74,6 +107,14 @@ test.skipIf(!existsSync(MANIFEST))('バックテストの推計', () => {
           tripEnds: diagnostics.stopTripEnds[k]!,
         })),
         segments: result.segments,
+        plan: planOp
+          ? {
+              patterns: planOp.patterns.map((p) => ({ name: p.pattern.name, oneWayMin: p.oneWayMin, stops: p.stops.filter(Boolean).length, trainsets: p.trainsets })),
+              passingStations: planOp.passingStations.map((i) => geo.stations[i]!.name),
+              maxCongestion: Math.max(0, ...congestion),
+              iterations,
+            }
+          : null,
       };
       const outPath = resolve(ROOT, v.out);
       mkdirSync(dirname(outPath), { recursive: true });
