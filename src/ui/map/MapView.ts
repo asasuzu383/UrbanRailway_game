@@ -15,6 +15,7 @@ import {
 } from '../../config/display';
 import type { BaseData } from '../../data/loaders';
 import { buildMeshFeatureCollection } from '../../data/meshGeoJson';
+import { describeQuality, SERVICE_QUALITY_LABEL, type ServiceQuality } from '../../data/services';
 import type { StationRecord } from '../../data/schema';
 import type { ViewState } from '../../state/viewState';
 
@@ -23,7 +24,6 @@ maplibregl.setWorkerUrl(workerUrl);
 const GSI_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>';
 /** 地図に描く加工データの出典（詳細は「出典」パネル） */
 /** 既存線の運行データの品質の表示名（docs/design.md §11） */
-const QUALITY_LABEL: Record<string, string> = { timetable: '時刻表', published: '公表資料', provisional: '仮置き' };
 const KSJ_ATTRIBUTION = '国土数値情報（国土交通省）を加工';
 const ESTAT_ATTRIBUTION = '国勢調査・経済センサス（総務省統計局）を加工';
 
@@ -132,12 +132,13 @@ export class MapView {
 
     // 既存線の運行データの品質（services.json の lineQuality。路線の id = network.json の lines の添字）を属性に付ける
     const quality = this.data.services?.lineQuality ?? [];
+    const detail = this.data.services?.lineQualityDetail ?? [];
     const railData = {
       ...this.data.railLines,
-      features: this.data.railLines.features.map((f) => ({
-        ...f,
-        properties: { ...f.properties, quality: quality[(f.properties as { id: number }).id] ?? 'provisional' },
-      })),
+      features: this.data.railLines.features.map((f) => {
+        const id = (f.properties as { id: number }).id;
+        return { ...f, properties: { ...f.properties, quality: quality[id] ?? 'provisional', qualityDetail: describeQuality(detail[id]) } };
+      }),
     };
     m.addSource('rail', { type: 'geojson', data: railData, attribution: KSJ_ATTRIBUTION });
     const lineWidth: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 8, 1.5, 12, 3, 15, 5];
@@ -157,11 +158,11 @@ export class MapView {
       type: 'line',
       source: 'rail',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      // 運行データが仮置きの路線は薄く表示する（所要時間・本数の精度が低いことを示す。凡例は「表示」タブ）
+      // 所要時間が仮置きの路線は薄く、物理推定はやや薄く表示する（精度が低いことを示す。凡例は「表示」タブ）
       paint: {
         'line-color': operatorColorExpression(),
         'line-width': lineWidth,
-        'line-opacity': ['match', ['get', 'quality'], 'provisional', 0.4, 1],
+        'line-opacity': ['match', ['get', 'quality'], 'provisional', 0.4, 'estimated', 0.75, 1],
       },
     });
     // ホバー判定用の太い透明レイヤー（細い線でも拾いやすくする）
@@ -239,9 +240,9 @@ export class MapView {
       if (m.queryRenderedFeatures(e.point, { layers: ['stations'] }).length > 0) return;
       const names = new Map<string, string>();
       for (const f of e.features ?? []) {
-        const p = f.properties as { name: string; operator: string; quality: string };
-        const q = QUALITY_LABEL[p.quality] ?? '仮置き';
-        names.set(`${p.operator}/${p.name}`, `${escapeHtml(operatorLabel(p.operator))} ${escapeHtml(p.name)}<span class="popup-sub">（運行データ: ${q}）</span>`);
+        const p = f.properties as { name: string; operator: string; quality: ServiceQuality; qualityDetail?: string };
+        const q = p.qualityDetail || (SERVICE_QUALITY_LABEL[p.quality] ?? '仮置き');
+        names.set(`${p.operator}/${p.name}`, `${escapeHtml(operatorLabel(p.operator))} ${escapeHtml(p.name)}<span class="popup-sub">（運行データ: ${escapeHtml(q)}）</span>`);
       }
       show(e, [...names.values()].slice(0, 6).join('<br>'));
     });

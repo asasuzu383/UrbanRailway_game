@@ -1,0 +1,293 @@
+# 運行データの手入力テンプレート（首都圏）。scripts/06_services.py が読む。
+#
+# 公表資料（各社の公式サイトの路線図・駅の案内・時刻表の冊子など）から手で入れる値をここに書く。
+# 入れる順番は docs/services_input_priority.md（乗降客数の多い線から。06_services.py が毎回作り直す）。
+# 入れたら次を実行する（PowerShell）:
+#   .\.venv\Scripts\python.exe scripts\run_pipeline.py 06_services   # 運行データ → docs/services_coverage.md
+#   .\.venv\Scripts\python.exe scripts\calibrate.py                  # 一般化費用の行列と需要モデルの校正
+#
+# 共通の約束:
+# - null は「未入力」。未入力の項目は仮置きの既定値を使う（下の routes は必須項目が null の間は計算に使わない）。
+# - 駅名は国土数値情報（N02）の表記（例: 「ケ」と「ヶ」の違いに注意）。間違っていると 06_services.py がエラーで駅名を表示する。
+# - source には資料名・URL・閲覧日を書く（docs/data-sources.md に転記する）。時刻表データそのもの（列車ごとの時刻）は書かない。
+# - 品質フラグ: 停車駅と最高速度を入れた系統は「物理推定」（運転曲線の簡易計算）、minutes（公表の所要時間）を入れた種別は「公表資料」になる。
+
+# --- 1. 新しく定義する系統（大手私鉄など）---------------------------------------
+# 書式は services.yaml の routes と同じ。追加の項目:
+#   max_speed_kmh / max_speed_source  最高速度（公表値）と出典。null なら既定値（仮置き、services.yaml の runtime.default_max_speed_kmh）
+#   services[].tph_peak     その種別のピーク 1 時間の本数（片方向）。null なら peak の本数を種別の数で等分（仮置き）
+#   services[].offpeak_tph  日中（10〜16 時）の 1 時間あたりの本数（片方向）。null ならピークの 0.5 倍（仮置き）
+#   services[].minutes      （任意）停車駅ごとの始発駅からの所要時間 [分]。入れると所要時間が公表資料になる
+#   services[].stops        all（全駅停車）か停車駅名の一覧。null の種別があると系統ごと使わない（不要な種別は行ごと消す）
+# 必須: id, name, source, 駅の並び（from/to か waypoints か stations）, services[].stops
+routes:
+  - id: tokyu_toyoko
+    name: 東横線
+    operator: 東急電鉄
+    lines: [東急電鉄/東横線]
+    from: 渋谷
+    to: 横浜
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 東急電鉄/東横線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: odakyu_odawara
+    name: 小田原線
+    operator: 小田急電鉄
+    lines: [小田急電鉄/小田原線]
+    from: 新宿
+    to: 小田原
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 小田急電鉄/小田原線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: tokyu_denentoshi
+    name: 田園都市線
+    operator: 東急電鉄
+    lines: [東急電鉄/田園都市線]
+    from: 渋谷
+    to: 中央林間
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 東急電鉄/田園都市線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: keikyu_main
+    name: 京急本線
+    operator: 京浜急行電鉄
+    lines: [京浜急行電鉄/本線]
+    from: 泉岳寺
+    to: 浦賀
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 京浜急行電鉄/本線 }
+    services:
+      - { name: 普通, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 快特, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: keio_main
+    name: 京王線
+    operator: 京王電鉄
+    lines: [京王電鉄/京王線]
+    from: 新宿
+    to: 京王八王子
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 京王電鉄/京王線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 特急, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: keio_inokashira
+    name: 井の頭線
+    operator: 京王電鉄
+    lines: [京王電鉄/井の頭線]
+    from: 渋谷
+    to: 吉祥寺
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 京王電鉄/井の頭線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: sotetsu_main
+    name: 相鉄本線
+    operator: 相模鉄道
+    lines: [相模鉄道/相鉄本線]
+    from: 横浜
+    to: 海老名
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 相模鉄道/相鉄本線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: tobu_isesaki
+    name: 東武スカイツリーライン・伊勢崎線
+    operator: 東武鉄道
+    lines: [東武鉄道/伊勢崎線]
+    from: 浅草
+    to: 久喜
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 東武鉄道/伊勢崎線 }
+    services:
+      - { name: 普通, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: tobu_noda
+    name: 東武アーバンパークライン・野田線
+    operator: 東武鉄道
+    lines: [東武鉄道/野田線]
+    waypoints: [大宮, 柏, 船橋]
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 東武鉄道/野田線 }
+    services:
+      - { name: 普通, stops: all, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: yokohama_mm21
+    name: みなとみらい線
+    operator: 横浜高速鉄道
+    lines: [横浜高速鉄道/みなとみらい21線]
+    from: 横浜
+    to: 元町・中華街
+    max_speed_kmh: null
+    max_speed_source: null
+    # 国交省の混雑率データに無い: ピーク本数・編成も入れる（tph: 本/時、cars: 両、source: 出典）
+    peak: { tph: null, cars: null, source: null }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: seibu_shinjuku
+    name: 西武新宿線
+    operator: 西武鉄道
+    lines: [西武鉄道/新宿線]
+    from: 西武新宿
+    to: 本川越
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 西武鉄道/新宿線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: tobu_tojo
+    name: 東武東上線
+    operator: 東武鉄道
+    lines: [東武鉄道/東上本線]
+    from: 池袋
+    to: 小川町
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 東武鉄道/東上本線 }
+    services:
+      - { name: 普通, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: keisei_main
+    name: 京成本線
+    operator: 京成電鉄
+    lines: [京成電鉄/本線]
+    from: 京成上野
+    to: 成田空港
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 京成電鉄/本線 }
+    services:
+      - { name: 普通, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 快速, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: odakyu_enoshima
+    name: 小田急江ノ島線
+    operator: 小田急電鉄
+    lines: [小田急電鉄/江ノ島線]
+    from: 相模大野
+    to: 片瀬江ノ島
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 小田急電鉄/江ノ島線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+  - id: seibu_ikebukuro
+    name: 西武池袋線
+    operator: 西武鉄道
+    lines: [西武鉄道/池袋線]
+    from: 池袋
+    to: 飯能
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { mlit_line: 西武鉄道/池袋線 }
+    services:
+      - { name: 各停, stops: all, tph_peak: null, offpeak_tph: null }
+      - { name: 急行, stops: null, tph_peak: null, offpeak_tph: null }
+    source: null
+    through: []
+
+# --- 2. services.yaml の系統（JR）への上書き ---------------------------------------
+# 停車駅は JR東日本の路線図（公表資料）で入力済み。最高速度と日中本数が仮置き。
+# max_speed_kmh / max_speed_source: 最高速度と出典、services.<種別>.offpeak_tph: 日中 1 時間あたりの本数、offpeak_source: 日中本数の出典
+route_overrides:
+  jr_yamanote: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_keihin_tohoku: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  # 湘南新宿ラインは国交省のデータに系統別の値が無いので、ピーク本数・編成も
+  jr_shonan_shinjuku:
+    max_speed_kmh: null
+    max_speed_source: null
+    peak: { tph: null, cars: null, source: null }
+    services: { 普通: { offpeak_tph: null } }
+    offpeak_source: null
+  jr_chuo_sobu_local: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_chuo_rapid: { max_speed_kmh: null, max_speed_source: null, services: { 快速: { offpeak_tph: null } }, offpeak_source: null }
+  jr_saikyo: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_tokaido: { max_speed_kmh: null, max_speed_source: null, services: { 普通: { offpeak_tph: null } }, offpeak_source: null }
+  jr_joban_rapid: { max_speed_kmh: null, max_speed_source: null, services: { 快速: { offpeak_tph: null } }, offpeak_source: null }
+  jr_yokosuka: { max_speed_kmh: null, max_speed_source: null, services: { 普通: { offpeak_tph: null } }, offpeak_source: null }
+  jr_takasaki: { max_speed_kmh: null, max_speed_source: null, services: { 普通: { offpeak_tph: null } }, offpeak_source: null }
+  jr_utsunomiya: { max_speed_kmh: null, max_speed_source: null, services: { 普通: { offpeak_tph: null } }, offpeak_source: null }
+  jr_sobu_rapid: { max_speed_kmh: null, max_speed_source: null, services: { 快速: { offpeak_tph: null } }, offpeak_source: null }
+  jr_nambu: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_yokohama: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_musashino: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_joban_local: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_keiyo: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+  jr_ome: { max_speed_kmh: null, max_speed_source: null, services: { 各停: { offpeak_tph: null } }, offpeak_source: null }
+
+# --- 3. 系統を定義しない線の本数だけ --------------------------------------------------
+# 停車駅まで入れる余裕がない線は、本数だけ入れられる（所要時間は仮置きのまま、本数が公表資料になる）。
+# キーは "運営会社/線名"（N02。docs/services_coverage.md の「線ごとの品質」の表の表記）。
+# 例: "流鉄/流山線": { peak_tph: 4, offpeak_tph: 3, cars: 2, source: "流鉄 時刻表（2026-11 閲覧）" }
+line_frequency: {}
+
+# --- 4. 主要区間の公表所要時間（物理推定との比較用） ---------------------------------
+# route（系統 ID）か line（"運営会社/線名"）、種別、区間の駅名、公表の所要時間 [分]（代表的な列車、または標準的な所要時間）。
+# 結果は docs/services_coverage.md の「物理推定の検証」。比較だけに使い、計算の値は変えない。
+published_times:
+  - { route: jr_tokaido, service: 普通, from: 東京, to: 横浜, minutes: null, source: null }
+  - { route: jr_chuo_rapid, service: 快速, from: 東京, to: 新宿, minutes: null, source: null }
+  - { route: jr_chuo_rapid, service: 快速, from: 新宿, to: 立川, minutes: null, source: null }
+  - { route: jr_joban_rapid, service: 快速, from: 上野, to: 取手, minutes: null, source: null }
+  - { route: jr_sobu_rapid, service: 快速, from: 東京, to: 千葉, minutes: null, source: null }
+  - { route: jr_keihin_tohoku, service: 各停, from: 大宮, to: 東京, minutes: null, source: null }
+  - { route: jr_yamanote, service: 各停, from: 渋谷, to: 新宿, minutes: null, source: null }
+  - { route: jr_saikyo, service: 各停, from: 大宮, to: 新宿, minutes: null, source: null }

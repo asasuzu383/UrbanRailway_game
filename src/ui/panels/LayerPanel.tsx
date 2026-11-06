@@ -75,11 +75,12 @@ export function LayerPanel() {
         </div>
         <p class="quality-legend" aria-label="既存線の運行データの品質">
           <span><i />時刻表・公表資料</span>
-          <span><i class="provisional" />仮置き（薄く表示）</span>
+          <span><i class="estimated" />物理推定</span>
+          <span><i class="provisional" />仮置き</span>
         </p>
         <p class="hint">
-          既存線の所要時間・本数のもと: 時刻表（ODPT のオープンデータ）、公表資料（国交省の混雑率データ・各社の停車駅）、仮置き（路線ごとの表定速度）。
-          路線にマウスを重ねると表示します。
+          既存線の所要時間のもと: 時刻表（ODPT のオープンデータ）、公表資料（公表の所要時間）、物理推定（公表の停車駅と最高速度から計算）、
+          仮置き（全駅停車・路線ごとの表定速度）。本数は国交省の混雑率データなど。路線にマウスを重ねると項目ごとに表示します。
         </p>
       </fieldset>
 

@@ -4,12 +4,12 @@
  */
 import { DEFAULT_TRANSIT_TYPE, TRANSIT_TYPES } from '../../config/transitTypes';
 import { MAX_SERVICE_PATTERNS, type ServicePattern, type ServicePlan } from '../../core/types';
+import { SERVICE_QUALITY_LABEL, type ServiceQuality } from '../../data/services';
 import { computeStore, scenarioStore, throughCandidates } from '../../state/appState';
 import { int } from '../format';
 import { useStore } from '../hooks';
 import { Warnings } from './Warnings';
 
-const QUALITY_LABEL: Record<string, string> = { timetable: '時刻表', published: '公表資料', provisional: '仮置き' };
 const PATTERN_NAMES = ['各停', '快速', '急行'];
 
 export function ServicePanel() {
@@ -129,7 +129,7 @@ export function ServicePanel() {
                 <select aria-label={`${s.name}からの直通先`} value={throughAt(s.id)} onChange={(e) => setThrough(s.id, e.currentTarget.value)}>
                   <option value="">直通しない</option>
                   {cands.map((c) => (
-                    <option key={c.id} value={c.id}>{c.operator} {c.name}（{QUALITY_LABEL[c.quality] ?? c.quality}）</option>
+                    <option key={c.id} value={c.id}>{c.operator} {c.name}（{SERVICE_QUALITY_LABEL[c.quality as ServiceQuality] ?? c.quality}）</option>
                   ))}
                 </select>
               </div>

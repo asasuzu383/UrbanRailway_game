@@ -76,6 +76,21 @@ py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe scripts\calibrate.py       # 運行データを需要モデルで使うようになったら（Phase 2 M2 以降）校正もやり直す
 ```
 
+現在は ODPT の開発者登録が承認されていないため、トークンが必要な事業者は使っていません（都営だけ時刻表ベース）。承認されたら 1. の手順で置き換わります。
+
+### 運行データの手入力
+
+時刻表を使えない線は、公表資料（各社の路線図・駅の案内など）から停車駅・最高速度・本数・主要区間の所要時間を手で入れられます。
+入力先は `scripts/config/regions/shutoken/services_input.yaml`（書き方はファイル冒頭）、入れる順番は [docs/services_input_priority.md](docs/services_input_priority.md)（乗降客数の多い線から）です。
+交通事業者の Web サイトを自動で取得（スクレイピング）することはしません。
+
+```powershell
+.\.venv\Scripts\python.exe scripts\06_services.py              # 入力を反映 → docs/services_coverage.md（品質の内訳と物理推定の検証）
+.\.venv\Scripts\python.exe scripts\tests\test_services_input.py # 手入力の扱いの単体テスト
+.\.venv\Scripts\python.exe scripts\calibrate.py                # 所要時間・本数が変わったら校正をやり直す
+.\.venv\Scripts\python.exe scripts\backtest.py --check         # 前回のバックテストとの差を確認
+```
+
 ### バックテスト
 
 既存路線（つくばエクスプレス、東急・相鉄新横浜線）を「無かったもの」として推計し、実績と比べる再現検証です。結果は [docs/backtest.md](docs/backtest.md)。

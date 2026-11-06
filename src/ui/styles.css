@@ -221,4 +221,5 @@ button.link { border: none; background: none; padding: 0; color: var(--text-prim
 .congestion .val { text-align: right; font-variant-numeric: tabular-nums; }
 .quality-legend span { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; font-size: 12px; }
 .quality-legend i { display: inline-block; width: 22px; height: 3px; background: #555; }
+.quality-legend i.estimated { opacity: 0.7; }
 .quality-legend i.provisional { opacity: 0.35; height: 2px; }

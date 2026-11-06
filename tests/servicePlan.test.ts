@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultDemandParams } from '../src/config/demand';
 import { TRANSIT_TYPES } from '../src/config/transitTypes';
 import type { ServicePlan, UserLine } from '../src/core/types';
-import { rideTimesFrom, routesAtStation, type ExistingRoute, type ServicesFile } from '../src/data/services';
+import { describeQuality, rideTimesFrom, routesAtStation, SERVICE_QUALITY_LABEL, type ExistingRoute, type ServicesFile } from '../src/data/services';
 import { runDemand } from '../src/demand/engine';
 import { operationFromPlan } from '../src/demand/lineOperation';
 import { computeLineGeometry } from '../src/network/lineGeometry';
@@ -102,6 +102,24 @@ describe('直通先の系統の乗車時間', () => {
   it('本数の多い種別で、接続駅から両方向の各駅までの時間を積み上げる', () => {
     expect([...rideTimesFrom(route, 11).entries()]).toEqual([[12, 3], [13, 7], [10, 2]]);
     expect(rideTimesFrom(route, 99).size).toBe(0);
+  });
+});
+
+describe('既存線のデータ品質', () => {
+  it('項目ごとの品質を、該当しない項目を除いて説明する', () => {
+    const text = describeQuality({ stops: 'published', runTime: 'estimated', maxSpeed: 'provisional', peak: 'published', offpeak: null });
+    expect(text).toBe('所要時間 物理推定、停車駅 公表資料、最高速度 仮置き、ピーク本数 公表資料');
+    expect(describeQuality(undefined)).toBe('');
+  });
+
+  it('services.json の品質フラグは 4 段階のどれか', () => {
+    const file = JSON.parse(readFileSync(resolve(__dirname, '../public/data/shutoken/services.json'), 'utf8')) as ServicesFile;
+    const flags = new Set(Object.keys(SERVICE_QUALITY_LABEL));
+    for (const r of file.routes) {
+      expect(flags.has(r.quality)).toBe(true);
+      expect(r.qualityDetail?.runTime).toBe(r.quality);
+    }
+    expect(file.lineQualityDetail?.length).toBe(file.lineQuality.length);
   });
 });
 

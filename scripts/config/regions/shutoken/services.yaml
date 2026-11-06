@@ -3,11 +3,17 @@
 # 運行系統（route）= 列車が走る駅の並び（N02 の法令上の線名とは一致しない。直通先は別の route として through で結ぶ）。
 # 運行種別（service）= 系統上の停車駅・駅間所要時間・時間帯別本数。
 #
-# データ品質（quality）:
-#   timetable   … 時刻表ベース（ODPT のオープンデータから集計。scripts/odpt_download.py → 06_services.py）
-#   published   … 公表資料ベース（国交省の混雑率データのピーク本数・編成、各社公式サイトの停車駅・最高速度。
-#                   所要時間は停車駅・駅間距離・最高速度から運転曲線の簡易計算で求める）
-#   provisional … 仮置き（上記がない路線。N02 の線ごとに全駅停車・表定速度は pipeline.yaml の rail.speed_kmh）
+# データ品質（quality = 所要時間の出所。項目ごとの出所は qualityDetail: 停車駅・所要時間・最高速度・ピーク本数・日中本数）:
+#   timetable   … 時刻表ベース（ODPT のうち認証なしで取れる CC BY 4.0 のデータから集計。scripts/odpt_download.py → 06_services.py）
+#   published   … 公表資料（公表の所要時間を手入力したもの。services_input.yaml の services[].minutes）
+#   estimated   … 物理推定（公表資料の停車駅と最高速度から、運転曲線の簡易計算で所要時間を求めたもの。新線と同じ計算）
+#   provisional … 仮置き（上記がない線。N02 の線ごとに全駅停車・表定速度は pipeline.yaml の rail.speed_kmh）
+# ピーク本数・編成は国交省の混雑率データ（公表資料）、日中本数は手入力がなければピークの比率（仮置き）。
+# 公表資料から手で入れる値は services_input.yaml（手入力テンプレート）に書く。優先順は docs/services_input_priority.md。
+#
+# ODPT の開発者登録（アクセストークン）が必要なデータは使っていない（2026-11-06 時点、登録が承認されていないため）。
+# 承認されたら .env に ODPT_ACCESS_TOKEN を置いて odpt_download.py → 06_services.py を実行すれば、
+# 下の odpt.operators の access: key の事業者が時刻表ベースに置き換わる（設定で定義した系統より時刻表が優先）。
 #
 # JR 東日本・大手私鉄の時刻表は使わない: ODPT ではチャレンジ限定ライセンス（常設の公開アプリに使えない）、
 # 各社の時刻表サイトは時刻データの転載・加工を禁止しているため（docs/data-sources.md）。
@@ -64,6 +70,12 @@ runtime:
   # 余裕時分・速度制限の係数: (走行時間 + 停車時間) × margin。都営地下鉄 4 線の時刻表（ODPT）の駅間所要時間と比べると、
   # 最高速度 70〜100 km/h で係数なしの計算に対して 1.10〜1.30 倍（中央値 約1.17）だったので 1.15 とした（2026-11-02）
   margin: 1.15
+  # 最高速度 [km/h] が未入力の系統と、時刻表との比較に使う既定値（すべて仮置き）。
+  # N02 の鉄道区分（rail_type）→ 事業者種別（operator_type: 2=JR在来線, 3=公営, 4=民営, 5=第三セクター）→ default の順に引く
+  default_max_speed_kmh:
+    rail_type: { "21": 40, "14": 70, "15": 70, "22": 70, "23": 70, "16": 60, "24": 60 }
+    operator_type: { "2": 100, "3": 80, "4": 100, "5": 100 }
+    default: 100
 
 # --- 仮置きの既定値 ------------------------------------------------------------
 provisional:
@@ -73,97 +85,99 @@ provisional:
   # 公表資料ベースの系統でオフピーク本数の資料がないときのピーク比
   offpeak_ratio: 0.5
 
-# --- 国交省の混雑率データ（公表資料）: ピーク 1 時間の本数・平均編成両数 -----------------
+# --- 国交省の混雑率データ（公表資料）: ピーク 1 時間の本数・平均編成両数・輸送力・輸送人員・混雑率 ------
 # 出典: 国土交通省「最混雑区間における混雑率（令和6年度）」（資料3、2025年7月29日公表）
 #   https://www.mlit.go.jp/report/press/tetsudo04_hh_000138.html
 # 最混雑区間の 1 時間（主に 7:30〜8:30 頃）の片方向の値。同じ線に複数の区間があるものは本数の多い区間。
+# tph = 本数、cars = 平均編成両数、capacity = 輸送力 [人]、volume = 輸送人員 [人]、congestion = 混雑率 [%]。
+# 本数・編成は既存線の運行データに、輸送力・輸送人員・混雑率は混雑率計算の検証（Phase 2・3）に使う。
 # N02 の線が 1 つの運行系統に対応する線に使う（JR の複数系統が走る線は、系統を定義したときに mlit_peak_jr を使う）。
 mlit_peak:
   source: 国土交通省「最混雑区間における混雑率（令和6年度）」
   lines:
-    "東武鉄道/伊勢崎線": { tph: 36, cars: 8.1, section: 小菅→北千住 }
-    "東武鉄道/東上本線": { tph: 22, cars: 10, section: 北池袋→池袋 }
-    "東武鉄道/野田線": { tph: 13, cars: 6, section: 北大宮→大宮 }
-    "西武鉄道/池袋線": { tph: 25, cars: 9, section: 椎名町→池袋 }
-    "西武鉄道/新宿線": { tph: 24, cars: 9.2, section: 下落合→高田馬場 }
-    "西武鉄道/西武有楽町線": { tph: 15, cars: 9.6, section: 新桜台→小竹向原 }
-    "京成電鉄/本線": { tph: 17, cars: 7, section: 大神宮下→京成船橋 }
-    "京成電鉄/押上線": { tph: 23, cars: 8, section: 京成曳舟→押上 }
-    "京成電鉄/松戸線": { tph: 13, cars: 6, section: 前原→新津田沼 }
-    "京王電鉄/京王線": { tph: 26, cars: 9.9, section: 下高井戸→明大前 }
-    "京王電鉄/井の頭線": { tph: 27, cars: 5, section: 池ノ上→駒場東大前 }
-    "京王電鉄/相模原線": { tph: 12, cars: 10, section: 京王多摩川→調布 }
-    "小田急電鉄/小田原線": { tph: 37, cars: 9.8, section: 世田谷代田→下北沢 }
-    "小田急電鉄/江ノ島線": { tph: 11, cars: 7.8, section: 南林間→中央林間 }
-    "小田急電鉄/多摩線": { tph: 11, cars: 7.8, section: 五月台→新百合ヶ丘 }
-    "東急電鉄/東横線": { tph: 24, cars: 9, section: 祐天寺→中目黒 }
-    "東急電鉄/目黒線": { tph: 24, cars: 7, section: 不動前→目黒 }
-    "東急電鉄/東急新横浜線": { tph: 15, cars: 8.3, section: 新綱島→日吉 }
-    "東急電鉄/田園都市線": { tph: 27, cars: 10, section: 池尻大橋→渋谷 }
-    "東急電鉄/大井町線": { tph: 21, cars: 5.7, section: 九品仏→自由が丘 }
-    "東急電鉄/池上線": { tph: 24, cars: 3, section: 大崎広小路→五反田 }
-    "東急電鉄/東急多摩川線": { tph: 18, cars: 3, section: 矢口渡→蒲田 }
-    "京浜急行電鉄/本線": { tph: 24, cars: 9, section: 戸部→横浜 }
-    "相模鉄道/相鉄本線": { tph: 28, cars: 9.5, section: 鶴ケ峰→西谷 }
-    "埼玉高速鉄道/埼玉高速鉄道線": { tph: 16, cars: 6.3, section: 川口元郷→赤羽岩淵 }
-    "東京地下鉄/2号線日比谷線": { tph: 27, cars: 7, section: 三ノ輪→入谷 }
-    "東京地下鉄/3号線銀座線": { tph: 26, cars: 6, section: 赤坂見附→溜池山王 }
-    "東京地下鉄/4号線丸ノ内線": { tph: 29, cars: 6, section: 四ツ谷→赤坂見附 }
-    "東京地下鉄/5号線東西線": { tph: 27, cars: 10, section: 木場→門前仲町 }
-    "東京地下鉄/7号線南北線": { tph: 19, cars: 6.4, section: 駒込→本駒込 }
-    "東京地下鉄/8号線有楽町線": { tph: 23, cars: 10, section: 東池袋→護国寺 }
-    "東京地下鉄/9号線千代田線": { tph: 29, cars: 10, section: 町屋→西日暮里 }
-    "東京地下鉄/11号線半蔵門線": { tph: 27, cars: 10, section: 渋谷→表参道 }
-    "東京地下鉄/13号線副都心線": { tph: 18, cars: 8.9, section: 要町→池袋 }
-    "東京都/1号線浅草線": { tph: 23, cars: 8, section: 本所吾妻橋→浅草 }
-    "東京都/6号線三田線": { tph: 20, cars: 7, section: 西巣鴨→巣鴨 }
-    "東京都/10号線新宿線": { tph: 17, cars: 10, section: 西大島→住吉 }
-    "東京都/12号線大江戸線": { tph: 20, cars: 8, section: 中井→東中野 }
-    "東京都/日暮里・舎人ライナー": { tph: 19, cars: 5, section: 赤土小学校前→西日暮里 }
-    "横浜市/1号線": { tph: 12, cars: 6, section: 三ツ沢下町→横浜（1・3号線） }
-    "横浜市/3号線": { tph: 12, cars: 6, section: 三ツ沢下町→横浜（1・3号線） }
-    "横浜市/4号線": { tph: 18, cars: 5, section: 日吉本町→日吉 }
-    "関東鉄道/常総線": { tph: 8, cars: 2, section: 取手→西取手 }
-    "関東鉄道/竜ヶ崎線": { tph: 3, cars: 2, section: 竜ヶ崎→佐貫 }
-    "流鉄/流山線": { tph: 4, cars: 2, section: 小金城趾→幸谷 }
-    "北総鉄道/北総線": { tph: 9, cars: 8, section: 新柴又→京成高砂 }
-    "東葉高速鉄道/東葉高速線": { tph: 12, cars: 10, section: 東海神→西船橋 }
-    "東京臨海高速鉄道/臨海副都心線": { tph: 11, cars: 10, section: 大井町→品川シーサイド }
-    "首都圏新都市鉄道/常磐新線": { tph: 25, cars: 6, section: 青井→北千住 }
-    "東京モノレール/東京モノレール羽田空港線": { tph: 15, cars: 6, section: 浜松町→天王洲アイル }
-    "多摩都市モノレール/多摩都市モノレール線": { tph: 9, cars: 4, section: 柴崎体育館→立川南 }
-    "千葉都市モノレール/2号線": { tph: 9, cars: 2, section: 千葉公園→千葉 }
-    "湘南モノレール/江の島線": { tph: 8, cars: 3, section: 富士見町→大船 }
-    "山万/ユーカリが丘線": { tph: 4, cars: 3, section: 地区センター→ユーカリが丘 }
-    "埼玉新都市交通/伊奈線": { tph: 12, cars: 6, section: 鉄道博物館→大宮 }
-    "ゆりかもめ/東京臨海新交通臨海線": { tph: 16, cars: 6, section: 汐留→竹芝 }
-    "横浜シーサイドライン/金沢シーサイドライン": { tph: 14, cars: 5, section: 新杉田→南部市場 }
-    "江ノ島電鉄/江ノ島電鉄線": { tph: 5, cars: 4, section: 和田塚→鎌倉（13:55〜14:54） }
+    "東武鉄道/伊勢崎線": { tph: 36, cars: 8.1, capacity: 39590, volume: 55143, congestion: 139, section: 小菅→北千住 }
+    "東武鉄道/東上本線": { tph: 22, cars: 10, capacity: 30360, volume: 39303, congestion: 129, section: 北池袋→池袋 }
+    "東武鉄道/野田線": { tph: 13, cars: 6, capacity: 10764, volume: 11318, congestion: 105, section: 北大宮→大宮 }
+    "西武鉄道/池袋線": { tph: 25, cars: 9, capacity: 30314, volume: 40224, congestion: 133, section: 椎名町→池袋 }
+    "西武鉄道/新宿線": { tph: 24, cars: 9.2, capacity: 30022, volume: 43666, congestion: 145, section: 下落合→高田馬場 }
+    "西武鉄道/西武有楽町線": { tph: 15, cars: 9.6, capacity: 19929, volume: 20395, congestion: 102, section: 新桜台→小竹向原 }
+    "京成電鉄/本線": { tph: 17, cars: 7, capacity: 14520, volume: 18580, congestion: 128, section: 大神宮下→京成船橋 }
+    "京成電鉄/押上線": { tph: 23, cars: 8, capacity: 22264, volume: 30770, congestion: 138, section: 京成曳舟→押上 }
+    "京成電鉄/松戸線": { tph: 13, cars: 6, capacity: 9698, volume: 9734, congestion: 100, section: 前原→新津田沼 }
+    "京王電鉄/京王線": { tph: 26, cars: 9.9, capacity: 37520, volume: 53680, congestion: 143, section: 下高井戸→明大前 }
+    "京王電鉄/井の頭線": { tph: 27, cars: 5, capacity: 18900, volume: 23246, congestion: 123, section: 池ノ上→駒場東大前 }
+    "京王電鉄/相模原線": { tph: 12, cars: 10, capacity: 16800, volume: 16959, congestion: 101, section: 京王多摩川→調布 }
+    "小田急電鉄/小田原線": { tph: 37, cars: 9.8, capacity: 48878, volume: 71153, congestion: 146, section: 世田谷代田→下北沢 }
+    "小田急電鉄/江ノ島線": { tph: 11, cars: 7.8, capacity: 12212, volume: 15059, congestion: 123, section: 南林間→中央林間 }
+    "小田急電鉄/多摩線": { tph: 11, cars: 7.8, capacity: 12212, volume: 9225, congestion: 76, section: 五月台→新百合ヶ丘 }
+    "東急電鉄/東横線": { tph: 24, cars: 9, capacity: 32568, volume: 39733, congestion: 122, section: 祐天寺→中目黒 }
+    "東急電鉄/目黒線": { tph: 24, cars: 7, capacity: 25080, volume: 32353, congestion: 129, section: 不動前→目黒 }
+    "東急電鉄/東急新横浜線": { tph: 15, cars: 8.3, capacity: 18648, volume: 10070, congestion: 54, section: 新綱島→日吉 }
+    "東急電鉄/田園都市線": { tph: 27, cars: 10, capacity: 40338, volume: 53650, congestion: 133, section: 池尻大橋→渋谷 }
+    "東急電鉄/大井町線": { tph: 21, cars: 5.7, capacity: 17472, volume: 19569, congestion: 112, section: 九品仏→自由が丘 }
+    "東急電鉄/池上線": { tph: 24, cars: 3, capacity: 8904, volume: 10952, congestion: 123, section: 大崎広小路→五反田 }
+    "東急電鉄/東急多摩川線": { tph: 18, cars: 3, capacity: 6678, volume: 7145, congestion: 107, section: 矢口渡→蒲田 }
+    "京浜急行電鉄/本線": { tph: 24, cars: 9, capacity: 27000, volume: 31845, congestion: 118, section: 戸部→横浜 }
+    "相模鉄道/相鉄本線": { tph: 28, cars: 9.5, capacity: 37240, volume: 43352, congestion: 116, section: 鶴ケ峰→西谷 }
+    "埼玉高速鉄道/埼玉高速鉄道線": { tph: 16, cars: 6.3, capacity: 15012, volume: 17271, congestion: 115, section: 川口元郷→赤羽岩淵 }
+    "東京地下鉄/2号線日比谷線": { tph: 27, cars: 7, capacity: 27945, volume: 45550, congestion: 163, section: 三ノ輪→入谷 }
+    "東京地下鉄/3号線銀座線": { tph: 26, cars: 6, capacity: 15860, volume: 23314, congestion: 147, section: 赤坂見附→溜池山王 }
+    "東京地下鉄/4号線丸ノ内線": { tph: 29, cars: 6, capacity: 22968, volume: 29169, congestion: 127, section: 四ツ谷→赤坂見附 }
+    "東京地下鉄/5号線東西線": { tph: 27, cars: 10, capacity: 40500, volume: 60750, congestion: 150, section: 木場→門前仲町 }
+    "東京地下鉄/7号線南北線": { tph: 19, cars: 6.4, capacity: 18090, volume: 27497, congestion: 152, section: 駒込→本駒込 }
+    "東京地下鉄/8号線有楽町線": { tph: 23, cars: 10, capacity: 34914, volume: 50625, congestion: 145, section: 東池袋→護国寺 }
+    "東京地下鉄/9号線千代田線": { tph: 29, cars: 10, capacity: 44022, volume: 65153, congestion: 148, section: 町屋→西日暮里 }
+    "東京地下鉄/11号線半蔵門線": { tph: 27, cars: 10, capacity: 40500, volume: 41715, congestion: 103, section: 渋谷→表参道 }
+    "東京地下鉄/13号線副都心線": { tph: 18, cars: 8.9, capacity: 24244, volume: 28365, congestion: 117, section: 要町→池袋 }
+    "東京都/1号線浅草線": { tph: 23, cars: 8, capacity: 22080, volume: 29596, congestion: 134, section: 本所吾妻橋→浅草 }
+    "東京都/6号線三田線": { tph: 20, cars: 7, capacity: 19600, volume: 28176, congestion: 144, section: 西巣鴨→巣鴨 }
+    "東京都/10号線新宿線": { tph: 17, cars: 10, capacity: 23800, volume: 35697, congestion: 150, section: 西大島→住吉 }
+    "東京都/12号線大江戸線": { tph: 20, cars: 8, capacity: 15308, volume: 23749, congestion: 155, section: 中井→東中野 }
+    "東京都/日暮里・舎人ライナー": { tph: 19, cars: 5, capacity: 4887, volume: 8664, congestion: 177, section: 赤土小学校前→西日暮里 }
+    "横浜市/1号線": { tph: 12, cars: 6, capacity: 9312, volume: 12160, congestion: 131, section: 三ツ沢下町→横浜（1・3号線） }
+    "横浜市/3号線": { tph: 12, cars: 6, capacity: 9312, volume: 12160, congestion: 131, section: 三ツ沢下町→横浜（1・3号線） }
+    "横浜市/4号線": { tph: 18, cars: 5, capacity: 8676, volume: 10104, congestion: 116, section: 日吉本町→日吉 }
+    "関東鉄道/常総線": { tph: 8, cars: 2, capacity: 2240, volume: 1458, congestion: 65, section: 取手→西取手 }
+    "関東鉄道/竜ヶ崎線": { tph: 3, cars: 2, capacity: 810, volume: 432, congestion: 53, section: 竜ヶ崎→佐貫 }
+    "流鉄/流山線": { tph: 4, cars: 2, capacity: 1132, volume: 835, congestion: 74, section: 小金城趾→幸谷 }
+    "北総鉄道/北総線": { tph: 9, cars: 8, capacity: 8712, volume: 8240, congestion: 95, section: 新柴又→京成高砂 }
+    "東葉高速鉄道/東葉高速線": { tph: 12, cars: 10, capacity: 18216, volume: 16163, congestion: 89, section: 東海神→西船橋 }
+    "東京臨海高速鉄道/臨海副都心線": { tph: 11, cars: 10, capacity: 17180, volume: 20179, congestion: 117, section: 大井町→品川シーサイド }
+    "首都圏新都市鉄道/常磐新線": { tph: 25, cars: 6, capacity: 20775, volume: 30353, congestion: 146, section: 青井→北千住 }
+    "東京モノレール/東京モノレール羽田空港線": { tph: 15, cars: 6, capacity: 8700, volume: 7329, congestion: 84, section: 浜松町→天王洲アイル }
+    "多摩都市モノレール/多摩都市モノレール線": { tph: 9, cars: 4, capacity: 3708, volume: 3519, congestion: 95, section: 柴崎体育館→立川南 }
+    "千葉都市モノレール/2号線": { tph: 9, cars: 2, capacity: 1440, volume: 2174, congestion: 151, section: 千葉公園→千葉 }
+    "湘南モノレール/江の島線": { tph: 8, cars: 3, capacity: 1776, volume: 2721, congestion: 153, section: 富士見町→大船 }
+    "山万/ユーカリが丘線": { tph: 4, cars: 3, capacity: 560, volume: 253, congestion: 45, section: 地区センター→ユーカリが丘 }
+    "埼玉新都市交通/伊奈線": { tph: 12, cars: 6, capacity: 3144, volume: 3990, congestion: 127, section: 鉄道博物館→大宮 }
+    "ゆりかもめ/東京臨海新交通臨海線": { tph: 16, cars: 6, capacity: 4896, volume: 4701, congestion: 96, section: 汐留→竹芝 }
+    "横浜シーサイドライン/金沢シーサイドライン": { tph: 14, cars: 5, capacity: 3304, volume: 3928, congestion: 119, section: 新杉田→南部市場 }
+    "江ノ島電鉄/江ノ島電鉄線": { tph: 5, cars: 4, capacity: 1500, volume: 2197, congestion: 146, section: 和田塚→鎌倉（13:55〜14:54） }
     # JR のうち 1 つの N02 の線が 1 系統に対応するもの
-    "東日本旅客鉄道/南武線": { tph: 24, cars: 6, section: 武蔵中原→武蔵小杉 }
-    "東日本旅客鉄道/武蔵野線": { tph: 14, cars: 8, section: 東浦和→南浦和 }
-    "東日本旅客鉄道/横浜線": { tph: 17, cars: 8, section: 小机→新横浜 }
-    "東日本旅客鉄道/根岸線": { tph: 14, cars: 10, section: 新杉田→磯子 }
-    "東日本旅客鉄道/五日市線": { tph: 5, cars: 6, section: 東秋留→拝島 }
-    "東日本旅客鉄道/青梅線": { tph: 16, cars: 8.8, section: 西立川→立川 }
-    "東日本旅客鉄道/京葉線": { tph: 21, cars: 9.2, section: 葛西臨海公園→新木場 }
+    "東日本旅客鉄道/南武線": { tph: 24, cars: 6, capacity: 21312, volume: 32570, congestion: 153, section: 武蔵中原→武蔵小杉 }
+    "東日本旅客鉄道/武蔵野線": { tph: 14, cars: 8, capacity: 16576, volume: 25380, congestion: 153, section: 東浦和→南浦和 }
+    "東日本旅客鉄道/横浜線": { tph: 17, cars: 8, capacity: 20128, volume: 27480, congestion: 137, section: 小机→新横浜 }
+    "東日本旅客鉄道/根岸線": { tph: 14, cars: 10, capacity: 20720, volume: 15210, congestion: 73, section: 新杉田→磯子 }
+    "東日本旅客鉄道/五日市線": { tph: 5, cars: 6, capacity: 4440, volume: 4310, congestion: 97, section: 東秋留→拝島 }
+    "東日本旅客鉄道/青梅線": { tph: 16, cars: 8.8, capacity: 20720, volume: 19200, congestion: 93, section: 西立川→立川 }
+    "東日本旅客鉄道/京葉線": { tph: 21, cars: 9.2, capacity: 28712, volume: 34160, congestion: 119, section: 葛西臨海公園→新木場 }
 # JR の系統別（複数系統が同じ N02 の線を走るもの。系統を定義するときに使う）
 mlit_peak_jr:
-  東海道線: { tph: 17, cars: 13, section: 川崎→品川 }
-  横須賀線: { tph: 10, cars: 13, section: 武蔵小杉→西大井 }
-  山手線外回り: { tph: 16, cars: 11, section: 上野→御徒町 }
-  山手線内回り: { tph: 20, cars: 11, section: 新大久保→新宿 }
-  中央線快速: { tph: 28, cars: 10, section: 中野→新宿 }
-  中央・総武線各駅停車（中央）: { tph: 18, cars: 10, section: 代々木→千駄ヶ谷 }
-  宇都宮線: { tph: 12, cars: 13, section: 土呂→大宮 }
-  高崎線: { tph: 14, cars: 13, section: 宮原→大宮 }
-  京浜東北線（北）: { tph: 23, cars: 10, section: 川口→赤羽 }
-  京浜東北線（南）: { tph: 26, cars: 10, section: 大井町→品川 }
-  常磐線快速: { tph: 15, cars: 14.2, section: 三河島→日暮里 }
-  常磐線各駅停車: { tph: 20, cars: 10, section: 亀有→綾瀬 }
-  総武線快速: { tph: 18, cars: 13, section: 新小岩→錦糸町 }
-  中央・総武線各駅停車（総武）: { tph: 25, cars: 10, section: 錦糸町→両国 }
-  埼京線: { tph: 19, cars: 10, section: 板橋→池袋 }
+  東海道線: { tph: 17, cars: 13, capacity: 31348, volume: 48420, congestion: 154, section: 川崎→品川 }
+  横須賀線: { tph: 10, cars: 13, capacity: 18680, volume: 24960, congestion: 134, section: 武蔵小杉→西大井 }
+  山手線外回り: { tph: 16, cars: 11, capacity: 26032, volume: 34940, congestion: 134, section: 上野→御徒町 }
+  山手線内回り: { tph: 20, cars: 11, capacity: 32540, volume: 45160, congestion: 139, section: 新大久保→新宿 }
+  中央線快速: { tph: 28, cars: 10, capacity: 41440, volume: 66720, congestion: 161, section: 中野→新宿 }
+  中央・総武線各駅停車（中央）: { tph: 18, cars: 10, capacity: 26640, volume: 24370, congestion: 91, section: 代々木→千駄ヶ谷 }
+  宇都宮線: { tph: 12, cars: 13, capacity: 22128, volume: 25790, congestion: 117, section: 土呂→大宮 }
+  高崎線: { tph: 14, cars: 13, capacity: 25816, volume: 33460, congestion: 130, section: 宮原→大宮 }
+  京浜東北線（北）: { tph: 23, cars: 10, capacity: 34040, volume: 53050, congestion: 156, section: 川口→赤羽 }
+  京浜東北線（南）: { tph: 26, cars: 10, capacity: 38480, volume: 58950, congestion: 153, section: 大井町→品川 }
+  常磐線快速: { tph: 15, cars: 14.2, capacity: 30804, volume: 42420, congestion: 138, section: 三河島→日暮里 }
+  常磐線各駅停車: { tph: 20, cars: 10, capacity: 28000, volume: 34360, congestion: 123, section: 亀有→綾瀬 }
+  総武線快速: { tph: 18, cars: 13, capacity: 33624, volume: 51450, congestion: 153, section: 新小岩→錦糸町 }
+  中央・総武線各駅停車（総武）: { tph: 25, cars: 10, capacity: 37000, volume: 53550, congestion: 145, section: 錦糸町→両国 }
+  埼京線: { tph: 19, cars: 10, capacity: 28040, volume: 45790, congestion: 163, section: 板橋→池袋 }
 
 # --- 公表資料ベースの系統 --------------------------------------------------------
 # id: 系統 ID、operator: 事業者（N02 の運営会社名）、lines: 走る N02 の線（"運営会社/線名"。省略すると operator の全線）
