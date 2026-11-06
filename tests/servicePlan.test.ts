@@ -108,11 +108,11 @@ describe('直通先の系統の乗車時間', () => {
 describe('既存線のデータ品質', () => {
   it('項目ごとの品質を、該当しない項目を除いて説明する', () => {
     const text = describeQuality({ stops: 'published', runTime: 'estimated', maxSpeed: 'provisional', peak: 'published', offpeak: null });
-    expect(text).toBe('所要時間 物理推定、停車駅 公表資料、最高速度 仮置き、ピーク本数 公表資料');
+    expect(text).toBe('所要時間 物理推定（入力値）、停車駅 公表資料、最高速度 仮置き、ピーク本数 公表資料');
     expect(describeQuality(undefined)).toBe('');
   });
 
-  it('services.json の品質フラグは 4 段階のどれか', () => {
+  it('services.json の品質フラグは定義済みのどれかで、所要時間の品質と一致する', () => {
     const file = JSON.parse(readFileSync(resolve(__dirname, '../public/data/shutoken/services.json'), 'utf8')) as ServicesFile;
     const flags = new Set(Object.keys(SERVICE_QUALITY_LABEL));
     for (const r of file.routes) {

@@ -30,9 +30,12 @@ from common import INTERIM, PUBLIC_DATA, RAW, docs_path, region_config_path, wri
 
 HERE = Path(__file__).resolve().parent
 ODPT_DIR = RAW / "odpt"
-# 品質フラグ（所要時間の出所。この順に高い）: 時刻表ベース／公表資料／物理推定／仮置き
-QUALITIES = ["timetable", "published", "estimated", "provisional"]
-QUALITY_LABEL = {"timetable": "時刻表", "published": "公表資料", "estimated": "物理推定", "provisional": "仮置き"}
+# 品質フラグ（所要時間の出所。この順に高い）: 時刻表ベース／公表資料／物理推定（入力値）／物理推定（既定値）／仮置き
+#   estimated         … 公表資料の停車駅と最高速度（手入力）から運転曲線で計算
+#   estimated_default … 停車駅（優等列車のパターン）か最高速度のどちらかが既定値（各停は全駅停車、最高速度は路線タイプ別の既定値）
+QUALITIES = ["timetable", "published", "estimated", "estimated_default", "provisional"]
+QUALITY_LABEL = {"timetable": "時刻表", "published": "公表資料", "estimated": "物理推定（入力値）",
+                 "estimated_default": "物理推定（既定値）", "provisional": "仮置き"}
 # 項目ごとの品質（qualityDetail）
 ITEMS = ["stops", "runTime", "maxSpeed", "peak", "offpeak"]
 ITEM_LABEL = {"stops": "停車駅", "runTime": "所要時間", "maxSpeed": "最高速度", "peak": "ピーク本数", "offpeak": "日中本数"}
@@ -342,21 +345,27 @@ def route_sequence(nw: Network, r: dict, lines: set) -> list[int]:
 def default_max_speed(scfg: dict, line: dict) -> float:
     """最高速度が未入力のときの既定値（仮置き）: N02 の鉄道区分 → 事業者種別 → default の順"""
     d = scfg["runtime"]["default_max_speed_kmh"]
-    return float(d["rail_type"].get(str(line["railType"])) or d["operator_type"].get(str(line["operatorType"])) or d["default"])
+    return float((d.get("operator") or {}).get(line["operator"]) or d["rail_type"].get(str(line["railType"]))
+                 or d["operator_type"].get(str(line["operatorType"])) or d["default"])
+
+
+def leg_minutes(scfg: dict, nw: Network, dist_m: float, to_station: int, vmax: float) -> float:
+    """1 駅間の所要時間 [分]（運転曲線の簡易計算 + 着駅の停車時間、× 余裕係数）"""
+    rcfg = scfg["runtime"]
+    dwell = rcfg["dwell_major_s"] if len(nw.stations[to_station]["lines"]) >= 2 else rcfg["dwell_s"]
+    sec = (run_seconds(dist_m, vmax, rcfg["accel_kmh_per_s"], rcfg["decel_kmh_per_s"]) + dwell) * rcfg["margin"]
+    return round(sec / 60, 2)
 
 
 def kinematic_legs(scfg: dict, nw: Network, seq: list, stops: list, lines: set | None, vmax: float,
                    operator: str | None = None, label: str = "") -> list[float]:
     """停車駅間の所要時間 [分]（運転曲線の簡易計算 + 停車時間、× 余裕係数）"""
-    rcfg = scfg["runtime"]
     legs = []
     for i, j in zip(stops[:-1], stops[1:]):
         dist, _ = nw.leg_length(seq[i], seq[j], lines, operator)
         if not math.isfinite(dist):
             raise SystemExit(f"{label}: {nw.stations[seq[i]]['name']}〜{nw.stations[seq[j]]['name']} の線路がつながっていません")
-        dwell = rcfg["dwell_major_s"] if len(nw.stations[seq[j]]["lines"]) >= 2 else rcfg["dwell_s"]
-        sec = (run_seconds(dist, vmax, rcfg["accel_kmh_per_s"], rcfg["decel_kmh_per_s"]) + dwell) * rcfg["margin"]
-        legs.append(round(sec / 60, 2))
+        legs.append(leg_minutes(scfg, nw, dist, seq[j], vmax))
     return legs
 
 
@@ -474,7 +483,8 @@ def configured_routes(scfg: dict, nw: Network) -> tuple[list, list]:
                 q_run.append("published")
             else:
                 legs = kinematic_legs(scfg, nw, seq, stops, lines, s.get("max_speed_kmh") or vmax_route, label=r["id"])
-                q_run.append("estimated")
+                # 停車駅は公表資料。最高速度も入力値なら「入力値」、既定値なら「既定値」の物理推定
+                q_run.append("estimated" if q_speed == "published" or s.get("max_speed_kmh") else "estimated_default")
             if s.get("tph_peak") is not None:
                 peak = float(s["tph_peak"])
                 q_peak.append("published" if pk["quality"] == "published" or origin == INPUT_FILE else "provisional")
@@ -491,7 +501,8 @@ def configured_routes(scfg: dict, nw: Network) -> tuple[list, list]:
                 q_off.append("provisional")
             services.append({"name": s["name"], "stops": stops, "legMinutes": legs,
                              "tph": {"peak": round(peak, 1), "offpeak": round(off, 1)}})
-        detail = {"stops": "published", "runTime": worst(q_run), "maxSpeed": q_speed if "estimated" in q_run else None,
+        detail = {"stops": "published", "runTime": worst(q_run),
+                  "maxSpeed": q_speed if {"estimated", "estimated_default"} & set(q_run) else None,
                   "peak": worst(q_peak), "offpeak": worst(q_off)}
         out.append({
             "id": r["id"], "name": r["name"], "operator": r.get("operator") or line0["operator"],
@@ -504,10 +515,14 @@ def configured_routes(scfg: dict, nw: Network) -> tuple[list, list]:
 
 
 # ---------------------------------------------------------------------------
-# 仮置き
+# 系統を定義していない線: 各停（全駅停車）を既定値で物理推定
 # ---------------------------------------------------------------------------
 
 def provisional_routes(scfg: dict, nw: Network, covered: set) -> list:
+    """設定・手入力で系統を定義していない N02 の線を、全駅停車の各停 1 種別として扱う。
+    所要時間は運転曲線の簡易計算（最高速度は路線タイプ別の既定値）で、品質は「物理推定（既定値）」。
+    優等列車（急行など）の停車パターンは手入力待ち（停車駅の品質は仮置き）。系統 ID は以前の仮置きの系統と同じ prov:<線>:<番号>
+    （保存済みのシナリオの直通先の指定を壊さないため）。"""
     pcfg = scfg["provisional"]
     mlit = scfg.get("mlit_peak", {}).get("lines", {})
     line_freq = (scfg.get("input") or {}).get("line_frequency") or {}
@@ -534,7 +549,8 @@ def provisional_routes(scfg: dict, nw: Network, covered: set) -> list:
         else:
             off, q_off = round(peak * pcfg["offpeak_ratio"], 1), "provisional"
         freq_src = src + ("、日中は手入力" if q_off == "published" else "、日中はピークの比率（仮置き）")
-        detail = {"stops": "provisional", "runTime": "provisional", "maxSpeed": None, "peak": q_peak, "offpeak": q_off}
+        vmax = default_max_speed(scfg, line)
+        detail = {"stops": "provisional", "runTime": "estimated_default", "maxSpeed": "provisional", "peak": q_peak, "offpeak": q_off}
 
         # 未カバーのエッジを鎖（駅の並び）に分解する: 次数 1 の駅から順にたどる
         adj = defaultdict(list)
@@ -559,11 +575,12 @@ def provisional_routes(scfg: dict, nw: Network, covered: set) -> list:
             legs = []
             for u, v in zip(seq[:-1], seq[1:]):
                 d = min(nw.edges[e][3] for m, e in adj[u] if m == v)
-                legs.append(round(d / 1000 / line["speedKmh"] * 60, 2))
+                legs.append(leg_minutes(scfg, nw, d, v, vmax))
             out.append({
-                "id": f"prov:{li}:{k}", "name": line["name"], "operator": line["operator"], "quality": "provisional",
-                "qualityDetail": detail,
-                "source": "仮置き（N02 の線ごとに全駅停車、表定速度は pipeline.yaml）", "frequencySource": freq_src,
+                "id": f"prov:{li}:{k}", "name": line["name"], "operator": line["operator"], "quality": "estimated_default",
+                "qualityDetail": detail, "maxSpeedKmh": vmax,
+                "source": "物理推定（既定値）: N02 の線ごとに全駅停車の各停、最高速度は路線タイプ別の既定値（services.yaml の runtime）",
+                "frequencySource": freq_src,
                 "stations": seq, "cars": cars,
                 "services": [{"name": "各停", "stops": list(range(len(seq))), "legMinutes": legs,
                               "tph": {"peak": round(float(peak), 1), "offpeak": round(float(off), 1)}}],
@@ -604,7 +621,7 @@ def compare_published_times(scfg: dict, nw: Network, routes: list) -> list[dict]
                 continue
             a, b = names.index(e["from"]), names.index(e["to"])
             for s in r["services"]:
-                if e.get("service") and s["name"] != e["service"] and r["quality"] != "provisional":
+                if e.get("service") and s["name"] != e["service"] and not r["id"].startswith("prov:"):
                     continue
                 m = service_minutes(r, s, a, b)
                 if m is not None and (best is None or QUALITIES.index(r["quality"]) < QUALITIES.index(best[0]["quality"])):
@@ -747,7 +764,7 @@ def main() -> None:
 
     pub_rows = compare_published_times(scfg, nw, routes)
     tt_rows = validate_with_timetable(scfg, nw, routes)
-    priority = input_priority(scfg, nw, routes, line_quality, line_km, line_detail)
+    priority = input_priority(scfg, nw, routes, line_quality, line_km, line_detail, best)
 
     for r in routes:
         for k in ("lineSet", "_lines", "_edges"):
@@ -788,9 +805,14 @@ def station_ridership(s: dict) -> float:
     return float(v or 0)
 
 
-def input_priority(scfg, nw, routes, line_quality, line_km, line_detail) -> dict:
+def input_priority(scfg, nw, routes, line_quality, line_km, line_detail, best) -> dict:
     """手入力をお願いしたい線・系統の優先順。
-    重み = 線の駅の乗降客数（S12）の合計 × 対象の延長の割合。乗降の多い線ほど、所要時間・本数の誤差が需要推計に効くため"""
+    重み = 線の駅の乗降客数（S12）の合計 × 対象の延長の割合。乗降の多い線ほど、所要時間・本数の誤差が需要推計に効くため。
+    A: 系統を定義していない線（各停だけの既定値の物理推定）の延長が半分以上の線、B: 設定で定義した系統"""
+    undefined_km = defaultdict(float)
+    for ei, (a, b, li, d) in enumerate(nw.edges):
+        if ei in best and best[ei]["id"].startswith("prov:"):
+            undefined_km[li] += d / 1000
     in_region = {i for i, s in enumerate(nw.stations) if s["inRegion"]}
     mlit = scfg.get("mlit_peak", {}).get("lines", {})
     lf_in = (scfg.get("input") or {}).get("line_frequency") or {}
@@ -808,19 +830,19 @@ def input_priority(scfg, nw, routes, line_quality, line_km, line_detail) -> dict
         l = nw.lines[li]
         key = f"{l['operator']}/{l['name']}"
         total = sum(line_km[li].values())
-        prov = line_km[li]["provisional"]
+        prov = undefined_km[li]
         rid = sum(station_ridership(nw.stations[i]) for i in line_st[li])
         det = line_detail[li]
         # 延長の半分以上が仮置きの線だけ（設定ファイルで系統を定義した線の不足は B の系統ごとの一覧に出す）
         if prov / max(total, 1e-9) < 0.5:
             continue
-        need = ["種別・停車駅・最高速度（系統の定義）"]
+        need = ["優等列車の停車パターン（あれば）"]
         if det.get("peak") == "provisional":
             need.append("ピーク本数")
         if det.get("offpeak") == "provisional":
             need.append("日中本数")
         # 系統の終端（仮置きの系統の最も長い鎖）: テンプレートの from / to の目安
-        chains = [r for r in routes if r["quality"] == "provisional" and r["id"].startswith(f"prov:{li}:")]
+        chains = [r for r in routes if r["id"].startswith(f"prov:{li}:")]
         ends = []
         for r in sorted(chains, key=lambda r: -len(r["stations"]))[:2]:
             ends.append((nw.stations[r["stations"][0]]["name"], nw.stations[r["stations"][-1]]["name"], len(r["stations"])))
@@ -833,14 +855,15 @@ def input_priority(scfg, nw, routes, line_quality, line_km, line_detail) -> dict
     lines_out.sort(key=lambda x: -x["score"])
     routes_out = []
     for r in routes:
-        if r["quality"] not in ("estimated", "published"):
+        if r["quality"] == "timetable" or r["id"].startswith("prov:"):
             continue
         det = r["qualityDetail"]
-        need = [ITEM_LABEL[it] for it in ("maxSpeed", "peak", "offpeak") if det.get(it) == "provisional"]
+        need = [ITEM_LABEL[it] for it in ("peak", "offpeak") if det.get(it) == "provisional"]
         if not need:
             continue
         rid = sum(station_ridership(nw.stations[i]) for i in set(r["stations"]))
-        routes_out.append({"id": r["id"], "name": r["name"], "ridership": rid, "need": need})
+        routes_out.append({"id": r["id"], "name": r["name"], "ridership": rid, "need": need,
+                           "maxSpeedDefault": det.get("maxSpeed") == "provisional"})
     routes_out.sort(key=lambda x: -x["ridership"])
     out = {"lines": lines_out, "routes": routes_out}
     path = INTERIM / "services_priority.json"
@@ -860,29 +883,36 @@ def write_priority(pr: dict, skipped: list, scfg: dict) -> None:
     w("優先度 = 線の駅の 1 日の乗降客数（S12、2024 年度。乗換駅は各線に重複して数える）の合計 × 対象の延長の割合。")
     w("乗降の多い線ほど、所要時間・本数の誤差が需要推計（一般化費用）に効くため。")
     w("")
-    w("## A. 系統（種別・停車駅）と本数の入力が必要な線")
+    w("手入力の対象は **優等列車の停車パターンと日中本数** に絞っている。各停は全駅停車、最高速度は路線タイプ別の既定値で物理推定済み（品質「物理推定（既定値）」）。")
+    w("最高速度は任意（公表値を入れると、停車駅も公表資料の系統は「物理推定（入力値）」になる）。")
     w("")
-    w("所要時間が仮置き（N02 の線ごとに全駅停車・一律の表定速度）の線。種別ごとの停車駅と最高速度を入れると物理推定に、日中本数を入れると本数が公表資料になる。")
+    w("## A. 優等列車の停車パターンと本数の入力が必要な線")
+    w("")
+    w("系統を定義していない線（各停だけ、既定値の物理推定）。急行などがある線は種別と停車駅を、各停だけの線は日中本数だけ入れればよい"
+      "（`routes` に各停だけの系統を書くか、`line_frequency` に本数だけ）。")
     w("")
     w("「ODPT」欄の ○ は、ODPT の開発者登録が承認されれば時刻表ベースに置き換わる事業者（後回しにしてよい）。")
     w("")
-    w("| 順位 | 線（N02） | 延長 km（うち仮置き） | 乗降合計 万人/日 | 国交省のピーク本数 | 必要な入力 | 系統の端の駅（目安） | ODPT | 記入状況 |")
+    w("記入状況: 「雛形」= テンプレートに枠があり未入力（計算に未使用）、「入力済み」= 計算に使っている。")
+    w("")
+    w("| 順位 | 線（N02） | 延長 km（うち系統未定義） | 乗降合計 万人/日 | 国交省のピーク本数 | 必要な入力 | 系統の端の駅（目安） | ODPT | 記入状況 |")
     w("|---|---|---|---|---|---|---|---|---|")
+    skipped_ids = {s["id"] for s in skipped}
     for k, x in enumerate(pr["lines"], 1):
         ends = "、".join(f"{a}〜{b}（{n}駅）" for a, b, n in x["ends"]) or "—"
         pk = f"{x['mlitPeak']:g}" if x["mlitPeak"] is not None else "—"
-        st = "、".join(x["inInput"]) if x["inInput"] else "未"
+        st = "、".join(f"{i}（{'雛形' if i in skipped_ids else '入力済み'}）" for i in x["inInput"]) if x["inInput"] else "未"
         od = "○" if x["odptKey"] else ""
         w(f"| {k} | {x['line']} | {x['km']:.1f}（{x['provisionalKm']:.1f}） | {x['ridership'] / 1e4:,.1f} | {pk} | {'、'.join(x['need'])} | {ends} | {od} | {st} |")
     w("")
     w("## B. 定義済みの系統で仮置きの項目")
     w("")
-    w("停車駅は公表資料（JR東日本の路線図）、所要時間は物理推定の系統。`route_overrides` に入れる。")
+    w("停車駅は公表資料（JR東日本の路線図）、所要時間は物理推定の系統。`route_overrides` に入れる。最高速度（任意）は既定値のままの系統に ○。")
     w("")
-    w("| 順位 | 系統 | 乗降合計 万人/日 | 仮置きの項目 |")
-    w("|---|---|---|---|")
+    w("| 順位 | 系統 | 乗降合計 万人/日 | 仮置きの項目 | 最高速度が既定値（任意） |")
+    w("|---|---|---|---|---|")
     for k, x in enumerate(pr["routes"], 1):
-        w(f"| {k} | {x['name']}（`{x['id']}`） | {x['ridership'] / 1e4:,.1f} | {'、'.join(x['need'])} |")
+        w(f"| {k} | {x['name']}（`{x['id']}`） | {x['ridership'] / 1e4:,.1f} | {'、'.join(x['need'])} | {'○' if x['maxSpeedDefault'] else ''} |")
     w("")
     if skipped:
         w("## C. テンプレートで未入力の系統（計算に使っていない）")
@@ -915,7 +945,8 @@ def write_coverage(routes, nw, line_quality, line_km, line_detail, odpt_report, 
     w("")
     w("品質フラグ（所要時間の出所。線ごとに延長の最も長いもの）:")
     w("時刻表 = ODPT のオープンデータの時刻表から集計、公表資料 = 公表の所要時間を手入力、")
-    w("物理推定 = 公表資料の停車駅と最高速度から運転曲線の簡易計算、仮置き = N02 の線ごとに全駅停車・一律の表定速度。")
+    w("物理推定（入力値）= 公表資料の停車駅と最高速度（手入力）から運転曲線の簡易計算、")
+    w("物理推定（既定値）= 停車駅か最高速度が既定値（系統を定義していない線は全駅停車の各停だけ、最高速度は路線タイプ別の既定値）、仮置き = 上記がない。")
     w("")
     w("| 品質（所要時間） | 線の数 | 延長 [km] | 割合（延長） |")
     w("|---|---|---|---|")
@@ -932,7 +963,7 @@ def write_coverage(routes, nw, line_quality, line_km, line_detail, odpt_report, 
         c = Counter(line_detail[li].get(it) for li in region_lines)
         w(f"| {ITEM_LABEL[it]} | " + " | ".join(str(c[q]) for q in QUALITIES) + f" | {c[None]} |")
     w("")
-    w("最高速度は物理推定の系統だけが使う（時刻表・仮置きの線は「該当なし」）。")
+    w("最高速度は物理推定の系統だけが使う（時刻表の線は「該当なし」）。停車駅の「仮置き」は、各停の全駅停車だけで優等列車の停車パターンが未入力のもの。")
     w("")
     w("## 物理推定の検証")
     w("")

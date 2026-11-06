@@ -98,7 +98,8 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 | Phase 2 M5 | 輸送力制約と均衡計算（混雑率・混雑の不効用・警告） | 完了（2026-11-02）。混雑率のグラフは M6 |
 | Phase 2 M6 | UI（交通機関タイプ・運行体系パネル・混雑率・既存線のデータ品質）、シナリオの版 2 と自動移行 | 完了（2026-11-02） |
 | Phase 2 M7 | バックテスト再実行（運行計画のケースを追加）、ドキュメント更新 | 完了（2026-11-02）。docs/backtest.md §6 |
-| Phase 2 M1 改訂 | ODPT 認証なしの方針: 品質フラグ 4 段階（物理推定を追加）、手入力テンプレートと優先順リスト、国交省の輸送力・輸送人員・混雑率 | 完了（2026-11-06）、報告済み・指示待ち。docs/services_coverage.md, docs/services_input_priority.md |
+| Phase 2 M1 改訂 | ODPT 認証なしの方針: 品質フラグ（物理推定を追加）、手入力テンプレートと優先順リスト、国交省の輸送力・輸送人員・混雑率 | 完了（2026-11-06）。docs/services_coverage.md, docs/services_input_priority.md |
+| Phase 2 M1 改訂 2 | 系統未定義の 107 線の各停を既定値で物理推定、品質フラグを入力値／既定値に分割、手入力を優等列車と日中本数に絞る、再校正・バックテスト | 完了（2026-11-06）、報告済み・指示待ち。design.md §11.2・§13.4、backtest.md §6.6 |
 
 ### 今後のフェーズ（詳細は design.md §8）
 
@@ -144,7 +145,8 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - 2026-11-02: 全国展開に向けて地域単位の構成にした（design.md §12）。首都圏前提の値はコードに書かず、`scripts/config/regions/<地域>/region.yaml` と `src/config/regions.ts` に置く。データは `public/data/<地域>/`、校正値は `src/config/regions/<地域>/`。前処理は `--region` で地域を指定。首都圏前提の箇所の一覧は design.md §12.2。
 - 2026-11-06: ODPT の開発者登録が承認されないため、認証が必要なデータは使わない。データ源の優先順位は ① ODPT の CC BY / CC0（認証なし、現在は都営のみ）② 国交省の混雑率データ ③ 物理推定 ④ 仮置き（手入力テンプレートで埋める）。承認されたら .env のトークンで取得し直せば時刻表ベースに置き換わる構造は維持。交通事業者の Web サイトの自動スクレイピングはしない。
 - 2026-11-06: 品質フラグを 4 段階に（timetable 時刻表／published 公表資料＝公表の所要時間を手入力／estimated 物理推定＝公表の停車駅と最高速度から運転曲線／provisional 仮置き）。系統・線の品質は所要時間の出所、項目ごと（停車駅・最高速度・ピーク本数・日中本数）は qualityDetail。JR の 18 系統は「公表資料」から「物理推定」に変わった（値は同じ）。
-- 2026-11-06: 手入力は `scripts/config/regions/<地域>/services_input.yaml`（routes / route_overrides / line_frequency / published_times、null は未入力）。優先順は乗降客数 × 仮置きの延長の割合で 06_services.py が docs/services_input_priority.md に出す。仮置きの線には全駅停車の運転曲線を当てない（急行のある線で過大になるため、一律の表定速度のまま）。
+- 2026-11-06: 手入力は `scripts/config/regions/<地域>/services_input.yaml`（routes / route_overrides / line_frequency / published_times、null は未入力）。優先順は乗降客数 × 系統未定義の延長の割合で 06_services.py が docs/services_input_priority.md に出す。
+- 2026-11-06（改訂 2）: 系統を定義していない線は、各停（全駅停車）を路線タイプ別の既定の最高速度（services.yaml の runtime.default_max_speed_kmh、仮置き）で物理推定する（一律の表定速度は廃止。所要時間は合計 0.82 倍）。品質フラグは estimated（物理推定・入力値＝停車駅と最高速度が公表資料）と estimated_default（物理推定・既定値）に分ける。JR の 18 系統も最高速度が仮置きなので既定値。手入力の対象は優等列車の停車パターンと日中本数（最高速度は任意）。系統 ID prov:* は維持（保存済みシナリオの直通先のため）。再校正で γ が下限を離れた（0.059）。
 - 2026-11-02: ODPT の利用ルール: CC0・CC BY 優先、チャレンジ限定は使わない、基本ライセンスは集計値だけ公開、ブラウザから ODPT API を呼ばない（トークンは .env、前処理のみ）、アプリ・README に ODPT 利用の旨・免責・問い合わせ先を表示、取得日を記録（docs/data-sources.md）。
 - 2026-11-02: 既存線の運行データは「運行系統（駅の並び）× 種別（停車駅・駅間所要時間・ピーク/日中本数）＋直通」で持つ（design.md §11、`public/data/<地域>/services.json`）。品質フラグは timetable / published / provisional。
 - 2026-11-02: 時刻表は ODPT のオープンデータだけを使う。都営（CC BY 4.0、トークン不要）は取得済み。東京メトロ・TX など基本ライセンスの事業者はユーザがトークンを取得して `.env` の ODPT_ACCESS_TOKEN に置く（git 管理外）。基本ライセンスのデータは集計値だけ公開する。
@@ -162,7 +164,8 @@ py -3.14 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r scripts\req
 - N02 の路線名は法令上の線名（山手線の一部が「東北線」など）。M4 で同一事業者内の乗換抵抗を下げる設定が必要。
 - 表定速度はすべて仮置き（急行を考慮しないため長距離の所要時間は過大。例: 新宿→横浜 52 分）。時刻表との照合は未実施。
 - 校正で α・a₁・γ が範囲の端に張り付いている。OD データ（大都市交通センサス等）で分布・経路側から推定するのが本筋。
-- M2 で校正の a₀ が範囲の下限（−6）に張り付いた（design.md §13.3）。
+- M2 で校正の a₀ が範囲の下限（−6）に張り付いた（design.md §13.3）。2026-11-06 の再校正でも同じ（γ は下限を離れた）。
+- 2026-11-06 の再校正後、バックテストの全駅校正とホールドアウトの差が約 20% に開いた（TX default 0.96 / 1.17）。開業前の予測の目安はホールドアウト。
 - バックテスト（Phase 2、docs/backtest.md §6）: TX は既定の計画で合計比 1.19、実際の運行体系（快速あり）では 1.62（経路転換が速い種別に敏感すぎる。Phase 3 で運賃込みの経路選択に）。所要時間は公式より約 1 割長い（最高速度 110 km/h 仮置き）。新横浜線は直通ありで 1.05。
 - ODPT の開発者登録が未承認（東京メトロ・TX など 6 事業者が仮置き）。大手私鉄の停車駅・JR の最高速度・全線の日中本数は手入力待ち（docs/services_input_priority.md）。
 - バックテスト（docs/backtest.md）: TX は合計で約 2.6 倍の過大。主因は接続駅での経路転換（既存線どうしの短絡利用。2 項ロジット・仮置き）で、これを除くと約 1.3 倍。新駅だけなら 1.33 倍で駅モデルの当てはまりと同程度。新横浜線は比較できる駅が 2 駅しかなく、直通運転の効果は駅の乗降では評価できない。

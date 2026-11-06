@@ -5,14 +5,16 @@
 
 /**
  * データ品質（所要時間の出所）: 時刻表ベース（ODPT のオープンデータ）／公表資料（公表の所要時間）／
- * 物理推定（公表資料の停車駅と最高速度から運転曲線で計算）／仮置き
+ * 物理推定（入力値: 公表資料の停車駅と最高速度から運転曲線で計算）／
+ * 物理推定（既定値: 停車駅か最高速度が既定値。系統を定義していない線は全駅停車の各停）／仮置き
  */
-export type ServiceQuality = 'timetable' | 'published' | 'estimated' | 'provisional';
+export type ServiceQuality = 'timetable' | 'published' | 'estimated' | 'estimated_default' | 'provisional';
 
 export const SERVICE_QUALITY_LABEL: Record<ServiceQuality, string> = {
   timetable: '時刻表',
   published: '公表資料',
-  estimated: '物理推定',
+  estimated: '物理推定（入力値）',
+  estimated_default: '物理推定（既定値）',
   provisional: '仮置き',
 };
 

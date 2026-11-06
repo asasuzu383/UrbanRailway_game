@@ -6,8 +6,10 @@
 # データ品質（quality = 所要時間の出所。項目ごとの出所は qualityDetail: 停車駅・所要時間・最高速度・ピーク本数・日中本数）:
 #   timetable   … 時刻表ベース（ODPT のうち認証なしで取れる CC BY 4.0 のデータから集計。scripts/odpt_download.py → 06_services.py）
 #   published   … 公表資料（公表の所要時間を手入力したもの。services_input.yaml の services[].minutes）
-#   estimated   … 物理推定（公表資料の停車駅と最高速度から、運転曲線の簡易計算で所要時間を求めたもの。新線と同じ計算）
-#   provisional … 仮置き（上記がない線。N02 の線ごとに全駅停車・表定速度は pipeline.yaml の rail.speed_kmh）
+#   estimated   … 物理推定（入力値）。公表資料の停車駅と最高速度（手入力）から運転曲線の簡易計算で所要時間を求めたもの。新線と同じ計算
+#   estimated_default … 物理推定（既定値）。停車駅か最高速度が既定値のもの。系統を定義していない N02 の線は、全駅停車の各停 1 種別とし、
+#                   最高速度は下の runtime.default_max_speed_kmh（路線タイプ別）で同じ計算をする
+#   provisional … 仮置き（上記がないもの。現在は該当なし）
 # ピーク本数・編成は国交省の混雑率データ（公表資料）、日中本数は手入力がなければピークの比率（仮置き）。
 # 公表資料から手で入れる値は services_input.yaml（手入力テンプレート）に書く。優先順は docs/services_input_priority.md。
 #
@@ -71,8 +73,10 @@ runtime:
   # 最高速度 70〜100 km/h で係数なしの計算に対して 1.10〜1.30 倍（中央値 約1.17）だったので 1.15 とした（2026-11-02）
   margin: 1.15
   # 最高速度 [km/h] が未入力の系統と、時刻表との比較に使う既定値（すべて仮置き）。
-  # N02 の鉄道区分（rail_type）→ 事業者種別（operator_type: 2=JR在来線, 3=公営, 4=民営, 5=第三セクター）→ default の順に引く
+  # 事業者（operator）→ N02 の鉄道区分（rail_type: 21=路面電車, 14/15/22/23=モノレール, 16/24=新交通）
+  # → 事業者種別（operator_type: 2=JR在来線, 3=公営, 4=民営, 5=第三セクター）→ default の順に引く
   default_max_speed_kmh:
+    operator: { 東京地下鉄: 80 }   # 地下鉄（公営の地下鉄の 80 にそろえる）
     rail_type: { "21": 40, "14": 70, "15": 70, "22": 70, "23": 70, "16": 60, "24": 60 }
     operator_type: { "2": 100, "3": 80, "4": 100, "5": 100 }
     default: 100

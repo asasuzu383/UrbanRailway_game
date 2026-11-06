@@ -158,11 +158,11 @@ export class MapView {
       type: 'line',
       source: 'rail',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      // 所要時間が仮置きの路線は薄く、物理推定はやや薄く表示する（精度が低いことを示す。凡例は「表示」タブ）
+      // 所要時間の精度が低い路線ほど薄く表示する（物理推定の入力値 → 既定値 → 仮置き。凡例は「表示」タブ）
       paint: {
         'line-color': operatorColorExpression(),
         'line-width': lineWidth,
-        'line-opacity': ['match', ['get', 'quality'], 'provisional', 0.4, 'estimated', 0.75, 1],
+        'line-opacity': ['match', ['get', 'quality'], 'provisional', 0.35, 'estimated_default', 0.55, 'estimated', 0.8, 1],
       },
     });
     // ホバー判定用の太い透明レイヤー（細い線でも拾いやすくする）

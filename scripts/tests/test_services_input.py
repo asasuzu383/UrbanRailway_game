@@ -54,9 +54,10 @@ def test_estimated_with_defaults() -> None:
     out, _ = run([base_route()])
     r = out[0]
     d = r["qualityDetail"]
-    assert r["quality"] == "estimated"
+    # 停車駅は公表資料だが最高速度が既定値なので「物理推定（既定値）」
+    assert r["quality"] == "estimated_default"
     # 最高速度は既定値（仮置き）、本数はピーク = 国交省、日中 = ピークの比率（仮置き）
-    assert (d["stops"], d["runTime"], d["maxSpeed"], d["peak"], d["offpeak"]) == ("published", "estimated", "provisional", "published", "provisional")
+    assert (d["stops"], d["runTime"], d["maxSpeed"], d["peak"], d["offpeak"]) == ("published", "estimated_default", "provisional", "published", "provisional")
     assert r["services"][0]["tph"] == {"peak": 20.0, "offpeak": 10.0}
     assert len(r["services"][0]["legMinutes"]) == 3
 
@@ -67,7 +68,7 @@ def test_published_inputs_upgrade_items() -> None:
     out, _ = run([base_route(max_speed_kmh=110, max_speed_source="テスト資料", services=sv)])
     r = out[0]
     d = r["qualityDetail"]
-    # 種別の 1 つが物理推定なので、系統の所要時間の品質は低い方の物理推定
+    # 最高速度も入力値なので「物理推定（入力値）」。種別の 1 つが公表の所要時間でも、系統の品質は低い方
     assert r["quality"] == "estimated"
     assert (d["maxSpeed"], d["peak"], d["offpeak"]) == ("published", "published", "published")
     assert r["services"][1]["legMinutes"] == [7.0]
@@ -92,6 +93,23 @@ def test_override_on_services_yaml_route() -> None:
     assert out[0]["maxSpeedKmh"] == 120
     assert (d["maxSpeed"], d["offpeak"]) == ("published", "published")
     assert out[0]["services"][0]["tph"]["offpeak"] == 9.0
+
+
+def test_undefined_line_is_default_estimate() -> None:
+    """系統を定義していない線は、全駅停車の各停を既定の最高速度で物理推定する"""
+    nw = svc.Network(STATIONS, NET)
+    out = svc.provisional_routes(dict(SCFG, input={}), nw, covered=set())
+    assert len(out) == 1
+    r = out[0]
+    assert r["id"] == "prov:0:0"
+    assert r["quality"] == "estimated_default"
+    assert (r["qualityDetail"]["stops"], r["qualityDetail"]["maxSpeed"]) == ("provisional", "provisional")
+    assert r["maxSpeedKmh"] == 100
+    legs = r["services"][0]["legMinutes"]
+    # 2km の駅間: 運転曲線（100 km/h まで加速して減速）+ 停車 30 秒、× 1.15
+    expect = (svc.run_seconds(2000, 100, 3.0, 3.5) + 30) * 1.15 / 60
+    assert all(abs(x - expect) < 0.01 for x in legs)
+    assert r["services"][0]["tph"] == {"peak": 20.0, "offpeak": 10.0}
 
 
 def test_faster_max_speed_is_not_slower() -> None:
